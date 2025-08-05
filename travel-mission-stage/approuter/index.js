@@ -2181,7 +2181,7 @@ const _fetchClaims = async function (decryptedData, cookies) {
     if (sFilterOptions) {
       var getClaimUrl =
         cookies.SF.URL +
-        `cust_BenefitTravelClaim?$format=json&$expand=cust_EmployeeIDNav&$select=externalCode,cust_MissionID,cust_EmployeeID,cust_startDate,cust_EndDate,cust_Location,cust_ClaimAmount,cust_Status,cust_EmployeeIDNav/defaultFullName&$filter=${sFilterOptions}`;
+        `cust_BenefitTravelClaim?$format=json&$expand=cust_EmployeeIDNav&$select=externalCode,mdfSystemEffectiveStartDate,cust_MissionID,cust_EmployeeID,cust_startDate,cust_EndDate,cust_Location,cust_ClaimAmount,cust_Status,cust_EmployeeIDNav/defaultFullName&$filter=${sFilterOptions}`;
       const getClaimConfig = {
         headers: {
           Authorization: auth,

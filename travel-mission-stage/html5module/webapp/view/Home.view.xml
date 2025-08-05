@@ -1,264 +1,723 @@
 <mvc:View
-	controllerName="ui5appstage.controller.Home"
-	xmlns="sap.m"
-	xmlns:core="sap.ui.core"
-	xmlns:mvc="sap.ui.core.mvc"
-	xmlns:l="sap.ui.layout"
-	core:require="{
+    controllerName="ui5appstage.controller.Home"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:l="sap.ui.layout"
+    xmlns:columnmenu="sap.m.table.columnmenu"
+    xmlns:cd="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
+    core:require="{
 		Formatter: 'ui5appstage/model/formatter'
-	}">
-	<Page class="sapUiResponsiveContentPadding homePage" enableScrolling="false">
-		<customHeader>
-			<core:Fragment fragmentName="ui5appstage.view.fragments.Header" type="XML" />
-		</customHeader>
-		<content>
-			<!-- <FlexBox class="tableLoadingIndicator" visible="{=${screenModel>/info/tableLoader}}">
+	}"
+>
+    <Page
+        class="sapUiResponsiveContentPadding homePage"
+        enableScrolling="false"
+    >
+        <customHeader>
+            <core:Fragment
+                fragmentName="ui5appstage.view.fragments.Header"
+                type="XML"
+            />
+        </customHeader>
+        <content>
+            <!-- <FlexBox class="tableLoadingIndicator" visible="{=${screenModel>/info/tableLoader}}">
 				<Image src="/assets/images/loader.svg" />
 				<Label text="Loading..." class="loadingText" />
 			</FlexBox> -->
 
-			<l:FixFlex class="fixFlexFixedSize" visible="{= ${screenModel>/info/list} === true || ( ${screenModel>/info/payrollGroup} === true &amp;&amp; ${screenModel>/payrollGroup/showMissions} === true ) }">
-				<l:fixContent>
-					<Toolbar class="homeToolbar">
-						<SearchField
-							id="searchField"
-							placeholder="{i18n>filter}"
-							width="25rem"
-							class="homeFilterInput"
-							liveChange="tableFilter('mission', $event)"
-							enabled="{=!${screenModel>/info/tableLoader}}"/>
-						<Button
-							tooltip="Refresh"
-							icon="sap-icon://refresh"
-							class="homeRefreshMissionBtn"
-							press="refreshList"/>
-						<ToolbarSpacer/>
-						<Button
-							tooltip="{i18n>goToClaimAdvanceList}"
-							icon="sap-icon://receipt"
-							text="{i18n>goToClaimAdvanceList}"
-							class="homeCreateMissionBtn"
-							press=".callClaimsAndAdvances"
-							visible="{= ${screenModel>/info/payrollGroup} === true }"/>
-						<Button
-							tooltip="{i18n>createMission}"
-							icon="sap-icon://add"
-							text="{i18n>createMission}"
-							class="homeCreateMissionBtn"
-							press="naveToCreateMission"
-							visible="{=${screenModel>/info/create}}"/>
-					</Toolbar>
-				</l:fixContent>
-				<l:flexContent>
-					<ScrollContainer height="100%" vertical="true">
-						<Table class="homeMissionsTable" alternateRowColors="true" noDataText="{i18n>noData}" items="{path: 'missionsModel>/missions', length : 500, templateShareable: false}" sticky="ColumnHeaders" >
-							<columns>
-								<Column minScreenWidth="321px"><Text text="{i18n>missionId}" /></Column>
-								<Column minScreenWidth="481px" demandPopin="true"><Text text="{i18n>missionName}" /></Column>
-								<Column minScreenWidth="769px" demandPopin="true"><Text text="{i18n>destination}" /></Column>
-								<Column minScreenWidth="769px" demandPopin="true"><Text text="{i18n>sector}" /></Column>
-								<Column minScreenWidth="1025px" demandPopin="true"><Text text="{i18n>startDate}" /></Column>
-								<Column minScreenWidth="1025px" demandPopin="true"><Text text="{i18n>endDate}" /></Column>
-								<Column minScreenWidth="1025px" demandPopin="true"><Text text="{i18n>pendingWith}" /></Column>
-								<Column minScreenWidth="1201px" demandPopin="true"><Text text="{i18n>status}" /></Column>
-								<Column minScreenWidth="1201px" demandPopin="true"><Text text="{i18n>utilizedBudget}" visible="{=${missionsModel>isBudgetViewable}}"/></Column>
-								<Column minScreenWidth="1201px" demandPopin="true"><Text text="{i18n>actions}" /></Column>
-							</columns>
-							<items>
-								<ColumnListItem vAlign="Middle">
-									<cells>
-										<Text text="{missionsModel>missionId}" />
-										<Text text="{missionsModel>mission}" />
-										<HBox>
-											<Text text="{missionsModel>destination/localeLabel}" visible="{= ${appModel>/language} === 'en' }" />
-											<Text text="{missionsModel>destination/labelAr}" visible="{= ${appModel>/language} === 'ar' }" />
-										</HBox>
-										<HBox>
-											<Text text="{missionsModel>SectorName}" visible="{= ${appModel>/language} === 'en' }" />
-											<Text text="{missionsModel>SectorNameAr}" visible="{= ${appModel>/language} === 'ar' }" />
-										</HBox>
-										<Text text="{path: 'missionsModel>startDate', formatter: 'Formatter.formatDateStr'}" />
-										<Text text="{path: 'missionsModel>endDate', formatter: 'Formatter.formatDateStr'}" />
-										<Text text="{ parts:[{path:'missionsModel>pendingWith'}, {path:'missionsModel>pendingWithGroup'}, {path:'appModel>/language'}], formatter:'Formatter.constructPendingWith'}" />
-										<HBox>
-											<Text text="{missionsModel>status/localeLabel}" visible="{= ${appModel>/language} === 'en' }" />
-											<Text text="{missionsModel>status/localeLabelAr}" visible="{= ${appModel>/language} === 'ar' }" />
-										</HBox>
-										<ObjectNumber
-											number="{
+            <l:FixFlex
+                class="fixFlexFixedSize"
+                visible="{= ${screenModel>/info/list} === true || ( ${screenModel>/info/payrollGroup} === true &amp;&amp; ${screenModel>/payrollGroup/showMissions} === true ) }"
+            >
+                <l:fixContent>
+                    <Toolbar class="homeToolbar">
+                        <SearchField
+                            id="searchField"
+                            placeholder="{i18n>filter}"
+                            width="25rem"
+                            class="homeFilterInput"
+                            liveChange="tableFilter('mission', $event)"
+                            enabled="{=!${screenModel>/info/tableLoader}}"
+                        />
+                        <Button
+                            tooltip="Refresh"
+                            icon="sap-icon://refresh"
+                            class="homeRefreshMissionBtn"
+                            press="refreshList"
+                        />
+                        <ToolbarSpacer />
+                        <Button
+                            tooltip="{i18n>goToClaimAdvanceList}"
+                            icon="sap-icon://receipt"
+                            text="{i18n>goToClaimAdvanceList}"
+                            class="homeCreateMissionBtn"
+                            press=".callClaimsAndAdvances"
+                            visible="{= ${screenModel>/info/payrollGroup} === true }"
+                        />
+                        <Button
+                            tooltip="{i18n>createMission}"
+                            icon="sap-icon://add"
+                            text="{i18n>createMission}"
+                            class="homeCreateMissionBtn"
+                            press="naveToCreateMission"
+                            visible="{=${screenModel>/info/create}}"
+                        />
+                    </Toolbar>
+                </l:fixContent>
+                <l:flexContent>
+                    <ScrollContainer
+                        height="100%"
+                        vertical="true"
+                    >
+                        <Table
+                            id="idHomeMissionsTable"
+                            class="homeMissionsTable"
+                            alternateRowColors="true"
+                            noDataText="{i18n>noData}"
+                            items="{path: 'missionsModel>/missions', length : 500, templateShareable: false}"
+                            sticky="ColumnHeaders,InfoToolbar"
+                        >
+                            <infoToolbar>
+                                <Toolbar>
+                                    <ToolbarSpacer />
+                                    <Button
+                                        icon="sap-icon://sort"
+                                        press=".openP13nDialog"
+                                        class="customButtonDefault"
+                                        tooltip="{i18n>sortBy}"
+                                        text="{i18n>sortBy}"
+                                        cd:sourceTable="idHomeMissionsTable"
+                                    />
+                                </Toolbar>
+                            </infoToolbar>
+                            <columns>
+                                <Column minScreenWidth="321px"
+                                    cd:p13nKey="missionId"
+                                    cd:p13nLabel="{i18n>missionId}"
+                                    cd:p13nPath="missionId"
+                                >
+                                    <Text text="{i18n>missionId}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="481px"
+                                    demandPopin="true"
+                                    cd:p13nKey="missionName"
+                                    cd:p13nLabel="{i18n>missionName}"
+                                    cd:p13nPath="mission"
+                                >
+                                    <Text text="{i18n>missionName}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="769px"
+                                    demandPopin="true"
+                                    cd:p13nKey="destination"
+                                    cd:p13nLabel="{i18n>destination}"
+                                    cd:p13nPath="destination/localeLabel"
+                                >
+                                    <Text text="{i18n>destination}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="769px"
+                                    demandPopin="true"
+                                    cd:p13nKey="sector"
+                                    cd:p13nLabel="{i18n>sector}"
+                                    cd:p13nPath="SectorName"
+                                >
+                                    <Text text="{i18n>sector}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="1025px"
+                                    demandPopin="true"
+                                    cd:p13nKey="startDate"
+                                    cd:p13nLabel="{i18n>startDate}"
+                                    cd:p13nPath="startDate"
+                                >
+                                    <Text text="{i18n>startDate}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="1025px"
+                                    demandPopin="true"
+                                    cd:p13nKey="endDate"
+                                    cd:p13nLabel="{i18n>endDate}"
+                                    cd:p13nPath="endDate"
+                                >
+                                    <Text text="{i18n>endDate}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="1025px"
+                                    demandPopin="true"
+                                    cd:p13nKey="pendingWith"
+                                    cd:p13nLabel="{i18n>pendingWith}"
+                                    cd:p13nPath="pendingWith"
+                                >
+                                    <Text text="{i18n>pendingWith}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="1201px"
+                                    demandPopin="true"
+                                    cd:p13nKey="status"
+                                    cd:p13nLabel="{i18n>status}"
+                                    cd:p13nPath="status/localeLabel"
+                                >
+                                    <Text text="{i18n>status}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="1201px"
+                                    demandPopin="true"
+                                    cd:p13nKey="utilizedBudget"
+                                    cd:p13nLabel="{i18n>utilizedBudget}"
+                                    cd:p13nPath="utilizedBudget"
+                                >
+                                    <Text
+                                        text="{i18n>utilizedBudget}"
+                                        visible="{=${missionsModel>isBudgetViewable}}"
+                                    />
+                                </Column>
+                                <Column
+                                    minScreenWidth="1201px"
+                                    demandPopin="true"
+                                >
+                                    <Text text="{i18n>actions}" />
+                                </Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem vAlign="Middle">
+                                    <cells>
+                                        <Text
+                                            text="{missionsModel>missionId}"
+                                        />
+                                        <Text text="{missionsModel>mission}" />
+                                        <HBox>
+                                            <Text
+                                                text="{missionsModel>destination/localeLabel}"
+                                                visible="{= ${appModel>/language} === 'en' }"
+                                            />
+                                            <Text
+                                                text="{missionsModel>destination/labelAr}"
+                                                visible="{= ${appModel>/language} === 'ar' }"
+                                            />
+                                        </HBox>
+                                        <HBox>
+                                            <Text
+                                                text="{missionsModel>SectorName}"
+                                                visible="{= ${appModel>/language} === 'en' }"
+                                            />
+                                            <Text
+                                                text="{missionsModel>SectorNameAr}"
+                                                visible="{= ${appModel>/language} === 'ar' }"
+                                            />
+                                        </HBox>
+                                        <Text
+                                            text="{path: 'missionsModel>startDate', formatter: 'Formatter.formatDateStr'}"
+                                        />
+                                        <Text
+                                            text="{path: 'missionsModel>endDate', formatter: 'Formatter.formatDateStr'}"
+                                        />
+                                        <Text
+                                            text="{ parts:[{path:'missionsModel>pendingWith'}, {path:'missionsModel>pendingWithGroup'}, {path:'appModel>/language'}], formatter:'Formatter.constructPendingWith'}"
+                                        />
+                                        <HBox>
+                                            <Text
+                                                text="{missionsModel>status/localeLabel}"
+                                                visible="{= ${appModel>/language} === 'en' }"
+                                            />
+                                            <Text
+                                                text="{missionsModel>status/localeLabelAr}"
+                                                visible="{= ${appModel>/language} === 'ar' }"
+                                            />
+                                        </HBox>
+                                        <ObjectNumber
+                                            number="{
 												parts:[{path:'missionsModel>utilizedBudget'}],
 												type: 'sap.ui.model.type.Currency',
 												formatter: 'Formatter.formatAmount'
 											}"
-											unit="AED" 
-											class="budgetColumn"
-											visible="{=${missionsModel>isBudgetViewable}}"
-											/>
-										<HBox class="tableActionsIcons">
-											<core:Icon src="sap-icon://show" press="getMission(${missionsModel>missionId})" visible="{=${missionsModel>isviewable}}" tooltip="View Mission"/>
-											<core:Icon src="sap-icon://travel-itinerary" press="updateItineraryMission(${missionsModel>missionId})" visible="{=${missionsModel>itineraryUpdatebale}}" tooltip="Update Itinerary Ticket Cost"/>
-											<core:Icon src="sap-icon://accept" press="approveMission(${missionsModel>missionId})" visible="{=${missionsModel>isApprovable}}" tooltip="Approve Mission"/>
-											<core:Icon src="sap-icon://simple-payment" press="claimMission(${missionsModel>missionId})" visible="{=${missionsModel>isClaimed}}" tooltip="Claim Mission"/>
-											<core:Icon src="sap-icon://waiver" press="advanceMission(${missionsModel>missionId})" visible="{=${missionsModel>isAdvanceable}}"  tooltip="Advance Request"/>
-											<core:Icon src="sap-icon://delete" press="cancelMission(${missionsModel>missionId})" visible="{=${missionsModel>isCancellable}}" tooltip="Cancel Mission"/>
-											<core:Icon src="sap-icon://validate" press="approveCancel(${missionsModel>missionId})" visible="{=${missionsModel>isCancelApprovable}}" tooltip="Approve Cancel"/>
-											<core:Icon src="sap-icon://edit" press="editMission(${missionsModel>missionId})" visible="{=${missionsModel>isEditable}}" tooltip="Edit Mission"/>
-										</HBox>
-									</cells>
-								</ColumnListItem>
-							</items>
-						</Table>
-						<FlexBox direction="Column" alignItems="Start" class="errorBox"  visible="{= ${screenModel>/info/pageError} === true }">
-							<Text text="{screenModel>/info/pageErrorMessage}" />
-						</FlexBox>		
-					</ScrollContainer>
-				</l:flexContent>
-			</l:FixFlex>
+                                            unit="AED"
+                                            class="budgetColumn"
+                                            visible="{=${missionsModel>isBudgetViewable}}"
+                                        />
+                                        <HBox class="tableActionsIcons">
+                                            <core:Icon
+                                                src="sap-icon://show"
+                                                press="getMission(${missionsModel>missionId})"
+                                                visible="{=${missionsModel>isviewable}}"
+                                                tooltip="View Mission"
+                                            />
+                                            <core:Icon
+                                                src="sap-icon://travel-itinerary"
+                                                press="updateItineraryMission(${missionsModel>missionId})"
+                                                visible="{=${missionsModel>itineraryUpdatebale}}"
+                                                tooltip="Update Itinerary Ticket Cost"
+                                            />
+                                            <core:Icon
+                                                src="sap-icon://accept"
+                                                press="approveMission(${missionsModel>missionId})"
+                                                visible="{=${missionsModel>isApprovable}}"
+                                                tooltip="Approve Mission"
+                                            />
+                                            <core:Icon
+                                                src="sap-icon://simple-payment"
+                                                press="claimMission(${missionsModel>missionId})"
+                                                visible="{=${missionsModel>isClaimed}}"
+                                                tooltip="Claim Mission"
+                                            />
+                                                <core:Icon
+                                                    src="sap-icon://waiver"
+                                                    press="advanceMission(${missionsModel>missionId})"
+                                                    visible="{=${missionsModel>isAdvanceable}}"
+                                                    tooltip="Advance Request"
+                                                />
+                                            <core:Icon
+                                                src="sap-icon://delete"
+                                                press="cancelMission(${missionsModel>missionId})"
+                                                visible="{=${missionsModel>isCancellable}}"
+                                                tooltip="Cancel Mission"
+                                            />
+                                            <core:Icon
+                                                src="sap-icon://validate"
+                                                press="approveCancel(${missionsModel>missionId})"
+                                                visible="{=${missionsModel>isCancelApprovable}}"
+                                                tooltip="Approve Cancel"
+                                            />
+                                            <core:Icon
+                                                src="sap-icon://edit"
+                                                press="editMission(${missionsModel>missionId})"
+                                                visible="{=${missionsModel>isEditable}}"
+                                                tooltip="Edit Mission"
+                                            />
+                                        </HBox>
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                        <FlexBox
+                            direction="Column"
+                            alignItems="Start"
+                            class="errorBox"
+                            visible="{= ${screenModel>/info/pageError} === true }"
+                        >
+                            <Text text="{screenModel>/info/pageErrorMessage}" />
+                        </FlexBox>
+                    </ScrollContainer>
+                </l:flexContent>
+            </l:FixFlex>
 
-			<l:FixFlex class="fixFlexFixedSize" visible="{= ${screenModel>/info/payrollGroup} === true &amp;&amp; ${screenModel>/payrollGroup/showMissions} === false }">
-				<l:fixContent>
-					<Toolbar class="homeToolbar">
-						<SearchField
-							id="searchFieldClaims"
-							placeholder="{i18n>filter}"
-							width="25rem"
-							class="homeFilterInput"
-							liveChange="tableFilter('claims', $event)"
-							enabled="{=!${screenModel>/info/tableLoader}}"
-							visible="{=${screenModel>/info/claimsTab}}"/>
-						<SearchField
-							id="searchFieldAdvances"
-							placeholder="{i18n>filter}"
-							width="25rem"
-							class="homeFilterInput"
-							liveChange="tableFilter('advances', $event)"
-							enabled="{=!${screenModel>/info/tableLoader}}"
-							visible="{=${screenModel>/info/advanceTab}}"/>
-						<Button
-							tooltip="Refresh"
-							icon="sap-icon://refresh"
-							class="homeRefreshMissionBtn"
-
-							press="refreshList"/>
-						<ToolbarSpacer/>
-						<Button
-							tooltip="{i18n>goToMissionList}"
-							icon="sap-icon://suitcase"
-							text="{i18n>goToMissionList}"
-							class="homeCreateMissionBtn"
-							press=".callMyMissions"
-							visible="{= ${screenModel>/info/payrollGroup} === true }"/>
-						<Button icon="sap-icon://filter" press=".callClaimAdvanceFilter"
-							class="customButtonDefault"
-							tooltip="{i18n>filterByStatus}"
-							text="{i18n>tableFilter}"
-						/>
-						<RadioButtonGroup id="payRollButtons" class="payRollButtons">
-							<RadioButton text="{i18n>homePayrollTabClaims}" selected="true" select="tabSwitch('claims')" class="claimRadio"/>
-							<RadioButton text="{i18n>homePayrollTabAdvances}" select="tabSwitch('advances')" class="advanceRadio"/>
-						</RadioButtonGroup>
-					</Toolbar>
-				</l:fixContent>
-				<l:flexContent>
-					<ScrollContainer height="100%" vertical="true">
-						<Table class="homeMissionsTable" alternateRowColors="true" noDataText="{i18n>noData}" visible="{=${screenModel>/info/claimsTab}}" items="{path: 'claimsModel>/claims', templateShareable: false}" sticky="ColumnHeaders" >
-							<columns>
-								<Column minScreenWidth="321px"><Text text="{i18n>missionId}" /></Column>
-								<Column minScreenWidth="481px" demandPopin="true"><Text text="{i18n>employeeName}" /></Column>
-								<Column minScreenWidth="1025px" demandPopin="true"><Text text="{i18n>startDate}" /></Column>
-								<Column minScreenWidth="1025px" demandPopin="true"><Text text="{i18n>endDate}" /></Column>
-								<Column minScreenWidth="1025px" demandPopin="true"><Text text="{i18n>location}" /></Column>
-								<Column minScreenWidth="1201px" demandPopin="true"><Text text="{i18n>claimAmount}" /></Column>
-								<Column minScreenWidth="1201px" demandPopin="true"><Text text="{i18n>status}" /></Column>
-								<Column minScreenWidth="1201px" demandPopin="true"><Text text="{i18n>actions}" /></Column>
-							</columns>
-							<items>
-								<ColumnListItem vAlign="Middle">
-									<cells>
-										<Text text="{claimsModel>cust_MissionID}" />
-										<Text text="{claimsModel>cust_EmployeeIDNav/defaultFullName} ({claimsModel>cust_EmployeeID})" />
-										<Text text="{path: 'claimsModel>cust_startDate', formatter: 'Formatter.formatDateStr'}" />
-										<Text text="{path: 'claimsModel>cust_EndDate', formatter: 'Formatter.formatDateStr'}" />
-										<HBox>
-											<Text text="{parts:[{path:'claimsModel>cust_Location'},{path:'appModel>/language'},{path:'destinationsModel>/destinations'}], formatter: 'Formatter.getCity'}"/>
-										</HBox>
-										<ObjectNumber
-											number="{
+            <l:FixFlex
+                class="fixFlexFixedSize"
+                visible="{= ${screenModel>/info/payrollGroup} === true &amp;&amp; ${screenModel>/payrollGroup/showMissions} === false }"
+            >
+                <l:fixContent>
+                    <Toolbar class="homeToolbar">
+                        <SearchField
+                            id="searchFieldClaims"
+                            placeholder="{i18n>filter}"
+                            width="25rem"
+                            class="homeFilterInput"
+                            liveChange="tableFilter('claims', $event)"
+                            enabled="{=!${screenModel>/info/tableLoader}}"
+                            visible="{=${screenModel>/info/claimsTab}}"
+                        />
+                        <SearchField
+                            id="searchFieldAdvances"
+                            placeholder="{i18n>filter}"
+                            width="25rem"
+                            class="homeFilterInput"
+                            liveChange="tableFilter('advances', $event)"
+                            enabled="{=!${screenModel>/info/tableLoader}}"
+                            visible="{=${screenModel>/info/advanceTab}}"
+                        />
+                        <Button
+                            tooltip="Refresh"
+                            icon="sap-icon://refresh"
+                            class="homeRefreshMissionBtn"
+                            press="refreshList"
+                        />
+                        <ToolbarSpacer />
+                        <Button
+                            tooltip="{i18n>goToMissionList}"
+                            icon="sap-icon://suitcase"
+                            text="{i18n>goToMissionList}"
+                            class="homeCreateMissionBtn"
+                            press=".callMyMissions"
+                            visible="{= ${screenModel>/info/payrollGroup} === true }"
+                        />
+                        <!-- <Button
+                            icon="sap-icon://sort"
+                            press=".openP13nDialog"
+                            class="customButtonDefault"
+                            tooltip="{i18n>sortBy}"
+                            cd:sourceTable="{ parts: [{path: 'screenModel>/info'},{path: 'screenModel>/payrollGroup'} ], formatter: '.getP13nSourceTable' }"
+                        />
+                        <Button
+                            icon="sap-icon://filter"
+                            press=".callClaimAdvanceFilter"
+                            class="customButtonDefault"
+                            tooltip="{i18n>filterByStatus}"
+                            text="{i18n>tableFilter}"
+                        /> -->
+                        <RadioButtonGroup
+                            id="payRollButtons"
+                            class="payRollButtons"
+                        >
+                            <RadioButton
+                                text="{i18n>homePayrollTabClaims}"
+                                selected="true"
+                                select="tabSwitch('claims')"
+                                class="claimRadio"
+                            />
+                            <RadioButton
+                                text="{i18n>homePayrollTabAdvances}"
+                                select="tabSwitch('advances')"
+                                class="advanceRadio"
+                            />
+                        </RadioButtonGroup>
+                    </Toolbar>
+                </l:fixContent>
+                <l:flexContent>
+                    <ScrollContainer
+                        height="100%"
+                        vertical="true"
+                    >
+                        <Table
+                            id="idHomeClaimsTable"
+                            class="homeMissionsTable"
+                            alternateRowColors="true"
+                            noDataText="{i18n>noData}"
+                            visible="{=${screenModel>/info/claimsTab}}"
+                            items="{path: 'claimsModel>/claims', templateShareable: false}"
+                            sticky="ColumnHeaders,InfoToolbar"
+                        >
+                            <infoToolbar>
+                                <Toolbar>
+                                    <ToolbarSpacer />
+                                    <Button
+                                        icon="sap-icon://sort"
+                                        press=".openP13nDialog"
+                                        class="customButtonDefault"
+                                        tooltip="{i18n>sortBy}"
+                                        text="{i18n>sortBy}"
+                                        cd:sourceTable="idHomeClaimsTable"
+                                    />
+                                    <Button
+                                        icon="sap-icon://filter"
+                                        press=".callClaimAdvanceFilter"
+                                        class="customButtonDefault"
+                                        tooltip="{i18n>filterByStatus}"
+                                        text="{i18n>tableFilter}"
+                                    />
+                                </Toolbar>
+                            </infoToolbar>
+                            <columns>
+                                <Column
+                                    minScreenWidth="321px"
+                                    cd:p13nKey="missionId"
+                                    cd:p13nLabel="{i18n>missionId}"
+                                    cd:p13nPath="cust_MissionID"
+                                >
+                                    <Text text="{i18n>missionId}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="481px"
+                                    demandPopin="true"
+                                    cd:p13nKey="employeeName"
+                                    cd:p13nLabel="{i18n>employeeName}"
+                                    cd:p13nPath="cust_EmployeeIDNav/defaultFullName"
+                                >
+                                    <Text text="{i18n>employeeName}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="1025px"
+                                    demandPopin="true"
+                                    cd:p13nKey="startDate"
+                                    cd:p13nLabel="{i18n>startDate}"
+                                    cd:p13nPath="cust_startDate"
+                                >
+                                    <Text text="{i18n>startDate}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="1025px"
+                                    demandPopin="true"
+                                    cd:p13nKey="endDate"
+                                    cd:p13nLabel="{i18n>endDate}"
+                                    cd:p13nPath="cust_EndDate"
+                                >
+                                    <Text text="{i18n>endDate}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="1025px"
+                                    demandPopin="true"
+                                    cd:p13nKey="location"
+                                    cd:p13nLabel="{i18n>location}"
+                                    cd:p13nPath="cust_Location"
+                                >
+                                    <Text text="{i18n>location}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="1025px"
+                                    demandPopin="true"
+                                    cd:p13nKey="requestDate"
+                                    cd:p13nLabel="{i18n>requestDate}"
+                                    cd:p13nPath="mdfSystemEffectiveStartDate"
+                                >
+                                    <Text text="{i18n>requestDate}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="1201px"
+                                    demandPopin="true"
+                                    cd:p13nKey="claimAmount"
+                                    cd:p13nLabel="{i18n>claimAmount}"
+                                    cd:p13nPath="cust_ClaimAmount"
+                                >
+                                    <Text text="{i18n>claimAmount}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="1201px"
+                                    demandPopin="true"
+                                    cd:p13nKey="status"
+                                    cd:p13nLabel="{i18n>status}"
+                                    cd:p13nPath="cust_Status"
+                                >
+                                    <Text text="{i18n>status}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="1201px"
+                                    demandPopin="true"
+                                >
+                                    <Text text="{i18n>actions}" />
+                                </Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem vAlign="Middle">
+                                    <cells>
+                                        <Text
+                                            text="{claimsModel>cust_MissionID}"
+                                        />
+                                        <Text
+                                            text="{claimsModel>cust_EmployeeIDNav/defaultFullName} ({claimsModel>cust_EmployeeID})"
+                                        />
+                                        <Text
+                                            text="{path: 'claimsModel>cust_startDate', formatter: 'Formatter.formatDateStr'}"
+                                        />
+                                        <Text
+                                            text="{path: 'claimsModel>cust_EndDate', formatter: 'Formatter.formatDateStr'}"
+                                        />
+                                        <HBox>
+                                            <Text
+                                                text="{parts:[{path:'claimsModel>cust_Location'},{path:'appModel>/language'},{path:'destinationsModel>/destinations'}], formatter: 'Formatter.getCity'}"
+                                            />
+                                        </HBox>
+                                        <Text
+                                            text="{path: 'claimsModel>mdfSystemEffectiveStartDate', formatter: 'Formatter.formatDateStr'}"
+                                        />
+                                        <ObjectNumber
+                                            number="{
 												parts:[{path:'claimsModel>cust_ClaimAmount'}],
 												type: 'sap.ui.model.type.Currency',
 												formatter: 'Formatter.formatAmount'
 											}"
-											unit="AED" 
-											class="budgetColumn"/>
-										<HBox>
-											<Text text="{parts:[{path:'claimsModel>cust_Status'},{path:'appModel>/language'},{path:'claimStatusModel>/status'}], formatter: 'Formatter.getStatus'}" />
-										</HBox>
-										
-										<HBox class="tableActionsIcons">
-											<core:Icon src="sap-icon://accept" press="approveClaim(${claimsModel>externalCode})" tooltip="Approve Claim"
-												visible="{= ${claimsModel>cust_Status} === '2' }"
-											/>
-											<core:Icon src="sap-icon://display" press="approveClaim(${claimsModel>externalCode})" tooltip="Display Claim"
-												visible="{= ${claimsModel>cust_Status} !== '2' }"
-											/>
-										</HBox>
-									</cells>
-								</ColumnListItem>
-							</items>
-						</Table>
-						<Table class="homeMissionsTable" alternateRowColors="true" noDataText="{i18n>noData}" visible="{=${screenModel>/info/advanceTab}}" items="{path: 'advancesModel>/advances', templateShareable: false}" sticky="ColumnHeaders" >
-							<columns>
-								<Column minScreenWidth="321px"><Text text="{i18n>missionId}" /></Column>
-								<Column minScreenWidth="481px" demandPopin="true"><Text text="{i18n>employeeName}" /></Column>
-								<Column minScreenWidth="1025px" demandPopin="true"><Text text="{i18n>startDate}" /></Column>
-								<Column minScreenWidth="1025px" demandPopin="true"><Text text="{i18n>endDate}" /></Column>
-								<Column minScreenWidth="1025px" demandPopin="true"><Text text="{i18n>location}" /></Column>
-								<Column minScreenWidth="1201px" demandPopin="true"><Text text="{i18n>advanceAmount}" /></Column>
-								<Column minScreenWidth="1201px" demandPopin="true"><Text text="{i18n>status}" /></Column>
-								<Column minScreenWidth="1201px" demandPopin="true"><Text text="{i18n>actions}" /></Column>
-							</columns>
-							<items>
-								<ColumnListItem vAlign="Middle">
-									<cells>
-										<Text text="{advancesModel>cust_MissionID}" />
-										<Text text="{advancesModel>cust_EmployeeIDNav/defaultFullName} ({advancesModel>cust_EmployeeID})" />
-										<Text text="{path: 'advancesModel>cust_StartDate', formatter: 'Formatter.formatDateStr'}" />
-										<Text text="{path: 'advancesModel>cust_EndDate', formatter: 'Formatter.formatDateStr'}" />
-										<HBox>
-											<Text text="{parts:[{path:'advancesModel>cust_location'},{path:'appModel>/language'},{path:'destinationsModel>/destinations'}], formatter: 'Formatter.getCity'}"/>
-										</HBox>
-										<ObjectNumber
-											number="{
+                                            unit="AED"
+                                            class="budgetColumn"
+                                        />
+                                        <HBox>
+                                            <Text
+                                                text="{parts:[{path:'claimsModel>cust_Status'},{path:'appModel>/language'},{path:'claimStatusModel>/status'}], formatter: 'Formatter.getStatus'}"
+                                            />
+                                        </HBox>
+
+                                        <HBox class="tableActionsIcons">
+                                            <core:Icon
+                                                src="sap-icon://accept"
+                                                press="approveClaim(${claimsModel>externalCode})"
+                                                tooltip="Approve Claim"
+                                                visible="{= ${claimsModel>cust_Status} === '2' }"
+                                            />
+                                            <core:Icon
+                                                src="sap-icon://display"
+                                                press="approveClaim(${claimsModel>externalCode})"
+                                                tooltip="Display Claim"
+                                                visible="{= ${claimsModel>cust_Status} !== '2' }"
+                                            />
+                                        </HBox>
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                        <Table
+                            id="idHomeAdvancesTable"
+                            class="homeMissionsTable"
+                            alternateRowColors="true"
+                            noDataText="{i18n>noData}"
+                            visible="{=${screenModel>/info/advanceTab}}"
+                            items="{path: 'advancesModel>/advances', templateShareable: false}"
+                           sticky="ColumnHeaders,InfoToolbar"
+                        >
+                            <infoToolbar>
+                                <Toolbar>
+                                    <ToolbarSpacer />
+                                    <Button
+                                        icon="sap-icon://sort"
+                                        press=".openP13nDialog"
+                                        class="customButtonDefault"
+                                        tooltip="{i18n>sortBy}"
+                                        text="{i18n>sortBy}"
+                                        cd:sourceTable="idHomeAdvancesTable"
+                                    />
+                                    <Button
+                                        icon="sap-icon://filter"
+                                        press=".callClaimAdvanceFilter"
+                                        class="customButtonDefault"
+                                        tooltip="{i18n>filterByStatus}"
+                                        text="{i18n>tableFilter}"
+                                    />
+                                </Toolbar>
+                            </infoToolbar>
+                            <columns>
+                                <Column minScreenWidth="321px"
+                                    cd:p13nKey="missionId"
+                                    cd:p13nLabel="{i18n>missionId}"
+                                    cd:p13nPath="cust_MissionID"
+                                >
+                                    <Text text="{i18n>missionId}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="481px"
+                                    demandPopin="true"
+                                    cd:p13nKey="employeeName"
+                                    cd:p13nLabel="{i18n>employeeName}"
+                                    cd:p13nPath="cust_EmployeeIDNav/defaultFullName"
+                                >
+                                    <Text text="{i18n>employeeName}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="1025px"
+                                    demandPopin="true"
+                                    cd:p13nKey="startDate"
+                                    cd:p13nLabel="{i18n>startDate}"
+                                    cd:p13nPath="cust_StartDate"
+                                >
+                                    <Text text="{i18n>startDate}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="1025px"
+                                    demandPopin="true"
+                                    cd:p13nKey="endDate"
+                                    cd:p13nLabel="{i18n>endDate}"
+                                    cd:p13nPath="cust_EndDate"
+                                >
+                                    <Text text="{i18n>endDate}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="1025px"
+                                    demandPopin="true"
+                                    cd:p13nKey="location"
+                                    cd:p13nLabel="{i18n>location}"
+                                    cd:p13nPath="cust_location"
+                                >
+                                    <Text text="{i18n>location}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="1025px"
+                                    demandPopin="true"
+                                      cd:p13nKey="requestDate"
+                                    cd:p13nLabel="{i18n>requestDate}"
+                                    cd:p13nPath="mdfSystemEffectiveStartDate"
+                                >
+                                    <Text text="{i18n>requestDate}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="1201px"
+                                    demandPopin="true"
+                                    cd:p13nKey="advanceAmount"
+                                    cd:p13nLabel="{i18n>advanceAmount}"
+                                    cd:p13nPath="cust_AdvanceAmount"
+                                >
+                                    <Text text="{i18n>advanceAmount}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="1201px"
+                                    demandPopin="true"
+                                    cd:p13nKey="status"
+                                    cd:p13nLabel="{i18n>status}"
+                                    cd:p13nPath="cust_Status"
+                                >
+                                    <Text text="{i18n>status}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="1201px"
+                                    demandPopin="true"
+                                >
+                                    <Text text="{i18n>actions}" />
+                                </Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem vAlign="Middle">
+                                    <cells>
+                                        <Text
+                                            text="{advancesModel>cust_MissionID}"
+                                        />
+                                        <Text
+                                            text="{advancesModel>cust_EmployeeIDNav/defaultFullName} ({advancesModel>cust_EmployeeID})"
+                                        />
+                                        <Text
+                                            text="{path: 'advancesModel>cust_StartDate', formatter: 'Formatter.formatDateStr'}"
+                                        />
+                                        <Text
+                                            text="{path: 'advancesModel>cust_EndDate', formatter: 'Formatter.formatDateStr'}"
+                                        />
+                                        <HBox>
+                                            <Text
+                                                text="{parts:[{path:'advancesModel>cust_location'},{path:'appModel>/language'},{path:'destinationsModel>/destinations'}], formatter: 'Formatter.getCity'}"
+                                            />
+                                        </HBox>
+                                        <Text
+                                            text="{path: 'advancesModel>mdfSystemEffectiveStartDate',  formatter: 'Formatter.formatDateStr'}"
+                                        />
+                                        <ObjectNumber
+                                            number="{
 												parts:[{path:'advancesModel>cust_AdvanceAmount'}],
 												type: 'sap.ui.model.type.Currency',
 												formatter: 'Formatter.formatAmount'
 											}"
-											unit="AED" 
-											class="budgetColumn"/>
-										<HBox>
-											<Text text="{parts:[{path:'advancesModel>cust_Status'},{path:'appModel>/language'},{path:'claimStatusModel>/status'}], formatter: 'Formatter.getStatus'}" />
-										</HBox>
-										
-										<HBox class="tableActionsIcons">
-											<core:Icon src="sap-icon://accept" press="approveAdvance(${advancesModel>externalCode})" tooltip="Approve Advance"
-												visible="{= ${advancesModel>cust_Status} === '2' }"
-											/>
+                                            unit="AED"
+                                            class="budgetColumn"
+                                        />
+                                        <HBox>
+                                            <Text
+                                                text="{parts:[{path:'advancesModel>cust_Status'},{path:'appModel>/language'},{path:'claimStatusModel>/status'}], formatter: 'Formatter.getStatus'}"
+                                            />
+                                        </HBox>
 
-											<core:Icon src="sap-icon://display" press="approveAdvance(${advancesModel>externalCode})" tooltip="Display Advance"
-												visible="{= ${advancesModel>cust_Status} !== '2' }"
-											/>
-										</HBox>
-									</cells>
-								</ColumnListItem>
-							</items>
-						</Table>
-						<FlexBox direction="Column" alignItems="Start" class="errorBox"  visible="{= ${screenModel>/info/pageError} === true }">
-							<Text text="{screenModel>/info/pageErrorMessage}" />
-						</FlexBox>	
-					</ScrollContainer>
-				</l:flexContent>
-			</l:FixFlex>
-		</content>
-	</Page>
+                                        <HBox class="tableActionsIcons">
+                                            <core:Icon
+                                                src="sap-icon://accept"
+                                                press="approveAdvance(${advancesModel>externalCode})"
+                                                tooltip="Approve Advance"
+                                                visible="{= ${advancesModel>cust_Status} === '2' }"
+                                            />
+
+                                            <core:Icon
+                                                src="sap-icon://display"
+                                                press="approveAdvance(${advancesModel>externalCode})"
+                                                tooltip="Display Advance"
+                                                visible="{= ${advancesModel>cust_Status} !== '2' }"
+                                            />
+                                        </HBox>
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                        <FlexBox
+                            direction="Column"
+                            alignItems="Start"
+                            class="errorBox"
+                            visible="{= ${screenModel>/info/pageError} === true }"
+                        >
+                            <Text text="{screenModel>/info/pageErrorMessage}" />
+                        </FlexBox>
+                    </ScrollContainer>
+                </l:flexContent>
+            </l:FixFlex>
+        </content>
+    </Page>
 </mvc:View>
-

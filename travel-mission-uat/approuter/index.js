@@ -1386,9 +1386,9 @@ const _approveRejectMission = async function (data, cookies) {
 
 const _claimMission = async function (decryptedData, cookies) {
   try {
-    var auth = "Basic " + cookies.SF.basicAuth;
-    var SFAuth = Buffer.from(cookies.SF.basicAuth, "base64").toString("utf-8");
-    var SFAuthUsername = SFAuth.split(":")[0].split("@")[0];
+    const auth = "Basic " + cookies.SF.basicAuth;
+    const SFAuth = Buffer.from(cookies.SF.basicAuth, "base64").toString("utf-8");
+    const SFAuthUsername = SFAuth.split(":")[0].split("@")[0];
 
     const postClaimAttachmentUrl = cookies.SF.URL + "upsert?$format=json";
 
