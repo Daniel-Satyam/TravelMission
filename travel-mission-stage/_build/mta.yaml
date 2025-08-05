@@ -1,0 +1,96 @@
+ID: travel-mission-stage
+description: mta descriptor for travel-mission-stage
+_schema-version: "2.1"
+version: 1.0.0
+
+modules:
+  - name: travel-mission-stage-approuter
+    type: approuter.nodejs
+    path: ../approuter
+    parameters:
+      routes:
+        - route: https://${default-host}.${default-domain}
+      disk-quota: 1024M
+      memory: 2048M
+    build-parameters:
+      ignore:
+        - 'default-*.json'
+        - .env
+        - '*node_modules*'
+        - package-lock.json
+    properties:
+      COOKIE_BACKWARD_COMPATIBILITY: true
+      OPTIMIZE_MEMORY: true
+    requires:
+      - name: travel-mission-stage-html5repo-runtime
+      - name: travel-mission-stage-destination
+      - name: travel-mission-stage-connectivity
+      - name: travel-mission-stage-uaa
+  - name: travel-mission-stage-deployer
+    type: com.sap.application.content
+    path: ../.
+    requires:
+      - name: travel-mission-stage-shared-repo-host
+        parameters:
+          content-target: true
+    build-parameters:
+      build-result: resources
+      requires:
+        - artifacts:
+            - ui5appstage.zip
+          name: ui5appstage
+          target-path: resources/      
+  - name: ui5appstage
+    type: html5
+    path: ../html5module
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm install
+        - npm run build:cf
+      supported-platforms: []
+
+resources:
+  - name: travel-mission-stage-shared-repo-host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-host
+      service-key:
+        name: ui5-shared-repo-host-key
+  - name: travel-mission-stage-html5repo-runtime
+    type: org.cloudfoundry.managed-service  
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-runtime
+  - name: travel-mission-stage-destination
+    type: org.cloudfoundry.managed-service
+    parameters:
+      config:
+        HTML5Runtime_enabled: true
+        init_data:
+          instance:
+            destinations:
+            - Authentication: NoAuthentication
+              Name: ui5
+              ProxyType: Internet
+              Type: HTTP
+              URL: https://ui5.sap.com
+            existing_destinations_policy: ignore
+        version: 1.0.0    
+      service-plan: lite
+      service: destination
+  - name: travel-mission-stage-connectivity
+    type: org.cloudfoundry.managed-service  
+    parameters:
+      service-plan: lite
+      service: connectivity
+  - name: travel-mission-stage-uaa
+    type: org.cloudfoundry.managed-service  
+    parameters:
+      path: ./xs-security.json
+      service-plan: application
+      service: xsuaa
+    properties:
+      COOKIE_BACKWARD_COMPATIBILITY: true

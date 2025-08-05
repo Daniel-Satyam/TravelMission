@@ -1,0 +1,77 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+>
+    <Dialog
+        contentWidth="600px"
+        title="{i18n>filterStatus}"
+        titleAlignment="Center"
+        class="sapUiContentPadding"
+    >
+        <content>
+            <VBox class="sapUiSmallMarginBottom">
+                <Label
+                    text="{i18n>statusSelection}:"
+                    class="sapUiTinyMarginBottom"
+                />
+                <HBox
+                    items="{path:'claimAdvanceFilterModel>/approvalStatusFilters',templateShareable: false}"
+                    width="100%"
+                    justifyContent="SpaceBetween"
+                >
+                    <items>
+                        <HBox alignItems="Center">
+                            <Switch
+                                type="AcceptReject"
+                                state="{claimAdvanceFilterModel>selected}"
+                                class="sapUiTinyMarginEnd customSwitch"
+                            />
+                            <Text
+                                text="{parts:[{path:'claimAdvanceFilterModel>externalCode'},{path:'appModel>/language'},{path:'claimStatusModel>/status'}], formatter: '.formatter.getStatus'}"
+                            />
+                        </HBox>
+                    </items>
+                </HBox>
+            </VBox>
+            <VBox width="100%">
+                <Label text="{i18n>dateSelection}:" />
+                <Button press=".selectFromPresets" 
+                    width="100%"
+                icon="sap-icon://time-entry-request" tooltip="Select from presets" text="Select from preset ranges" class="customButtonEmphasized" />
+                <HBox
+                    width="100%"
+                    alignItems="Center"
+                    class="hFlexRow"
+                >   
+                    <DateRangeSelection
+                        dateValue="{claimAdvanceFilterModel>/dateSelection/beginDate}"
+                        secondDateValue="{claimAdvanceFilterModel>/dateSelection/endDate}"
+                        displayFormat="MMM d, yyyy"
+                        width="100%"
+                        class="hFlexPrimeChild"
+                    />
+                    <Button
+                        icon="sap-icon://reset"
+                        press=".clearDateSelection"
+                        type="Reject"
+                        tooltip="{i18n>resetDateSelection}"
+                        visible="{= ${claimAdvanceFilterModel>/dateSelection/beginDate} !== null }"
+                    />
+                </HBox>
+            </VBox>
+        </content>
+
+        <buttons>
+            <Button
+                icon="sap-icon://decline"
+                press=".cancelClaimAdvanceFilter"
+                type="Reject"
+            />
+            <Button
+                icon="sap-icon://accept"
+                press=".applyClaimAdvanceFilter"
+                type="Emphasized"
+            />
+        </buttons>
+    </Dialog>
+</core:FragmentDefinition>

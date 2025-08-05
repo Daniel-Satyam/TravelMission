@@ -1,0 +1,6 @@
+<c:FragmentDefinition
+	 xmlns="ui5app.ui"
+	xmlns:c="sap.ui.core"
+>
+    <BusyDialog busyIndicatorDelay="0" />
+</c:FragmentDefinition>

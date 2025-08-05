@@ -1,0 +1,217 @@
+{
+    "_version": "1.32.0",
+    "sap.app": {
+        "id": "ui5appstage",
+        "type": "application",
+        "i18n": {
+			"bundleUrl": "i18n/i18n.properties",
+			"supportedLocales": [
+				"en",
+                "ar"
+			],
+			"fallbackLocale": "en"
+		},
+        "applicationVersion": {
+            "version": "1.0.0"
+        },
+        "title": "{{appTitle}}",
+        "description": "{{appDescription}}",
+        "dataSources": {
+        }
+    },
+    "sap.ui": {
+        "technology": "UI5",
+        "icons": {
+            "icon": "",
+            "favIcon": "",
+            "phone": "",
+            "phone@2": "",
+            "tablet": "",
+            "tablet@2": ""
+        },
+        "deviceTypes": {
+            "desktop": true,
+            "tablet": true,
+            "phone": true
+        },
+        "fullWidth": true
+    },
+    "sap.ui5": {
+        "flexEnabled": false,
+        "dependencies": {
+            "minUI5Version": "1.133.0",
+            "libs": {
+                "sap.m": {},
+                "sap.ui.table": {},
+                "sap.ui.core": {},
+                "sap.f": {}
+            }
+        },
+        "contentDensities": {
+            "compact": true,
+            "cozy": true
+        },
+        "models": {
+			"i18n": {
+				"type": "sap.ui.model.resource.ResourceModel",
+				"settings": {
+					"bundleName": "ui5appstage.i18n.i18n",
+					"supportedLocales": [
+                        "en",
+                        "ar"
+                    ],
+                    "fallbackLocale": "en"
+				}
+			}
+		},
+        "resources": {
+            "css": [
+                {
+                    "uri": "css/style.css"
+                },
+                {
+                    "uri": "css/animate.css"
+                }
+            ]
+        },
+        "rootView": {
+            "viewName": "ui5appstage.view.App",
+            "id": "app",
+            "type": "XML",
+            "async": true
+        },
+        "routing": {
+            "config": {
+                "routerClass": "sap.m.routing.Router",
+                "type": "View",
+                "viewType": "XML",
+                "path": "ui5appstage.view",
+                "viewPath": "ui5appstage.view",
+                "controlId": "app",
+                "controlAggregation": "pages",
+                "transition": "fade",
+				"bypassed": {
+					"target": "notFound"
+				},
+                "async": true
+            },
+            "routes": [
+                {
+                    "pattern": "",
+                    "name": "home",
+                    "target": "home"
+                },
+                {
+                    "pattern": "index",
+                    "name": "index",
+                    "target": "home"
+                },
+                {
+                    "pattern": "createmission",
+                    "name": "createmission",
+                    "target": "createmission"
+                },
+                {
+                    "pattern": "viewmission/{mission}",
+                    "name": "viewmission",
+                    "target": "viewmission"
+                },
+                {
+                    "pattern": "approvemission/{mission}",
+                    "name": "approvemission",
+                    "target": "approvemission"
+                },
+                {
+                    "pattern": "itinerarymission/{mission}",
+                    "name": "itinerarymission",
+                    "target": "itinerarymission"
+                },
+                {
+                    "pattern": "claimmission/{mission}",
+                    "name": "claimmission",
+                    "target": "claimmission"
+                },
+                {
+                    "pattern": "approveclaim/{claim}",
+                    "name": "approveclaim",
+                    "target": "approveclaim"
+                },
+                {
+                    "pattern": "advancemission/{mission}",
+                    "name": "advancemission",
+                    "target": "advancemission"
+                },
+                {
+                    "pattern": "approveadvance/{advance}",
+                    "name": "approveadvance",
+                    "target": "approveadvance"
+                },
+                {
+                    "pattern": "approvecancel/{mission}",
+                    "name": "approvecancel",
+                    "target": "approvecancel"
+                },
+                {
+                    "pattern": "editmission/{mission}",
+                    "name": "editmission",
+                    "target": "editmission"
+                },
+                {
+                    "pattern": "adminpage",
+                    "name": "adminpage",
+                    "target": "adminpage"
+                },
+                {
+                    "pattern": "forbidden",
+                    "name": "unauthorized",
+                    "target": "unauthorized"
+                }
+            ],
+            "targets": {
+                "home": {
+					"name": "Home"
+				},
+                "createmission": {
+					"name": "CreateMission"
+				},
+                "viewmission": {
+					"name": "ViewMission"
+				},
+                "approvemission": {
+					"name": "ApproveMission"
+				},
+                "itinerarymission": {
+					"name": "ItineraryMission"
+				},
+                "claimmission": {
+					"name": "ClaimMission"
+				},
+                "approveclaim": {
+					"name": "ApproveClaim"
+				},
+                "advancemission": {
+					"name": "AdvanceMission"
+				},
+                "approveadvance": {
+					"name": "ApproveAdvance"
+				},
+                "approvecancel": {
+					"name": "ApproveCancel"
+				},
+                "editmission": {
+					"name": "EditMission"
+				},
+                "adminpage": {
+					"name": "AdminPage"
+				},
+                "unauthorized": {
+					"name": "Unauthorized"
+				}
+            }
+        }
+    },
+    "sap.cloud": {
+        "public": true,
+        "service": "ui5appstage"
+    }
+}

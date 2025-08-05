@@ -1,0 +1,19 @@
+<core:FragmentDefinition
+		xmlns="sap.m"
+		xmlns:core="sap.ui.core">
+	<Menu itemSelected=".handlePresetDateSelection">
+		<MenuItemGroup itemSelectionMode="SingleSelect">
+			<items>
+				<MenuItem key="01" text="Custom range"  selected="{= ${claimAdvanceFilterModel>/dateSelection/presetKey} === '01'}"/>
+				<MenuItem key="02" text="Last week" selected="{= ${claimAdvanceFilterModel>/dateSelection/presetKey} === '02'}"/>
+				<MenuItem key="03" text="Last two weeks" selected="{= ${claimAdvanceFilterModel>/dateSelection/presetKey} === '03'}"/>
+				<MenuItem key="04" text="Last month" selected="{= ${claimAdvanceFilterModel>/dateSelection/presetKey} === '04'}"/>
+				<MenuItem key="05" text="Last two months" selected="{= ${claimAdvanceFilterModel>/dateSelection/presetKey} === '05'}"/>
+				<MenuItem key="06" text="Last three months" selected="{= ${claimAdvanceFilterModel>/dateSelection/presetKey} === '06'}"/>
+				<MenuItem key="07" text="Last six months" selected="{= ${claimAdvanceFilterModel>/dateSelection/presetKey} === '07'}"/>
+                <MenuItem key="08" text="Year to date" selected="{= ${claimAdvanceFilterModel>/dateSelection/presetKey} === '08'}"/>
+                <MenuItem key="09" text="Last one year" selected="{= ${claimAdvanceFilterModel>/dateSelection/presetKey} === '09'}"/>
+			</items>
+		</MenuItemGroup>
+	</Menu>
+</core:FragmentDefinition>

@@ -1,0 +1,76 @@
+{
+	"findMissions": [
+		{
+			"missionId": "MIS100138",
+			"mission": "الإيفاد في مهمة رسمية إلى ولاية كيرلا",
+			"destination": {
+				"externalCode": "2",
+				"localeLabel": "Paris",
+				"labelAr": "باريس"
+			},
+			"startDate": "/Date(1691366400000)/",
+			"endDate": "/Date(1691712000000)/",
+			"utilizedBudget": "1828565",
+			"status": {
+				"externalCode": "2",
+				"localeLabel": "Pending "
+			},
+			"pendingWith": {
+				"userId": "535133",
+				"username": "535133",
+				"firstName": "عبدالله",
+				"lastName": "البلوكي",
+				"defaultFullName": "عبدالله البلوكي",
+				"displayName": "عبدالله البلوكي",
+				"title": "Assistant Undersecretary of Support Services Affairs (4298362)",
+				"jobCode": "Assistant Undersecretary of Support Services Affairs Sector (1020301)",
+				"jobTitle": "Assistant Undersecretary of Support Services Affairs",
+				"empId": "535133",
+				"department": "Office of the Assistant Undersecretary for Support Services Affairs (17545)",
+				"division": "Assistant Undersecretary for Support Services Affairs (65000011)"
+			},
+			"isBudgetViewable": true,
+			"isviewable": true,
+			"isEditable": true,
+			"isApprovable": true,
+			"isAbleToDelete": true,
+			"itineraryUpdatebale": true
+		},
+		{
+			"missionId": "MIS100295",
+			"mission": "معاينة العقار المقترح للإستئجار كمقر للبعثة في تل أبيب",
+			"destination": {
+				"externalCode": "6",
+				"localeLabel": "Tel Aviv - Israel",
+				"labelAr": "تل أبيب"
+			},
+			"startDate": "/Date(1686614400000)/",
+			"endDate": "/Date(1686787200000)/",
+			"utilizedBudget": "2500000",
+			"status": {
+				"externalCode": "1",
+				"localeLabel": "Approved"
+			},
+			"pendingWith": {
+				"userId": "512967",
+				"username": "512967",
+				"firstName": "إبتسام",
+				"lastName": "المنذري",
+				"defaultFullName": "إبتسام المنذري",
+				"displayName": "إبتسام المنذري",
+				"title": "Implementation and Follow Up Specialist (9755921)",
+				"jobCode": "Implementation and Follow Up Specialist (949301)",
+				"jobTitle": "Implementation and Follow Up Specialist",
+				"empId": "512967",
+				"department": "Financial Resources Department (17667)",
+				"division": "Assistant Undersecretary for Support Services Affairs (65000011)"
+			},
+			"isBudgetViewable": true,
+			"isviewable": true,
+			"isEditable": true,
+			"isApprovable": true,
+			"isAbleToDelete": true,
+			"itineraryUpdatebale": false
+		}
+	]
+}

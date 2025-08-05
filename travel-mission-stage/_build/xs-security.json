@@ -1,0 +1,19 @@
+{
+  "xsappname": "travel-mission-stage",
+  "tenant-mode": "dedicated",
+  "description": "Security profile of travel-mission-stage application",
+  "oauth2-configuration": {
+    "redirect-uris": [
+      "https://*.hana.ondemand.com/**"
+    ],
+    "token-validity": 43200
+  },
+  "scopes": [
+    {
+      "name": "uaa.user",
+      "description": "UAA"
+    }
+  ],
+  "role-templates": [
+  ]
+}

@@ -1,0 +1,137 @@
+<!DOCTYPE HTML>
+<html>
+
+	<head>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/>
+
+		<title>MOFA Travel Mission</title>
+		<link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon/favicon-32x32.png">
+		
+		<script id="sap-ui-bootstrap"
+			src="resources/sap-ui-core.js"
+			data-sap-ui-theme="sap_horizon"
+			data-sap-ui-compatVersion="edge"
+			data-sap-ui-preload="async"
+			data-sap-ui-async="true"
+			data-sap-ui-oninit="module:sap/ui/core/ComponentSupport"
+			data-sap-ui-resourceroots='{"ui5appstage": "./", "assets": "./assets", "model": "./model"}'>
+		</script>
+		<script src="/assets/scripts/forge.min.js"></script>
+		<style>
+			#busyIndicator {
+				text-align: center;
+				font-family: Sans, Arial;
+				width: 100%;
+				height: 100%;
+				position: absolute;
+				z-index: 100;
+				background: rgba(0, 0, 0, 0.7);
+				display: flex;
+				overflow: hidden;
+				backdrop-filter: blur(3px) !important;
+			}
+
+			.splashText {
+				display: block;
+				color: #ffffff;
+				position: relative;
+				width: 100%;
+				height: 20px;
+				margin: auto;
+				color: #b68a35;
+				font-size: 25px;
+				font-weight: bold;
+			}
+
+			.splashText p {
+				padding: 0px;
+				margin: 0px;
+			}
+
+			.splashEllipsis {
+				display: block;
+				position: relative;
+				width: 80px;
+				height: 80px;
+				margin: auto;
+			}
+
+			.splashEllipsis div {
+				position: absolute;
+				top: 33px;
+				width: 13px;
+				height: 13px;
+				border-radius: 50%;
+				background: #b68a35 ;
+				animation-timing-function: cubic-bezier(0, 1, 1, 0);
+			}
+
+			.splashEllipsis div:nth-child(1) {
+				left: 8px;
+				animation: lds-ellipsis1 0.6s infinite;
+			}
+
+			.splashEllipsis div:nth-child(2) {
+				left: 8px;
+				animation: lds-ellipsis2 0.6s infinite;
+			}
+
+			.splashEllipsis div:nth-child(3) {
+				left: 32px;
+				animation: lds-ellipsis2 0.6s infinite;
+			}
+
+			.splashEllipsis div:nth-child(4) {
+				left: 56px;
+				animation: lds-ellipsis3 0.6s infinite;
+			}
+
+			@keyframes lds-ellipsis1 {
+				0% {
+					transform: scale(0);
+				}
+				100% {
+					transform: scale(1);
+				}
+			}
+
+			@keyframes lds-ellipsis3 {
+				0% {
+					transform: scale(1);
+				}
+				100% {
+					transform: scale(0);
+				}
+			}
+
+			@keyframes lds-ellipsis2 {
+				0% {
+					transform: translate(0, 0);
+				}
+				100% {
+					transform: translate(24px, 0);
+				}
+			}
+
+		</style>
+	</head>
+	
+	<body class="sapUiBody" id="content">
+		<div id="busyIndicator">
+			<div class="splashText">
+				<p>Travel Mission</p>
+				<div class="splashEllipsis">
+					<div></div>
+					<div></div>
+					<div></div>
+					<div></div>
+				</div>
+			</div>
+		</div>
+		
+		<div data-sap-ui-component data-name="ui5appstage" data-id="container" data-settings='{"id" : "ui5appstage"}'>
+		
+		</div>
+	</body>
+</html>

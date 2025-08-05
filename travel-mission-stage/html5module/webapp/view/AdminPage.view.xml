@@ -1,0 +1,225 @@
+<mvc:View
+    controllerName="ui5appstage.controller.AdminPage"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core"
+    xmlns="sap.m"
+    xmlns:f="sap.f"
+    xmlns:t="sap.ui.table"
+    xmlns:fb="sap.ui.comp.filterbar"
+    displayBlock="true"
+    height="100%"
+    busyIndicatorDelay="0"
+>
+    <!-- <Page
+        title="Admin Page"
+        class="sapUiResponsiveContentPadding travelMissionPage"
+        enableScrolling="true"
+    >
+        <customHeader>
+            <core:Fragment
+                fragmentName="ui5appstage.view.fragments.Header"
+                type="XML"
+            />
+        </customHeader>
+        <content>
+            <Text text="Admin page content here" />
+            <Button type="Emphasized" text="Refresh data" press=".onRefreshData"/>
+            <
+         </content>
+    </Page> -->
+
+    <f:DynamicPage
+        class="adminReportPage sapUiNoContentPadding"
+        id="idAdminReportDynamicPage"
+    >
+        <f:title>
+            <f:DynamicPageTitle>
+                <!-- <f:heading>
+						<svm:SmartVariantManagement id="svm" showExecuteOnSelection="true" />
+					</f:heading> -->
+                <f:heading>
+                    <Title text="Travel Mission - Reporting Page" />
+                </f:heading>
+                <!-- <f:expandedContent>
+                    <Label text="No filters active" />
+                </f:expandedContent>
+                <f:snappedContent>
+                    <Label text="No filters active" />
+                </f:snappedContent> -->
+                <f:actions>
+                    <Button
+                        icon="sap-icon://log"
+                        tooltip="Go to homepage"
+                        type="Reject"
+                        press=".onNavHome"
+                    />
+                </f:actions>
+            </f:DynamicPageTitle>
+        </f:title>
+        <f:header>
+            <f:DynamicPageHeader>
+                <f:content>
+                    <fb:FilterBar
+                        id="reportPageFilterBar"
+                        useToolbar="false"
+                        search=".onPerformSearch"
+                        filterChange=".onFilterChange"
+                    >
+                        <fb:filterGroupItems>
+                            <fb:FilterGroupItem
+                                name="Dates"
+                                label="Dates"
+                                groupName="Group2"
+                                class="dateSelectionFilterItem"
+                                visibleInFilterBar="true"
+                            >
+                                <fb:control>
+                                    <HBox
+                                        width="100%"
+                                        alignItems="Center"
+                                        class="hFlexRow"
+                                    >
+                                        <DateRangeSelection
+                                            dateValue="{adminPageModel>/filters/dateSelection/beginDate}"
+                                            secondDateValue="{adminPageModel>/filters/dateSelection/endDate}"
+                                            displayFormat="MMM d, yyyy"
+                                            width="100%"
+                                            class="hFlexPrimeChild"
+                                            change="onFilterChange"
+                                        />
+                                        <Button
+                                            press=".selectFromPresets"
+                                            width="100%"
+                                            icon="sap-icon://time-entry-request"
+                                            tooltip="{i18n>selectFromPresets}"
+                                            class="customButtonEmphasized"
+                                        />
+                                        <Button
+                                            icon="sap-icon://reset"
+                                            press=".clearDateSelection"
+                                            type="Reject"
+                                            tooltip="{i18n>resetDateSelection}"
+                                            visible="{= ${adminPageModel>/filters/dateSelection/beginDate} !== null }"
+                                        />
+                                    </HBox>
+                                </fb:control>
+                            </fb:FilterGroupItem>
+
+                            <fb:FilterGroupItem
+                                name="Status"
+                                label="Status"
+                                groupName="Group1"
+                                visibleInFilterBar="true"
+                            >
+                                <fb:control>
+                                    <MultiComboBox
+                                        name="Status"
+                                        selectionChange=".onFilterChange"
+                                        selectedKeys="{adminPageModel>/filters/statusSelection}"
+                                        items="{
+												path: 'adminPageModel>/valueLists/statuses',
+												templateShareable: true,
+                                                length : 500,
+										        sorter: { path: 'localeLabel' }
+										}"
+                                    >
+                                        <core:Item
+                                            key="{adminPageModel>externalCode}"
+                                            text="{adminPageModel>localeLabel}"
+                                        />
+                                    </MultiComboBox>
+                                </fb:control>
+                            </fb:FilterGroupItem>
+
+                            <fb:FilterGroupItem
+                                name="Mission Id"
+                                label="Mission Id"
+                                groupName="Group1"
+                                visibleInFilterBar="true"
+                            >
+                                <fb:control>
+                                    <Input
+                                        name="MissionId"
+                                        showSuggestion="false"
+                                        showValueHelp="false"
+                                        value="{adminPageModel>/filters/missionSelection}"
+                                        change=".onFilterChange"
+                                        showClearIcon="true"
+                                        placeholder="{i18n>commaSeparatedSearchPossible}"
+                                    >
+                                    </Input>
+                                </fb:control>
+                            </fb:FilterGroupItem>
+
+                            <fb:FilterGroupItem
+                                name="Sector"
+                                label="Sector"
+                                groupName="Group1"
+                                visibleInFilterBar="true"
+                                visible="{adminPageModel>/isSectorVisible}"
+                            >
+                                <fb:control>
+                                    <MultiComboBox
+                                        name="Sector"
+                                        selectionChange=".onFilterChange"
+                                        selectedKeys="{adminPageModel>/filters/sectorSelection}"
+                                        items="{
+												path: 'adminPageModel>/valueLists/sectors',
+												templateShareable: true,
+                                                length : 500,
+										        sorter: { path: 'localeLabel' }
+											}"
+                                    >
+                                        <core:Item
+                                            key="{adminPageModel>externalCode}"
+                                            text="{adminPageModel>localeLabel}"
+                                        />
+                                    </MultiComboBox>
+                                </fb:control>
+                            </fb:FilterGroupItem>
+                            <fb:FilterGroupItem
+                                name="Destination"
+                                label="Destination"
+                                groupName="Group1"
+                                visibleInFilterBar="true"
+                            >
+                                <fb:control>
+                                    <MultiComboBox
+                                        name="Destination"
+                                        selectionChange=".onFilterChange"
+                                        selectedKeys="{adminPageModel>/filters/destinationSelection}"
+                                        items="{
+												path: 'adminPageModel>/valueLists/cities',
+												templateShareable: true,
+                                                length : 500,
+										        sorter: { path: 'localeLabel' }
+											}"
+                                    >
+                                        <core:Item
+                                            key="{adminPageModel>externalCode}"
+                                            text="{adminPageModel>localeLabel}"
+                                        />
+                                    </MultiComboBox>
+                                </fb:control>
+                            </fb:FilterGroupItem>
+                        </fb:filterGroupItems>
+                    </fb:FilterBar>
+                </f:content>
+            </f:DynamicPageHeader>
+        </f:header>
+        <f:content>
+            <!-- <t:Table
+                rows="{path:'adminPageModel>/report/rows', factory: '.createRow'}"
+                columns="{path:'adminPageModel>/report/columns', factory: '.createColumn'}"
+                selectionMode="None"
+                rowMode="Auto"
+            >
+                <t:extension>
+                    <OverflowToolbar style="Clear">
+                        <Title text="Report" />
+                    </OverflowToolbar>
+                </t:extension>
+            </t:Table> -->
+        </f:content>
+    </f:DynamicPage>
+</mvc:View>

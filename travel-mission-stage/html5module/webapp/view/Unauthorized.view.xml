@@ -1,0 +1,22 @@
+<mvc:View
+	controllerName="ui5appstage.controller.Unauthorized"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns="sap.m"
+	displayBlock="true"
+	height="100%"
+	busyIndicatorDelay="0"
+    class="notAuthorizedView"
+>
+	<IllustratedMessage
+			id="NotAuthPageMessage"
+			illustrationType="sapIllus-PageNotFound"
+			enableVerticalResponsiveness="true"
+            enableFormattedText="true"
+            description="You are not &lt;strong&gt;authorized&lt;/strong&gt; for this page. &lt;br&gt;&lt;br&gt; &lt;h6&gt;If you think you should see this page, please contact with your system administrator.&lt;/h6&gt;"
+            title="403 - Forbidden"
+            >
+			<additionalContent>
+				<Button text="Homepage" icon="sap-icon://home" press=".onNavHome" class="customButtonReject"/>
+			</additionalContent>
+		</IllustratedMessage>
+</mvc:View>

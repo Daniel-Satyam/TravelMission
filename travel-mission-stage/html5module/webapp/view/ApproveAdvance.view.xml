@@ -1,0 +1,971 @@
+<mvc:View
+	controllerName="ui5appstage.controller.ApproveAdvance"
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns:grid="sap.ui.layout.cssgrid"
+	xmlns:f="sap.f"
+	core:require="{
+		Formatter: 'ui5appstage/model/formatter'
+	}"
+	xmlns:upload="sap.m.upload">
+	<Page class="sapUiResponsiveContentPadding travelMissionPage" enableScrolling="true"
+		showFooter="true" floatingFooter="true"
+		>
+		<customHeader>
+			<core:Fragment fragmentName="ui5appstage.view.fragments.Header" type="XML" />
+		</customHeader>
+		<content>
+			<Panel width="auto" class="sapUiResponsiveMargin travelMissionPanel" backgroundDesign="Transparent" visible="{=!${screenModel>/info/pageError}}">
+				<headerToolbar>
+					<Toolbar class="travelMissionPanelHeaderToolbar">
+						<Title text="{i18n>advanceMission}"/>
+					</Toolbar>
+				</headerToolbar>
+				<content>
+					<f:GridList>
+						<f:customLayout>
+							<grid:GridBoxLayout boxMinWidth="15rem" boxesPerRowConfig="XL5 L4 M2 S1"/>
+						</f:customLayout>
+						<f:GridListItem>
+							<VBox class="sapUiSmallMargin">
+								<layoutData>
+									<FlexItemData growFactor="1" shrinkFactor="0" />
+								</layoutData>
+
+								<Label text="{i18n>missionId}" labelFor="missionId" />
+								<Input value="{missionInfoModel>/info/missionID}" enabled="false"/>
+							</VBox>
+						</f:GridListItem>
+						<f:GridListItem>
+							<VBox class="sapUiSmallMargin">
+								<layoutData>
+									<FlexItemData growFactor="1" shrinkFactor="0" />
+								</layoutData>
+
+								<Label text="{i18n>missionDescription}" labelFor="missionDescription" required="true" />
+								<Input value="{missionInfoModel>/info/missionDescription}" enabled="false"/>
+							</VBox>
+						</f:GridListItem>
+						<f:GridListItem>
+							<VBox class="sapUiSmallMargin">
+								<layoutData>
+									<FlexItemData growFactor="1" shrinkFactor="0" />
+								</layoutData>
+
+								<Label text="{i18n>destination}" labelFor="missionDestination" required="true" />
+								<ComboBox
+									visible="{= ${appModel>/language} === 'en' }"
+									class="createMissionDropdown"
+									selectedKey="{missionInfoModel>/info/destination}"
+									items="{
+										path: 'destinationsModel>/destinations',
+										length : 500,
+										sorter: { path: 'localeLabel' },
+										templateShareable:false
+									}"
+									enabled="false">
+									<core:Item key="{destinationsModel>externalCode}" text="{destinationsModel>localeLabel}" />
+								</ComboBox>
+								<ComboBox
+									visible="{= ${appModel>/language} === 'ar' }"
+									class="createMissionDropdown"
+									selectedKey="{missionInfoModel>/info/destination}"
+									items="{
+										path: 'destinationsModel>/destinations',
+										length : 500,
+										sorter: { path: 'localeLabel' },
+										templateShareable:false
+									}"
+									enabled="false">
+									<core:Item key="{destinationsModel>externalCode}" text="{destinationsModel>localeARLabel}" />
+								</ComboBox>
+							</VBox>
+						</f:GridListItem>
+						<f:GridListItem>
+							<VBox class="sapUiSmallMargin">
+								<layoutData>
+									<FlexItemData growFactor="1" shrinkFactor="0" />
+								</layoutData>
+
+								<Label text="{i18n>missionStartDate}" labelFor="missionStartDate" required="true" />
+								<DatePicker
+									displayFormat="MMM dd, yyyy"
+									value="{path:'missionInfoModel>/info/missionStartDate',type:'sap.ui.model.type.Date'}"
+									placeholder="MMM dd, yyyy" 
+									enabled="{= ${approveAdvanceModel>/edit} === true }"
+									maxDate="{missionInfoModel>/info/missionStartDateMaxDate}"
+									change="handleMissionDatesChange('start', $event)"
+									/>
+							</VBox>
+						</f:GridListItem>
+						<f:GridListItem>
+							<VBox class="sapUiSmallMargin">
+								<layoutData>
+									<FlexItemData growFactor="1" shrinkFactor="0" />
+								</layoutData>
+
+								<Label text="{i18n>missionEndDate}" labelFor="missionEndDate" required="true" />
+								<DatePicker
+									displayFormat="MMM dd, yyyy"
+									value="{path:'missionInfoModel>/info/missionEndDate',type:'sap.ui.model.type.Date'}"
+									placeholder="MMM dd, yyyy" 
+									enabled="{= ${approveAdvanceModel>/edit} === true }"
+									minDate="{missionInfoModel>/info/missionEndDateMinDate}"
+									change="handleMissionDatesChange('end', $event)"
+									/>
+							</VBox>
+						</f:GridListItem>
+						<f:GridListItem>
+							<VBox class="sapUiSmallMargin">
+								<layoutData>
+									<FlexItemData growFactor="1" shrinkFactor="0" />
+								</layoutData>
+
+								<Label text="{i18n>hospitality}" labelFor="missionHospitality" required="true" />
+								<ComboBox
+									visible="{= ${appModel>/language} === 'en' }"
+									class="createMissionDropdown"
+									selectedKey="{missionInfoModel>/info/hospitality_Type}"
+									enabled="false"
+									items="{
+										path: 'hospitalityOptionsModel>/hospitalityOptions',
+										length : 500,
+										sorter: { path: 'localeLabel' },
+										templateShareable:false
+									}">
+									<core:Item key="{hospitalityOptionsModel>externalCode}" text="{hospitalityOptionsModel>localeLabel}" />
+								</ComboBox>
+								<ComboBox
+									visible="{= ${appModel>/language} === 'ar' }"
+									class="createMissionDropdown"
+									selectedKey="{missionInfoModel>/info/hospitality_Type}"
+									enabled="false"
+									items="{
+										path: 'hospitalityOptionsModel>/hospitalityOptions',
+										length : 500,
+										sorter: { path: 'localeLabel' },
+										templateShareable:false
+									}">
+									<core:Item key="{hospitalityOptionsModel>externalCode}" text="{hospitalityOptionsModel>localeARLabel}" />
+								</ComboBox>
+							</VBox>
+						</f:GridListItem>
+						<f:GridListItem>
+							<VBox class="sapUiSmallMargin">
+								<layoutData>
+									<FlexItemData growFactor="1" shrinkFactor="0" />
+								</layoutData>
+
+								<Label text="{i18n>sector}" labelFor="missionSector" required="true" />
+								<ComboBox
+									visible="{= ${appModel>/language} === 'en' }"
+									class="createMissionDropdown"
+									selectedKey="{missionInfoModel>/info/sector}"
+									enabled="false"
+									items="{
+										path: 'sectorsModel>/sectors',
+										length : 500,
+										sorter: { path: 'externalName_localized' },
+										templateShareable:false
+									}">
+									<core:Item key="{sectorsModel>externalCode}" text="{sectorsModel>externalName_localized}" />
+								</ComboBox>
+								<ComboBox
+									visible="{= ${appModel>/language} === 'ar' }"
+									class="createMissionDropdown"
+									selectedKey="{missionInfoModel>/info/sector}"
+									enabled="false"
+									items="{
+										path: 'sectorsModel>/sectors',
+										length : 500,
+										sorter: { path: 'externalName_localized' },
+										templateShareable:false
+									}">
+									<core:Item key="{sectorsModel>externalCode}" text="{sectorsModel>externalName_ar_SA}" />
+								</ComboBox>
+							</VBox>
+						</f:GridListItem>
+						<f:GridListItem>
+							<VBox class="sapUiSmallMargin">
+								<layoutData>
+									<FlexItemData growFactor="1" shrinkFactor="0" />
+								</layoutData>
+
+								<Label text="{i18n>decreeType}" labelFor="missionDecreeType" required="true" />
+								<ComboBox
+									visible="{= ${appModel>/language} === 'en' }"
+									class="createMissionDropdown"
+									selectedKey="{missionInfoModel>/info/decreeType}"
+									enabled="false"
+									items="{
+										path: 'decreeTypesModel>/decreeTypes',
+										length : 500,
+										sorter: { path: 'localeLabel' },
+										templateShareable:false
+									}">
+									<core:Item key="{decreeTypesModel>externalCode}" text="{decreeTypesModel>localeLabel}" />
+								</ComboBox>
+								<ComboBox
+									visible="{= ${appModel>/language} === 'ar' }"
+									class="createMissionDropdown"
+									selectedKey="{missionInfoModel>/info/decreeType}"
+									enabled="false"
+									items="{
+										path: 'decreeTypesModel>/decreeTypes',
+										length : 500,
+										sorter: { path: 'localeLabel' },
+										templateShareable:false
+									}">
+									<core:Item key="{decreeTypesModel>externalCode}" text="{decreeTypesModel>localeARLabel}" />
+								</ComboBox>
+							</VBox>
+						</f:GridListItem>
+						<f:GridListItem visible="{= ${missionInfoModel>/info/decreeType} === '09' || ${missionInfoModel>/info/decreeType} === '10' }">
+							<VBox class="sapUiSmallMargin">
+								<layoutData>
+									<FlexItemData growFactor="1" shrinkFactor="0" />
+								</layoutData>
+
+								<Label text="{i18n>externalEntity}" labelFor="missionExternalEntity" required="{= ${missionInfoModel>/info/decreeType} === '09' || ${missionInfoModel>/info/decreeType} === '10' }" />
+								<ComboBox
+									visible="{= ${appModel>/language} === 'en' }"
+									class="createMissionDropdown"
+									showClearIcon="true"
+									selectedKey="{missionInfoModel>/info/externalEntity}"
+									enabled="false"
+									items="{
+										path: 'externalEntityModel>/externalEntitySet',
+										length : 500,
+										sorter: { path: 'localeLabel' },
+										templateShareable: false
+									}"
+									>
+									<core:Item key="{externalEntityModel>externalCode}" text="{externalEntityModel>localeLabel}" />
+								</ComboBox>
+								<ComboBox
+									visible="{= ${appModel>/language} === 'ar' }"
+									class="createMissionDropdown"
+									showClearIcon="true"
+									selectedKey="{missionInfoModel>/info/externalEntity}"
+									enabled="false"
+									items="{
+										path: 'externalEntityModel>/externalEntitySet',
+										length : 500,
+										sorter: { path: 'localeLabel' },
+										templateShareable: false
+									}"
+									>
+									<core:Item key="{externalEntityModel>externalCode}" text="{externalEntityModel>localeARLabel}" />
+								</ComboBox>
+							</VBox>
+						</f:GridListItem>
+						<f:GridListItem>
+							<VBox class="sapUiSmallMargin">
+								<layoutData>
+									<FlexItemData growFactor="1" shrinkFactor="0" />
+								</layoutData>
+
+								<Label text="{i18n>flightType}" labelFor="missionFlightType" required="true" />
+								<ComboBox
+									visible="{= ${appModel>/language} === 'en' }"
+									class="createMissionDropdown"
+									selectedKey="{missionInfoModel>/info/flightType}"
+									enabled="false"
+									items="{
+										path: 'flightTypesModel>/flightTypes',
+										length : 500,
+										sorter: { path: 'localeLabel' },
+										templateShareable:false
+									}">
+									<core:Item key="{flightTypesModel>externalCode}" text="{flightTypesModel>localeLabel}" />
+								</ComboBox>
+								<ComboBox
+									visible="{= ${appModel>/language} === 'ar' }"
+									class="createMissionDropdown"
+									selectedKey="{missionInfoModel>/info/flightType}"
+									enabled="false"
+									items="{
+										path: 'flightTypesModel>/flightTypes',
+										length : 500,
+										sorter: { path: 'localeLabel' },
+										templateShareable:false
+									}">
+									<core:Item key="{flightTypesModel>externalCode}" text="{flightTypesModel>localeARLabel}" />
+								</ComboBox>
+							</VBox>
+						</f:GridListItem>
+						<f:GridListItem>
+							<VBox class="sapUiSmallMargin">
+								<layoutData>
+									<FlexItemData growFactor="1" shrinkFactor="0" />
+								</layoutData>
+
+								<Label text="{i18n>budgetAvailable}" labelFor="missionBudgetAvailable" />
+								<Input value="{path: 'missionInfoModel>/info/budgetAvailable', formatter: 'Formatter.formatAmount'}" enabled="false"/>
+							</VBox>
+						</f:GridListItem>
+						<f:GridListItem>
+							<VBox class="sapUiSmallMargin">
+								<layoutData>
+									<FlexItemData growFactor="1" shrinkFactor="0" />
+								</layoutData>
+
+								<Label text="{i18n>budgetParked}" labelFor="missionBudgetParked" />
+								<Input value="{path: 'missionInfoModel>/info/budgetParked', formatter: 'Formatter.formatAmount'}" enabled="false"/>
+							</VBox>
+						</f:GridListItem>
+						<f:GridListItem>
+							<VBox class="sapUiSmallMargin">
+								<layoutData>
+									<FlexItemData growFactor="1" shrinkFactor="0" />
+								</layoutData>
+
+								<Label text="{i18n>noOfDays}" labelFor="missionNoOfDays" />
+								<Input value="{missionInfoModel>/info/noOfDays}" enabled="false"/>
+							</VBox>
+						</f:GridListItem>
+						<f:GridListItem>
+							<VBox class="sapUiSmallMargin">
+								<layoutData>
+									<FlexItemData growFactor="1" shrinkFactor="0" />
+								</layoutData>
+
+								<Label text="{i18n>ticketAverage}" labelFor="missionTicketAverage" />
+								<Input value="{path: 'missionInfoModel>/info/ticketAverage', formatter: 'Formatter.formatAmount'}" enabled="false"/>
+							</VBox>
+						</f:GridListItem>
+						<f:GridListItem>
+							<VBox class="sapUiSmallMargin">
+								<layoutData>
+									<FlexItemData growFactor="1" shrinkFactor="0" />
+								</layoutData>
+
+								<Label text="{i18n>totalExpenseOnMission}" labelFor="missionTotalExpense" />
+								<Input value="{path: 'missionInfoModel>/info/totalExpense', formatter: 'Formatter.formatAmount'}" enabled="false"/>
+							</VBox>
+						</f:GridListItem>
+						<f:GridListItem>
+							<VBox class="sapUiSmallMargin">
+								<layoutData>
+									<FlexItemData growFactor="1" shrinkFactor="0" />
+								</layoutData>
+
+								<Label text="{i18n>totalPerdiemMission}" labelFor="missionTotalPerdiem" />
+								<Input value="{path: 'missionInfoModel>/info/totalPerdiemMission', formatter: 'Formatter.formatAmount'}" enabled="false"/>
+							</VBox>
+						</f:GridListItem>
+					</f:GridList>
+					<Label text="{i18n>missionDetails}" class="textAreaLbl"/>
+					<TextArea value="{missionInfoModel>/info/missionDetails}" showExceededText="false" maxLength="4000" width="100%" liveChange="handleTxtAreaLiveChange" id="missionDetails" enabled="false" />
+					<VBox items="{
+						path: 'membersModel>/members',
+						length : 500,
+						templateShareable: false
+					}">
+						<Panel expandable="true" expanded="true" width="auto" class="dynamicMemberPanels">
+							<headerToolbar>
+								<OverflowToolbar style="Clear">
+									<Title text="{i18n>members}" />
+									<ToolbarSpacer />
+								</OverflowToolbar>
+							</headerToolbar>
+							<content>
+								<f:GridList>
+									<f:customLayout>
+										<grid:GridBoxLayout boxMinWidth="15rem" boxesPerRowConfig="XL5 L4 M2 S1"/>
+									</f:customLayout>
+									<f:GridListItem>
+										<VBox class="sapUiSmallMargin">
+											<layoutData>
+												<FlexItemData growFactor="1" shrinkFactor="0" />
+											</layoutData>
+
+											<Label text="{i18n>employeeName}" />
+											<Input value="{membersModel>employeeName}" enabled="false"/>
+										</VBox>
+									</f:GridListItem>
+									<f:GridListItem>
+										<VBox class="sapUiSmallMargin">
+											<layoutData>
+												<FlexItemData growFactor="1" shrinkFactor="0" />
+											</layoutData>
+
+											<Label text="{i18n>salutation}" />
+											<Input value="{membersModel>salutation}" enabled="false"/>
+										</VBox>
+									</f:GridListItem>
+									<f:GridListItem>
+										<VBox class="sapUiSmallMargin">
+											<layoutData>
+												<FlexItemData growFactor="1" shrinkFactor="0" />
+											</layoutData>
+
+											<Label text="{i18n>employeeID}" />
+											<Input value="{membersModel>employeeID}" enabled="false"/>
+										</VBox>
+									</f:GridListItem>
+									<f:GridListItem>
+										<VBox class="sapUiSmallMargin">
+											<layoutData>
+												<FlexItemData growFactor="1" shrinkFactor="0" />
+											</layoutData>
+											<Label text="{i18n>userID}" />
+											<Input value="{membersModel>userID}" enabled="false"/>
+										</VBox>
+									</f:GridListItem>
+									<f:GridListItem>
+										<VBox class="sapUiSmallMargin">
+											<layoutData>
+												<FlexItemData growFactor="1" shrinkFactor="0" />
+											</layoutData>
+
+											<Label text="{i18n>grade}" />
+											<Input value="{membersModel>grade}" enabled="false"/>
+										</VBox>
+									</f:GridListItem>
+									<f:GridListItem>
+										<VBox class="sapUiSmallMargin">
+											<layoutData>
+												<FlexItemData growFactor="1" shrinkFactor="0" />
+											</layoutData>
+
+											<Label text="{i18n>department}" />
+											<Input value="{membersModel>department}" enabled="false"/>
+										</VBox>
+									</f:GridListItem>
+									<f:GridListItem>
+										<VBox class="sapUiSmallMargin">
+											<layoutData>
+												<FlexItemData growFactor="1" shrinkFactor="0" />
+											</layoutData>
+
+											<Label text="{i18n>titleOfEmployee}" />
+											<Input value="{membersModel>title}" enabled="false"/>
+										</VBox>
+									</f:GridListItem>
+									<f:GridListItem>
+										<VBox class="sapUiSmallMargin">
+											<layoutData>
+												<FlexItemData growFactor="1" shrinkFactor="0" />
+											</layoutData>
+
+											<Label text="{i18n>multipleCities}" required="true" />
+											<ComboBox
+												visible="{= ${appModel>/language} === 'en' }"
+												class="createMissionDropdown"
+												enabled="false"
+												selectedKey="{membersModel>multipleCities}"
+												items="{
+													path: 'multicitiesModel>/multicities',
+													length : 500,
+													sorter: { path: 'localeLabel' },
+													templateShareable:false
+												}">
+												<core:Item key="{multicitiesModel>externalCode}" text="{multicitiesModel>localeLabel}" />
+											</ComboBox>
+											<ComboBox
+												visible="{= ${appModel>/language} === 'ar' }"
+												class="createMissionDropdown"
+												enabled="false"
+												selectedKey="{membersModel>multipleCities}"
+												items="{
+													path: 'multicitiesModel>/multicities',
+													length : 500,
+													sorter: { path: 'localeLabel' },
+													templateShareable:false
+												}">
+												<core:Item key="{multicitiesModel>externalCode}" text="{multicitiesModel>localeARLabel}" />
+											</ComboBox>
+										</VBox>
+									</f:GridListItem>
+									<f:GridListItem>
+										<VBox class="sapUiSmallMargin">
+											<layoutData>
+												<FlexItemData growFactor="1" shrinkFactor="0" />
+											</layoutData>
+
+											<Label text="{i18n>employeeTotalExpense}" />
+											<Input value="{path: 'membersModel>employeeTotalExpense', formatter: 'Formatter.formatAmount'}" enabled="false" />
+										</VBox>
+									</f:GridListItem>
+									<f:GridListItem>
+										<VBox class="sapUiSmallMargin">
+											<layoutData>
+												<FlexItemData growFactor="1" shrinkFactor="0" />
+											</layoutData>
+
+											<Label text="{i18n>employeeTotalPerdiem}" />
+											<Input value="{path: 'membersModel>employeeTotalPerdiem', formatter: 'Formatter.formatAmount'}" enabled="false" />
+										</VBox>
+									</f:GridListItem>
+									<f:GridListItem>
+										<VBox class="sapUiSmallMargin">
+											<layoutData>
+												<FlexItemData growFactor="1" shrinkFactor="0" />
+											</layoutData>
+
+											<Label text="{i18n>employeeTotalTicket}" />
+											<Input value="{path: 'membersModel>employeeTotalTicket', formatter: 'Formatter.formatAmount'}" enabled="false" />
+										</VBox>
+									</f:GridListItem>
+								</f:GridList>
+
+								<VBox items="{
+									path: 'membersModel>itinerary',
+									length : 500,
+									templateShareable: false
+								}">
+									<Panel expandable="false" expanded="true" width="auto" class="dynamicItineraryPanels">
+										<headerToolbar>
+											<OverflowToolbar style="Clear" class="dynamicItineraryPanelsTitle">
+												<Title text="{i18n>itinerary}" />
+												<ToolbarSpacer />
+											</OverflowToolbar>
+										</headerToolbar>
+										<content>
+											<f:GridList>
+												<f:customLayout>
+													<grid:GridBoxLayout boxMinWidth="15rem" boxesPerRowConfig="XL5 L4 M2 S1"/>
+												</f:customLayout>
+												<f:GridListItem>
+													<VBox class="sapUiSmallMargin">
+														<layoutData>
+															<FlexItemData growFactor="1" shrinkFactor="0" />
+														</layoutData>
+
+														<Label text="{i18n>city}" required="true" />
+														<ComboBox
+															visible="{= ${appModel>/language} === 'en' }"
+															class="createMissionDropdown"
+															enabled="false"
+															selectedKey="{membersModel>city}"
+															items="{
+																path: 'destinationsModel>/destinations',
+																length : 500,
+																sorter: { path: 'localeLabel' },
+																templateShareable:false
+															}">
+															<core:Item key="{destinationsModel>externalCode}" text="{destinationsModel>localeLabel}" />
+														</ComboBox>
+														<ComboBox
+															visible="{= ${appModel>/language} === 'ar' }"
+															class="createMissionDropdown"
+															enabled="false"
+															selectedKey="{membersModel>city}"
+															items="{
+																path: 'destinationsModel>/destinations',
+																length : 500,
+																sorter: { path: 'localeLabel' },
+																templateShareable:false
+															}">
+															<core:Item key="{destinationsModel>externalCode}" text="{destinationsModel>localeARLabel}" />
+														</ComboBox>
+													</VBox>
+												</f:GridListItem>
+												<f:GridListItem>
+													<VBox class="sapUiSmallMargin">
+														<layoutData>
+															<FlexItemData growFactor="1" shrinkFactor="0" />
+														</layoutData>
+
+														<Label text="{i18n>startDate}" required="true" />
+														<DatePicker
+															displayFormat="MMM dd, yyyy"
+															value="{path:'membersModel>startDate',type:'sap.ui.model.type.Date'}"
+															placeholder="MMM dd, yyyy"
+															enabled="{= ${approveAdvanceModel>/edit} === true }"
+															minDate="{membersModel>startDateMinDate}"
+															maxDate="{membersModel>startDateMaxDate}"
+															change="handleItineraryDatesChange('start', ${membersModel>memberGUID}, ${membersModel>id}, $event)"
+															/>
+														<Text class="errorInfoTxt" text="{i18n>validateMissionItineraryStartDate}" visible="{=${membersModel>startDate} === null}"/>
+													</VBox>
+												</f:GridListItem>
+												<f:GridListItem>
+													<VBox class="sapUiSmallMargin">
+														<layoutData>
+															<FlexItemData growFactor="1" shrinkFactor="0" />
+														</layoutData>
+
+														<Label text="{i18n>endDate}" required="true" />
+														<DatePicker
+															displayFormat="MMM dd, yyyy"
+															value="{path:'membersModel>endDate',type:'sap.ui.model.type.Date'}"
+															placeholder="MMM dd, yyyy"
+															enabled="{= ${approveAdvanceModel>/edit} === true }"
+															minDate="{membersModel>endDateMinDate}"
+															maxDate="{membersModel>endDateMaxDate}"
+															change="handleItineraryDatesChange('start', ${membersModel>memberGUID}, ${membersModel>id}, $event)"
+															
+															/>
+														<Text class="errorInfoTxt" text="{i18n>validateMissionItineraryEndDate}" visible="{=${membersModel>endDate} === null}"/>
+													</VBox>
+												</f:GridListItem>
+												<f:GridListItem>
+													<VBox class="sapUiSmallMargin">
+														<layoutData>
+															<FlexItemData growFactor="1" shrinkFactor="0" />
+														</layoutData>
+
+														<Label text="{i18n>hospitalityDefault}" required="true" />
+														<ComboBox
+															visible="{= ${appModel>/language} === 'en' }"
+															class="createMissionDropdown"
+															selectedKey="{membersModel>hospitalityDefault}"
+															enabled="false"
+															items="{
+																path: 'hospitalityOptionsModel>/hospitalityOptions',
+																length : 500,
+																sorter: { path: 'localeLabel' },
+																templateShareable:false
+															}">
+															<core:Item key="{hospitalityOptionsModel>externalCode}" text="{hospitalityOptionsModel>localeLabel}" />
+														</ComboBox>
+														<ComboBox
+															visible="{= ${appModel>/language} === 'ar' }"
+															class="createMissionDropdown"
+															selectedKey="{membersModel>hospitalityDefault}"
+															enabled="false"
+															items="{
+																path: 'hospitalityOptionsModel>/hospitalityOptions',
+																length : 500,
+																sorter: { path: 'localeLabel' },
+																templateShareable:false
+															}">
+															<core:Item key="{hospitalityOptionsModel>externalCode}" text="{hospitalityOptionsModel>localeARLabel}" />
+														</ComboBox>
+													</VBox>
+												</f:GridListItem>
+												<f:GridListItem>
+													<VBox class="sapUiSmallMargin">
+														<layoutData>
+															<FlexItemData growFactor="1" shrinkFactor="0" />
+														</layoutData>
+
+														<Label text="{i18n>isHeadOfMission}" required="true" />
+														<ComboBox
+															visible="{= ${appModel>/language} === 'en' }"
+															class="createMissionDropdown itineraryHeadOfMission"
+															enabled="false"
+															selectedKey="{membersModel>headOfMission}"
+															items="{
+																path: 'headOfMissionModel>/headOfMission',
+																length : 500,
+																sorter: { path: 'localeLabel' },
+																templateShareable:false
+															}">
+															<core:Item key="{headOfMissionModel>externalCode}" text="{headOfMissionModel>localeLabel}" />
+														</ComboBox>
+														<ComboBox
+															visible="{= ${appModel>/language} === 'ar' }"
+															class="createMissionDropdown itineraryHeadOfMission"
+															enabled="false"
+															selectedKey="{membersModel>headOfMission}"
+															items="{
+																path: 'headOfMissionModel>/headOfMission',
+																length : 500,
+																sorter: { path: 'localeLabel' },
+																templateShareable:false
+															}">
+															<core:Item key="{headOfMissionModel>externalCode}" text="{headOfMissionModel>localeARLabel}" />
+														</ComboBox>
+													</VBox>
+												</f:GridListItem>
+												<f:GridListItem>
+													<VBox class="sapUiSmallMargin">
+														<layoutData>
+															<FlexItemData growFactor="1" shrinkFactor="0" />
+														</layoutData>
+
+														<Label text="{i18n>ticketType}" required="true" />
+														<ComboBox
+															visible="{= ${appModel>/language} === 'en' }"
+															class="createMissionDropdown"
+															enabled="false"
+															showClearIcon="true"
+															selectedKey="{membersModel>ticketType}"
+															selectionChange="findTicketAndPerDiemPerCity(${membersModel>memberGUID}, ${membersModel>id}, $event)"
+															items="{
+																path: 'ticketTypesModel>/ticketTypes',
+																length : 500,
+																sorter: { path: 'localeLabel' },
+																templateShareable:false
+															}">
+															<core:Item key="{ticketTypesModel>externalCode}" text="{ticketTypesModel>localeLabel}" />
+														</ComboBox>
+														<ComboBox
+															visible="{= ${appModel>/language} === 'ar' }"
+															class="createMissionDropdown"
+															enabled="false"
+															showClearIcon="true"
+															selectedKey="{membersModel>ticketType}"
+															selectionChange="findTicketAndPerDiemPerCity(${membersModel>memberGUID}, ${membersModel>id}, $event)"
+															items="{
+																path: 'ticketTypesModel>/ticketTypes',
+																length : 500,
+																sorter: { path: 'localeLabel' }
+															}">
+															<core:Item key="{ticketTypesModel>externalCode}" text="{ticketTypesModel>localeARLabel}" />
+														</ComboBox>
+													</VBox>
+												</f:GridListItem>
+												<f:GridListItem>
+													<VBox class="sapUiSmallMargin">
+														<layoutData>
+															<FlexItemData growFactor="1" shrinkFactor="0" />
+														</layoutData>
+
+														<Label text="{i18n>ticketAverage}" />
+														<Input value="{path: 'membersModel>ticketAverage', formatter: 'Formatter.formatAmount'}" enabled="false" />
+													</VBox>
+												</f:GridListItem>
+												<f:GridListItem>
+													<VBox class="sapUiSmallMargin">
+														<layoutData>
+															<FlexItemData growFactor="1" shrinkFactor="0" />
+														</layoutData>
+
+														<Label text="{i18n>perdiemPerCity}" />
+														<Input value="{path: 'membersModel>perDiemPerCity', formatter: 'Formatter.formatAmount'}" enabled="false" />
+													</VBox>
+												</f:GridListItem>
+												<f:GridListItem>
+													<VBox class="sapUiSmallMargin">
+														<layoutData>
+															<FlexItemData growFactor="1" shrinkFactor="0" />
+														</layoutData>
+
+														<Label text="{i18n>ticketActualCost}" />
+														<Input value="{path: 'membersModel>ticketActualCost', formatter: 'Formatter.formatAmount'}" enabled="false"/>
+													</VBox>
+												</f:GridListItem>
+											</f:GridList>
+										</content>
+									</Panel>
+								</VBox>
+
+								<upload:UploadSet
+									instantUpload="false"
+									uploadEnabled="false"
+									showIcons="true"
+									mode="None"
+									class="viewMissionMembersUpload"
+									items="{
+										path: 'membersModel>attachments',
+										parameters: {
+											$orderby: 'createdAt desc'
+										},
+										templateShareable: false}"
+									>
+									<upload:toolbar>
+										<OverflowToolbar>
+											<Text text="{i18n>memberAttachments} " class="fileAttachmentsTitle" />
+											<ToolbarSpacer/>
+										</OverflowToolbar>
+									</upload:toolbar>
+									<upload:illustratedMessage>
+										<IllustratedMessage  illustrationType="sapIllus-SearchEarth"  illustrationSize="Auto"  title="No attachments found" description="Drop files to upload, or use the Upload button"></IllustratedMessage>
+									</upload:illustratedMessage>
+									<upload:items>
+										<upload:UploadSetItem
+											fileName="{membersModel>fileName}"
+											mediaType="{membersModel>mimeType}"
+											url="{membersModel>file}"
+											enabledEdit="false"
+											visibleEdit="false"
+											openPressed="onAttachmentOpen"
+										>
+											<upload:attributes>
+												<ObjectAttribute
+													title="File Size"
+													text="{membersModel>fileSize}"
+													active="false"
+												/>
+											</upload:attributes>
+										</upload:UploadSetItem>
+									</upload:items>
+								</upload:UploadSet>
+							</content>
+						</Panel>
+					</VBox>
+
+					<Panel expandable="false" expanded="true" width="auto" class="claimInfoPanel">
+						<headerToolbar>
+							<OverflowToolbar style="Clear" class="claimInfoPanelTitle">
+								<Title text="{i18n>advanceDetails}" />
+								<ToolbarSpacer />
+							</OverflowToolbar>
+						</headerToolbar>
+						<content>
+							<f:GridList>
+								<f:customLayout>
+									<grid:GridBoxLayout boxMinWidth="15rem" boxesPerRowConfig="XL5 L4 M2 S1"/>
+								</f:customLayout>
+								<f:GridListItem>
+									<VBox class="sapUiSmallMargin">
+										<layoutData>
+											<FlexItemData growFactor="1" shrinkFactor="0" />
+										</layoutData>
+
+										<Label text="{i18n>advanceAmount}" />
+										<Input value="{path: 'advanceInfoModel>/info/cust_AdvanceAmount', formatter: 'Formatter.formatAmount'}" enabled="false"/>
+									</VBox>
+								</f:GridListItem>
+								<f:GridListItem>
+									<VBox class="sapUiSmallMargin">
+										<layoutData>
+											<FlexItemData growFactor="1" shrinkFactor="0" />
+										</layoutData>
+
+										<Label text="{i18n>startDate}" required="true" />
+										<Input value="{advanceInfoModel>/info/cust_StartDate}" enabled="false" />
+									</VBox>
+								</f:GridListItem>
+								<f:GridListItem>
+									<VBox class="sapUiSmallMargin">
+										<layoutData>
+											<FlexItemData growFactor="1" shrinkFactor="0" />
+										</layoutData>
+
+										<Label text="{i18n>endDate}" required="true" />
+										<Input value="{advanceInfoModel>/info/cust_EndDate}" enabled="false" />
+									</VBox>
+								</f:GridListItem>
+							</f:GridList>
+						</content>
+					</Panel>
+
+					<Panel expandable="false" expanded="true" width="auto" class="decreeInfoPanel">
+						<headerToolbar>
+							<OverflowToolbar style="Clear" class="claimInfoPanelTitle">
+								<Title text="{i18n>decree}" />
+								<ToolbarSpacer />
+							</OverflowToolbar>
+						</headerToolbar>
+						<content>
+							<VBox class="missionClaimAttachmentsVBox">
+							<upload:UploadSet
+								instantUpload="false"
+								uploadEnabled="false"
+								showIcons="true"
+								mode="None"
+								class="viewClaimUpload"
+								items="{
+									path: 'missionAttachmentsModel>/attachments',
+									parameters: {
+										$orderby: 'createdAt desc'
+									},
+									templateShareable: false}">
+								<upload:toolbar>
+									<OverflowToolbar>
+										<Text text="{i18n>attachments} " class="fileAttachmentsTitle" />
+										<ToolbarSpacer/>
+									</OverflowToolbar>
+								</upload:toolbar>
+								<upload:illustratedMessage>
+									<IllustratedMessage  illustrationType="sapIllus-SearchEarth"  illustrationSize="Auto"  title="No attachments found" description="Drop files to upload, or use the Upload button"></IllustratedMessage>
+								</upload:illustratedMessage>
+								<upload:items>
+									<upload:UploadSetItem
+										fileName="{missionAttachmentsModel>fileName}"
+										mediaType="{missionAttachmentsModel>mimetype}"
+										url="{missionAttachmentsModel>file}"
+										enabledEdit="false"
+										visibleEdit="false"
+										openPressed="onAttachmentOpen"
+									>
+										<upload:attributes>
+											<ObjectAttribute
+												title="File Size"
+												text="{missionAttachmentsModel>fileSize}"
+												active="false"
+											/>
+										</upload:attributes>
+									</upload:UploadSetItem>
+								</upload:items>
+							</upload:UploadSet>
+							</VBox>
+						</content>
+					</Panel>
+
+					<VBox class="missionHistoryTitleBox">
+						<Text text="{i18n>missionHistory}" />
+					</VBox>
+
+					<VBox items="{
+						path: 'auditModel>/info',
+						length : 500,
+						templateShareable: false
+					}" class="missionHistoryVBox">
+						<HBox class="missionHistoryHBox">
+							<VBox class="missionHistoryChildImageVBox">
+								<Image ariaDetails="detailsActiveImage" src="{auditModel>photo}" decorative="false"/>
+							</VBox>
+							<VBox class="missionHistoryChildTextVBox">
+								<Title text="{auditModel>action}" class="missionHistoryTextAction"/>
+								<HBox class="missionHistoryChildTextHBox">
+									<Text text="{i18n>missionHistoryComment} :" class="missionHistoryTextCommentsLabel"/>
+									<Text text="{auditModel>comments}" class="missionHistoryTextComments" />
+								</HBox>
+								<HBox>
+									<Text text="{i18n>missionHistoryTime} :" class="missionHistoryTextTimeLabel" />
+									<Text text="{path: 'auditModel>timestamp', formatter: 'Formatter.formatDateHistory'}" class="missionHistoryTextTime" />
+								</HBox>
+								<HBox>
+									<Text text="{i18n>missionHistoryUser} :" class="missionHistoryTextUserLabel" />
+									<Text text="{auditModel>user}" class="missionHistoryTextUser" />
+								</HBox>
+								<HBox>
+									<Text text="{i18n>missionHistoryName} :" class="missionHistoryTextUserLabel" />
+									<Text text="{auditModel>userFirstName} {auditModel>userLastName}" class="missionHistoryTextUser" />
+								</HBox>
+								<HBox>
+									<Text text="{i18n>missionHistoryDesignation} :" class="missionHistoryTextUserLabel" />
+									<Text text="{auditModel>userDesignation}" class="missionHistoryTextUser" />
+								</HBox>
+							</VBox>
+						</HBox>
+					</VBox>
+					<HBox class="missionApproveHBox" visible="{= ${advanceInfoModel>/info/cust_Status} === '2'}">
+						<TextArea value="{approveModel>/comments}" maxLength="500" enabled="true" placeholder="{i18n>comments}"/>
+						<Button text="{i18n>approve}" class="approveBtn" press="approveAdvance"/>
+						<Button text="{i18n>sendBack}" class="sendBackBtn" press="sendBackAdvance"/>
+					</HBox>
+				</content>
+				<Toolbar class="createMissionFooter">
+					<ToolbarSpacer/>
+					<Button text="{i18n>close}" class="createMissionDefaultBtn" press="closeMission"/>
+				</Toolbar>
+			</Panel>	
+
+			<VBox class="sapUiSmallMargin errorBox"  visible="{=${screenModel>/info/pageError}}">
+				<layoutData>
+					<FlexItemData growFactor="1" shrinkFactor="0" />
+				</layoutData>
+
+				<Text text="{screenModel>/info/pageErrorMessage}" />
+			</VBox>
+		</content>
+		<footer>
+			<Toolbar>
+				<Button text="{i18n>close}" class="customButtonEmphasized" press="closeMission"/>
+				<ToolbarSpacer />
+				<Button icon="sap-icon://edit" 
+					class="customButtonEmphasized" 
+					text="{i18n>edit}"
+					press=".editMission" visible="{= ${approveAdvanceModel>/edit} === false &amp;&amp; ${advanceInfoModel>/info/cust_Status} === '2' }"/>
+				<Button icon="sap-icon://reset" 
+					class="customButtonReject"
+					text="{i18n>reset}"
+				    press=".cancelEditMission" visible="{= ${approveAdvanceModel>/edit} === true &amp;&amp; ${advanceInfoModel>/info/cust_Status} === '2' }"/>
+				<Button icon="sap-icon://save" 
+				    id="idUpdateAdvanceButton" 
+					class="customButtonEmphasized animate__animated"
+					text="{i18n>save}"
+					 press=".saveMission" visible="{= ${approveAdvanceModel>/edit} === true &amp;&amp; ${advanceInfoModel>/info/cust_Status} === '2' }"/>
+			</Toolbar>
+		</footer>
+	</Page>
+</mvc:View>
+

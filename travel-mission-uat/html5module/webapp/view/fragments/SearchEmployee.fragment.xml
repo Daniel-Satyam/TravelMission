@@ -1,0 +1,169 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:cd="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
+>
+    <!-- <SelectDialog
+        id="EmployeeSearchDialog"
+        noDataText="{i18n>noEmployeesFound}"
+        title="{i18n>employeeSearchTitle}"
+        search=".searchForEmployee"
+        confirm=".confirmEmployeeSelection"
+        cancel=".closeEmployeeSearch"
+        items="{
+            path: 'employeesModel>/employees',
+			sorter: { path: 'personIdExternal' },
+            templateShareable: false
+		}"
+        growing="false"
+        busyIndicatorDelay="0"
+        contentWidth="400px"
+        contentHeight="500px"
+    >
+        <StandardListItem
+            title="{employeesModel>personNav/personalInfoNav/results/0/displayName}"
+            description="({employeesModel>personIdExternal})"
+            iconDensityAware="false"
+            iconInset="false"
+            type="Active"
+            cd:key="{employeesModel>personIdExternal}"
+        >
+            <avatar>
+                <Avatar fallbackIcon="sap-icon://picture" src="{employeesModel>photoNav/photo}" />
+            </avatar>
+        </StandardListItem>
+    </SelectDialog> -->
+    <Dialog
+        id="EmployeeSearchDialog"
+        busyIndicatorDelay="0"
+        contentWidth="500px"
+        contentHeight="500px"
+        title="{i18n>employeeSearchTitle}"
+    >
+        <content>
+            <Table
+                noDataText="{i18n>noEmployeesFound}"
+                busyIndicatorDelay="0"
+                 items="{
+                    path: 'employeesModel>/employees',
+                    sorter: { path: 'personIdExternal' },
+                    templateShareable: false
+                }"
+            >   
+                <headerToolbar>
+                    <Toolbar>
+                        <SearchField search=".searchForEmployee" />
+                    </Toolbar>
+                </headerToolbar>
+                <columns>
+                    <Column>
+                        <header>
+                            <Text text="{i18n>employee}" />
+                        </header>
+                    </Column>
+                    <Column
+                        width="10rem"
+                        hAlign="Center"
+                    >
+                        <header>
+                            <Text text="{i18n>availability}" />
+                        </header>
+                    </Column>
+                </columns>
+                <items>
+                        <!-- cd:key="{employeesModel>personIdExternal}" -->
+                    <ColumnListItem
+                        vAlign="Middle"
+                        type="{= ${employeesModel>available} === true ? 'Active' : 'Inactive' }"
+                        cd:userID="{employeesModel>userId}"
+                        cd:employeeID="{employeesModel>personIdExternal}"
+                        press=".confirmEmployeeSelection"
+                    >
+                        <cells>
+                            <HBox alignItems="Center">
+                                <Avatar
+                                    fallbackIcon="sap-icon://picture"
+                                    src="{employeesModel>photoNav/photo}"
+                                    class="sapUiTinyMarginEnd"
+                                />
+                                <ObjectIdentifier
+                                    title="{employeesModel>personNav/personalInfoNav/results/0/displayName}"
+                                    text="({employeesModel>personIdExternal})"
+                                />
+                            </HBox>
+                            <GenericTag
+                                text="{= ${employeesModel>available} === true ? 'Available' : 'Not Available' }"
+                                status="{= ${employeesModel>available} === true ? 'Success' : 'Warning' }"
+                            />
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+        </content>
+        <buttons>
+            <Button
+                text="{i18n>cancel}"
+                press=".closeEmployeeSearch"
+            />
+        </buttons>
+    </Dialog>
+
+    <!-- <TableSelectDialog
+        id="EmployeeSearchDialog"
+        noDataText="{i18n>noEmployeesFound}"
+        title="{i18n>employeeSearchTitle}"
+        search=".searchForEmployee"
+        confirm=".confirmEmployeeSelection"
+        cancel=".closeEmployeeSearch"
+        items="{
+            path: 'employeesModel>/employees',
+			sorter: { path: 'personIdExternal' },
+            templateShareable: false
+		}"
+        growing="false"
+        busyIndicatorDelay="0"
+        contentWidth="500px"
+        contentHeight="500px"
+    >
+        <columns>
+            <Column>
+                <header>
+                    <Text text="Employee" />
+                </header>
+            </Column>
+            <Column
+                width="10rem"
+                hAlign="Center"
+            >
+                <header>
+                    <Text text="Availability" />
+                </header>
+            </Column>
+        </columns>
+        <items>
+            <ColumnListItem
+                vAlign="Middle"
+                type="{= ${employeesModel>available} === true ? 'Active' : 'Inactive' }"
+                cd:key="{employeesModel>personIdExternal}"
+            >
+                <cells>
+                    <HBox alignItems="Center">
+                        <Avatar
+                            fallbackIcon="sap-icon://picture"
+                            src="{employeesModel>photoNav/photo}"
+                            class="sapUiTinyMarginEnd"
+                        />
+                        <ObjectIdentifier
+                            title="{employeesModel>personNav/personalInfoNav/results/0/displayName}"
+                            text="({employeesModel>personIdExternal})"
+                        />
+                    </HBox>
+                    <GenericTag
+                        text="{= ${employeesModel>available} === true ? 'Available' : 'Not Available' }"
+                        status="{= ${employeesModel>available} === true ? 'Success' : 'Warning' }"
+                    />
+                </cells>
+            </ColumnListItem>
+        </items>
+    </TableSelectDialog> -->
+</core:FragmentDefinition>

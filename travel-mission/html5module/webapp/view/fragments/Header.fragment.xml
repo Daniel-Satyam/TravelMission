@@ -1,0 +1,29 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core">
+	<Bar class="homePageCustomHeaderBar">
+		<contentLeft>
+			<Image class="logo-english" mode="Image" src="{path: 'appModel>/pageInfo/logo/en'}" />
+			<Image class="logo-arabic" mode="Image" src="{path: 'appModel>/pageInfo/logo/ar'}" />
+		</contentLeft>
+		<contentMiddle>
+			<Title text="{i18n>headerTitle}" />
+		</contentMiddle>
+		<contentRight>
+			<Button icon="sap-icon://key-user-settings" text="{i18n>adminPage}" press=".onNavToAdminPage" type="Transparent" class="customButtonReject" 
+				visible="{= ${appModel>/activeRoute} === 'home' &amp;&amp; ${appModel>/isAdmin} === true  }"
+			/>
+			<Button text="{i18n>english}" press="onLanguageChange('view')" type="Transparent" class="homeLanguageChangeBtn-en" />
+			<Button text="{i18n>arabic}" press="onLanguageChange('view')" type="Transparent" class="homeLanguageChangeBtn-ar" />
+			<Title text="{i18n>headerEmployeeNamePrefix} {appModel>/user/firstName} {appModel>/user/lastName} {= ${appModel>/user/proxy} === true ? '(On Behalf)' : null }" class="homeUserInfoTxt"
+				visible="{= ${appModel>/user/id} !== null }"
+			/>
+			<Button icon="sap-icon://visits" text="" press=".onSelectDelegator" class="customButtonEmphasized"
+				visible="{= ${appModel>/activeRoute} === 'home' &amp;&amp; ${appModel>/delegateOf} &amp;&amp; ${appModel>/delegateOf}.length > 0  }"
+				tooltip="Delegators"
+			/>
+			<Button icon="sap-icon://overflow" type="Transparent" id="menuButton"  press="onOverflowMenuOpen" ariaHasPopup="Dialog" class="homeMenuOverflowButton" />
+		</contentRight>		
+	</Bar>
+</core:FragmentDefinition>
+

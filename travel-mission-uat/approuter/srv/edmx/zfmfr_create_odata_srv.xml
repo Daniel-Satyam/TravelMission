@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" xmlns:sap="http://www.sap.com/Protocols/SAPData" Version="1.0">
+  <edmx:DataServices m:DataServiceVersion="2.0">
+    <Schema xmlns="http://schemas.microsoft.com/ado/2008/09/edm" Namespace="ZFMFR_CREATE_ODATA_SRV" xml:lang="en" sap:schema-version="1">
+      <EntityType Name="Header" sap:content-version="1">
+        <Key>
+          <PropertyRef Name="KTEXT"/>
+        </Key>
+        <Property Name="STATUS" Type="Edm.String" MaxLength="1" sap:unicode="false" sap:label="DOCUMENT STATUS"/>
+        <Property Name="WAERS" Type="Edm.String" MaxLength="5" sap:unicode="false" sap:label="Trans. Currency" sap:semantics="currency-code"/>
+        <Property Name="BLDAT" Type="Edm.DateTime" Precision="7" sap:unicode="false" sap:label="Document Date"/>
+        <Property Name="KTEXT" Type="Edm.String" Nullable="false" MaxLength="50" sap:unicode="false" sap:label="Document Text"/>
+        <Property Name="RET_MSG" Type="Edm.String" MaxLength="220" sap:unicode="false" sap:label="Message Text"/>
+        <Property Name="BELNR" Type="Edm.String" MaxLength="10" sap:unicode="false" sap:label="Earmarked Funds"/>
+        <NavigationProperty Name="HeaderToItem" Relationship="ZFMFR_CREATE_ODATA_SRV.HeaderToItem" FromRole="FromRole_HeaderToItem" ToRole="ToRole_HeaderToItem"/>
+      </EntityType>
+      <EntityType Name="Items" sap:content-version="1">
+        <Key>
+          <PropertyRef Name="BLPOS"/>
+          <PropertyRef Name="KOSTL"/>
+          <PropertyRef Name="WRBTR"/>
+          <PropertyRef Name="PTEXT"/>
+        </Key>
+        <Property Name="BLPOS" Type="Edm.String" Nullable="false" MaxLength="3" sap:unicode="false" sap:label="Document item"/>
+        <Property Name="KOSTL" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:label="Cost Center"/>
+        <Property Name="WRBTR" Type="Edm.Decimal" Nullable="false" Precision="14" Scale="3" sap:unicode="false" sap:label="Amount"/>
+        <Property Name="PTEXT" Type="Edm.String" Nullable="false" MaxLength="50" sap:unicode="false" sap:label="Text"/>
+      </EntityType>
+      <Association Name="HeaderToItem" sap:content-version="1">
+        <End Type="ZFMFR_CREATE_ODATA_SRV.Header" Multiplicity="1" Role="FromRole_HeaderToItem"/>
+        <End Type="ZFMFR_CREATE_ODATA_SRV.Items" Multiplicity="*" Role="ToRole_HeaderToItem"/>
+      </Association>
+      <EntityContainer Name="ZFMFR_CREATE_ODATA_SRV_Entities" m:IsDefaultEntityContainer="true" sap:supported-formats="atom json xlsx">
+        <EntitySet Name="HeaderSet" EntityType="ZFMFR_CREATE_ODATA_SRV.Header" sap:creatable="true" sap:updatable="true" sap:deletable="true" sap:pageable="true" sap:content-version="1"/>
+        <EntitySet Name="ItemsSet" EntityType="ZFMFR_CREATE_ODATA_SRV.Items" sap:creatable="true" sap:updatable="true" sap:deletable="true" sap:pageable="true" sap:content-version="1"/>
+        <AssociationSet Name="HeaderToItemSet" Association="ZFMFR_CREATE_ODATA_SRV.HeaderToItem" sap:creatable="true" sap:updatable="true" sap:deletable="true" sap:content-version="1">
+          <End EntitySet="HeaderSet" Role="FromRole_HeaderToItem"/>
+          <End EntitySet="ItemsSet" Role="ToRole_HeaderToItem"/>
+        </AssociationSet>
+      </EntityContainer>
+      <atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="self" href="https://s4qaapp:44300/sap/opu/odata/sap/ZFMFR_CREATE_ODATA_SRV/$metadata"/>
+      <atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="latest-version" href="https://s4qaapp:44300/sap/opu/odata/sap/ZFMFR_CREATE_ODATA_SRV/$metadata"/>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>
