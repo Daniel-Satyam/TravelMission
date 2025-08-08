@@ -1223,7 +1223,7 @@
                     <VBox class="missionClaimAttachmentsVBox">
                         <upload:UploadSet
                             instantUpload="false"
-                            uploadEnabled="true"
+                            uploadEnabled="{= ${claimAttachmentsModel>/attachments} &amp;&amp; ${claimAttachmentsModel>/attachments}.length === 0 }"
                             showIcons="true"
                             fileTypes="txt,png,pdf,jpg,xlsx"
                             maxFileSize="200"

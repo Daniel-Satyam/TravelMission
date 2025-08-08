@@ -1497,7 +1497,7 @@ const _claimMission = async function (decryptedData, cookies) {
         `Content-Transfer-Encoding: binary\r\n\r\n` +
         `GET ${sectorFetchUrl} HTTP/1.1\r\n` +
         `Accept: application/json\r\n\r\n` +
-        q`--${boundary}--`;
+        `--${boundary}--`;
 
       const batchResponse = await axios.post(batchURL, getBatchBody, {
         headers: {
