@@ -5762,7 +5762,7 @@ const _getMastersBatch = async function (body, cookies) {
     let aResultMap = [];
 
     const cityFetchUrl =
-      "Picklist?$expand=picklistOptions,picklistOptions/picklistLabels&$select=picklistOptions/externalCode,picklistOptions/localeLabel,picklistOptions/picklistLabels/locale,picklistOptions/picklistLabels/label&$filter=picklistId eq 'Destination' and picklistOptions/status eq 'ACTIVE'&$format=json";
+      "Picklist?$expand=picklistOptions,picklistOptions/picklistLabels&$select=picklistOptions/externalCode,picklistOptions/localeLabel,picklistOptions/picklistLabels/locale,picklistOptions/picklistLabels/label,picklistOptions/status&$filter=picklistId eq 'Destination' and picklistOptions/status eq 'ACTIVE'&$format=json";
 
     //--Construct batch body
     getBatchBody +=
@@ -5773,7 +5773,7 @@ const _getMastersBatch = async function (body, cookies) {
       `Accept: application/json\r\n\r\n`;
 
     const hospitalityFetchUrl =
-      "Picklist?$expand=picklistOptions, picklistOptions/picklistLabels&$select=picklistOptions/externalCode,picklistOptions/localeLabel,picklistOptions/picklistLabels/locale,picklistOptions/picklistLabels/label&$filter=picklistId eq 'Hospitality_Default' and picklistOptions/status eq 'ACTIVE'&$format=json";
+      "Picklist?$expand=picklistOptions, picklistOptions/picklistLabels&$select=picklistOptions/externalCode,picklistOptions/localeLabel,picklistOptions/picklistLabels/locale,picklistOptions/picklistLabels/label,picklistOptions/status&$filter=picklistId eq 'Hospitality_Default' and picklistOptions/status eq 'ACTIVE'&$format=json";
 
     getBatchBody +=
       `--${boundary}\r\n` +
@@ -5793,7 +5793,7 @@ const _getMastersBatch = async function (body, cookies) {
       `Accept: application/json\r\n\r\n`;
 
     const decreeTypeFetchUrl =
-      "Picklist?$expand=picklistOptions,picklistOptions/picklistLabels&$select=picklistOptions/externalCode,picklistOptions/localeLabel,picklistOptions/picklistLabels/locale,picklistOptions/picklistLabels/label&$filter=picklistId eq 'Decree_name_mission' and picklistOptions/status eq 'ACTIVE'&$format=json";
+      "Picklist?$expand=picklistOptions,picklistOptions/picklistLabels&$select=picklistOptions/externalCode,picklistOptions/localeLabel,picklistOptions/picklistLabels/locale,picklistOptions/picklistLabels/label,picklistOptions/status&$filter=picklistId eq 'Decree_name_mission' and picklistOptions/status eq 'ACTIVE'&$format=json";
 
     getBatchBody +=
       `--${boundary}\r\n` +
@@ -5803,7 +5803,7 @@ const _getMastersBatch = async function (body, cookies) {
       `Accept: application/json\r\n\r\n`;
 
     const flightTypeFetchUrl =
-      "Picklist?$expand=picklistOptions,picklistOptions/picklistLabels&$select=picklistOptions/externalCode,picklistOptions/localeLabel,picklistOptions/picklistLabels/locale,picklistOptions/picklistLabels/label&$format=json&$filter=picklistId eq 'Flight_type_mission' and picklistOptions/status eq 'ACTIVE'";
+      "Picklist?$expand=picklistOptions,picklistOptions/picklistLabels&$select=picklistOptions/externalCode,picklistOptions/localeLabel,picklistOptions/picklistLabels/locale,picklistOptions/picklistLabels/label,picklistOptions/status&$format=json&$filter=picklistId eq 'Flight_type_mission' and picklistOptions/status eq 'ACTIVE'";
 
     getBatchBody +=
       `--${boundary}\r\n` +
@@ -5813,7 +5813,7 @@ const _getMastersBatch = async function (body, cookies) {
       `Accept: application/json\r\n\r\n`;
 
     const ticketTypeFetchUrl =
-      "Picklist?$expand=picklistOptions,picklistOptions/picklistLabels&$select=picklistOptions/externalCode,picklistOptions/localeLabel,picklistOptions/picklistLabels/locale,picklistOptions/picklistLabels/label&$format=json&$filter=picklistId eq 'Ticket_Type' and picklistOptions/status eq 'ACTIVE'";
+      "Picklist?$expand=picklistOptions,picklistOptions/picklistLabels&$select=picklistOptions/externalCode,picklistOptions/localeLabel,picklistOptions/picklistLabels/locale,picklistOptions/picklistLabels/label,picklistOptions/status&$format=json&$filter=picklistId eq 'Ticket_Type' and picklistOptions/status eq 'ACTIVE'";
 
     getBatchBody +=
       `--${boundary}\r\n` +
@@ -5823,7 +5823,7 @@ const _getMastersBatch = async function (body, cookies) {
       `Accept: application/json\r\n\r\n`;
 
     const dynamicGroupsFetchUrl =
-      "Picklist?$expand=picklistOptions,picklistOptions/picklistLabels&$select=picklistOptions/externalCode,picklistOptions/localeLabel,picklistOptions/picklistLabels/locale,picklistOptions/picklistLabels/label&$filter=picklistId eq 'Delegates_Dynamic_Group' and picklistOptions/status eq 'ACTIVE'&$format=json";
+      "Picklist?$expand=picklistOptions,picklistOptions/picklistLabels&$select=picklistOptions/externalCode,picklistOptions/localeLabel,picklistOptions/picklistLabels/locale,picklistOptions/picklistLabels/label,picklistOptions/status&$filter=picklistId eq 'Delegates_Dynamic_Group' and picklistOptions/status eq 'ACTIVE'&$format=json";
 
     getBatchBody +=
       `--${boundary}\r\n` +
@@ -5833,7 +5833,7 @@ const _getMastersBatch = async function (body, cookies) {
       `Accept: application/json\r\n\r\n`;
 
     const statusFetchUrl =
-      "Picklist?$expand=picklistOptions,picklistOptions/picklistLabels&$select=picklistOptions/externalCode,picklistOptions/localeLabel,picklistOptions/picklistLabels/locale,picklistOptions/picklistLabels/label&$filter=picklistId eq 'Status' and picklistOptions/status eq 'ACTIVE'&$format=json";
+      "Picklist?$expand=picklistOptions,picklistOptions/picklistLabels&$select=picklistOptions/externalCode,picklistOptions/localeLabel,picklistOptions/picklistLabels/locale,picklistOptions/picklistLabels/label,picklistOptions/status&$filter=picklistId eq 'Status' and picklistOptions/status eq 'ACTIVE'&$format=json";
 
     getBatchBody +=
       `--${boundary}\r\n` +
@@ -5843,7 +5843,7 @@ const _getMastersBatch = async function (body, cookies) {
       `Accept: application/json\r\n\r\n`;
 
     const externalEntityFetchUrl =
-      "Picklist?$expand=picklistOptions,picklistOptions/picklistLabels&$select=picklistOptions/externalCode,picklistOptions/localeLabel,picklistOptions/picklistLabels/locale,picklistOptions/picklistLabels/label&$filter=picklistId eq 'External Entity' and picklistOptions/status eq 'ACTIVE'&$format=json";
+      "Picklist?$expand=picklistOptions,picklistOptions/picklistLabels&$select=picklistOptions/externalCode,picklistOptions/localeLabel,picklistOptions/picklistLabels/locale,picklistOptions/picklistLabels/label,picklistOptions/status&$filter=picklistId eq 'External Entity' and picklistOptions/status eq 'ACTIVE'&$format=json";
 
     getBatchBody +=
       `--${boundary}\r\n` +
@@ -5853,7 +5853,7 @@ const _getMastersBatch = async function (body, cookies) {
       `Accept: application/json\r\n\r\n`;
 
     const multicityFetchUrl =
-      "Picklist?$expand=picklistOptions,picklistOptions/picklistLabels&$select=picklistOptions/externalCode,picklistOptions/localeLabel,picklistOptions/picklistLabels/locale,picklistOptions/picklistLabels/label&$filter=picklistId eq 'yesNo' and picklistOptions/status eq 'ACTIVE'&$format=json";
+      "Picklist?$expand=picklistOptions,picklistOptions/picklistLabels&$select=picklistOptions/externalCode,picklistOptions/localeLabel,picklistOptions/picklistLabels/locale,picklistOptions/picklistLabels/label,picklistOptions/status&$filter=picklistId eq 'yesNo' and picklistOptions/status eq 'ACTIVE'&$format=json";
 
     getBatchBody +=
       `--${boundary}\r\n` +
@@ -5917,7 +5917,6 @@ const _getMastersBatch = async function (body, cookies) {
           );
           oPickListOptions.results.forEach((o) => {
             if (o.status !== "ACTIVE") return;
-            
             let oLabelEn = _.find(o.picklistLabels.results, [
               "locale",
               "en_US",
