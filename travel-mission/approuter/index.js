@@ -1651,9 +1651,9 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
 
 const _claimMission = async function (decryptedData, cookies) {
   try {
-    var auth = "Basic " + cookies.SF.basicAuth;
-    var SFAuth = Buffer.from(cookies.SF.basicAuth, "base64").toString("utf-8");
-    var SFAuthUsername = SFAuth.split(":")[0].split("@")[0];
+    const auth = "Basic " + cookies.SF.basicAuth;
+    const SFAuth = Buffer.from(cookies.SF.basicAuth, "base64").toString("utf-8");
+    const SFAuthUsername = SFAuth.split(":")[0].split("@")[0];
 
     const postClaimAttachmentUrl = cookies.SF.URL + "upsert?$format=json";
 
@@ -1700,7 +1700,7 @@ const _claimMission = async function (decryptedData, cookies) {
       const claimFetchUrl = `cust_BenefitTravelClaim?$format=json&$filter=cust_EmployeeID eq '${decryptedData.employeeId}' and cust_MissionID eq '${decryptedData.missionId}'`;
 
       const missionExpandQuery =
-        "cust_Members,cust_Members/cust_itinerary_details";
+        "cust_Members,cust_Members/cust_itinerary_details_child";
 
       const missionSelectQuery =
         "externalCode,effectiveStartDate,transactionSequence,cust_Mission_Start_Date,cust_Mission_End_Date,cust_No_Of_Days," +
@@ -1776,56 +1776,57 @@ const _claimMission = async function (decryptedData, cookies) {
         _.cloneDeep(batchResult[2].d.results[0]);
 
       const sectorFetchResponse =
-        batchResult[2] &&
-        batchResult[2].d &&
-        batchResult[2].d.results &&
-        _.cloneDeep(batchResult[3].d.results[0]);
+        batchResult[3] && batchResult[3].d && batchResult[3].d.results;
 
       //--Prepare post bodies
 
       //--Claim update
       const approveGroup = approveGroupFetchResponse.cust_Value;
 
+      let claimUpdateHeader = {};
+      if (claimFetchResponse) {
+        claimUpdateHeader["__metadata"] = claimFetchResponse["__metadata"];
+        claimUpdateHeader["externalCode"] = claimFetchResponse["externalCode"];
+        claimUpdateHeader["mdfSystemEffectiveStartDate"] =
+          claimFetchResponse["mdfSystemEffectiveStartDate"];
+      } else {
+        claimUpdateHeader["__metadata"] = {
+          uri: cookies.SF.URL + "cust_BenefitTravelClaim",
+          type: "SFOData.cust_BenefitTravelClaim"
+        };
+        claimUpdateHeader["externalName"] = "The claim creation in mission " + decryptedData.missionId;
+        claimUpdateHeader["mdfSystemEffectiveStartDate"] = decryptedData.date;
+      }
       let claimUpdateRequest = {
+        ...claimUpdateHeader,
         cust_Claim_Type: decryptedData.type,
-        cust_EmployeeID: claimRequest.cust_EmployeeID,
+        cust_EmployeeID: decryptedData.employeeId,
         cust_MissionID: decryptedData.missionId,
         cust_startDate: decryptedData.claimStartDate,
         cust_EndDate: decryptedData.claimEndDate,
         cust_Location: decryptedData.location,
         cust_ClaimAmount: decryptedData.claimAmount,
         cust_Currency: "AED",
+        cust_Status: decryptedData.status,
+        cust_Pending_with: approveGroup,
+        cust_Claim_Parked: decryptedData.claimParked,
+        cust_Description:
+        "The claim creation for " +
+        decryptedData.employeeId +
+        " on mission " +
+        decryptedData.missionId,
         cust_attachmentNav: {
           __metadata: {
             uri: cookies.SF.URL + "Attachment(" + attachmentId + ")",
           },
         },
-        cust_Status: decryptedData.status,
-        cust_Pending_with: approveGroup,
-        cust_Claim_Parked: decryptedData.claimParked,
-        cust_Description:
-          "The claim creation for " +
-          decryptedData.employeeId +
-          " on mission " +
-          decryptedData.missionId,
-        externalName:
-          "The claim creation in mission " + decryptedData.missionId,
       };
-
-      if (claimFetchResponse) {
-        claimUpdateRequest["__metadata"] = claimFetchResponse["__metadata"];
-        claimUpdateRequest["externalCode"] = claimFetchResponse["externalCode"];
-        claimUpdateRequest["mdfSystemEffectiveStartDate"] =
-          claimFetchResponse["mdfSystemEffectiveStartDate"];
-      } else {
-        claimUpdateRequest["__metadata"] = {
-          uri: cookies.SF.URL + "cust_BenefitTravelClaim",
-        };
-      }
       //--Claim update
 
       //--Mission update
+      let missionClone = _.clone(missionFetchResponse);
       let missionUpdateRequest = {
+        ...missionClone,
         __metadata: missionFetchResponse.__metadata,
         //--Update related fields
         cust_TicketAverage: decryptedData.missionTotalTicketCost,
@@ -1839,7 +1840,7 @@ const _claimMission = async function (decryptedData, cookies) {
       missionFetchResponse.cust_Members.results.forEach((oMember) => {
         let memberUpdateRequest = _.cloneDeep(oMember);
 
-        if (oMember.cust_EmployeeID === decryptedData.employeeId) {
+        if (oMember.cust_Employee_ID === decryptedData.employeeId) {
           memberUpdateRequest.cust_itinerary_details_child = {
             results: [],
           };
@@ -1854,7 +1855,7 @@ const _claimMission = async function (decryptedData, cookies) {
           for (var i = 0; i < decryptedData.itinerary.length; i++) {
             const oItineraryFound = _.find(
               oMember.cust_itinerary_details_child.results,
-              ["cust_city", decryptedData.itinerary[i].city]
+              ["cust_city", decryptedData.itinerary[i].itineraryCity]
             );
 
             if (oItineraryFound) {
@@ -1879,11 +1880,15 @@ const _claimMission = async function (decryptedData, cookies) {
       //--Mission update
 
       //--Sector update
-      let sectorUpdateRequest = sectorFetchResponse.data.d.results[0];
-      sectorUpdateRequest["__metadata"] = {
-        uri: cookies.SF.URL + "cust_SectorBudget"
-      };
-      sectorUpdateRequest["cust_Available_budget"] = decryptedData.sectorAvailableBudget;
+      let sectorUpdateRequest = sectorFetchResponse[0] || null;
+      if (sectorUpdateRequest) {
+        sectorUpdateRequest["__metadata"] = {
+          uri: cookies.SF.URL + "cust_SectorBudget",
+          type: "SFOData.cust_SectorBudget"
+        };
+        sectorUpdateRequest["cust_Available_budget"] =
+          decryptedData.sectorAvailableBudget;
+      }
       //--Sector update
 
       //--Audit log update
@@ -1896,6 +1901,7 @@ const _claimMission = async function (decryptedData, cookies) {
       const auditLogUpdateRequest = {
         __metadata: {
           uri: cookies.SF.URL + "cust_Audit_Log",
+          type: "SFOData.cust_Audit_Log"
         },
         externalCode: "1234",
         cust_Timestamp: decryptedData.date,
@@ -1929,14 +1935,20 @@ const _claimMission = async function (decryptedData, cookies) {
         `POST upsert?$format=json HTTP/1.1\r\n` +
         `Content-Type: application/json;charset=utf-8\r\n` +
         `Accept: application/json\r\n\r\n` +
-        `${JSON.stringify(missionUpdateRequest)}\r\n\r\n` +
-        `--${changeSet}\r\n` +
-        `Content-Type: application/http\r\n` +
-        `Content-Transfer-Encoding: binary\r\n\r\n` +
-        `POST upsert?$format=json HTTP/1.1\r\n` +
-        `Content-Type: application/json;charset=utf-8\r\n` +
-        `Accept: application/json\r\n\r\n` +
-        `${JSON.stringify(sectorUpdateRequest)}\r\n\r\n` +
+        `${JSON.stringify(missionUpdateRequest)}\r\n\r\n`;
+      if (sectorUpdateRequest) {
+        postBatchBody =
+          postBatchBody +
+          `--${changeSet}\r\n` +
+          `Content-Type: application/http\r\n` +
+          `Content-Transfer-Encoding: binary\r\n\r\n` +
+          `POST upsert?$format=json HTTP/1.1\r\n` +
+          `Content-Type: application/json;charset=utf-8\r\n` +
+          `Accept: application/json\r\n\r\n` +
+          `${JSON.stringify(sectorUpdateRequest)}\r\n\r\n`;
+      }
+      postBatchBody =
+        postBatchBody +
         `--${changeSet}\r\n` +
         `Content-Type: application/http\r\n` +
         `Content-Transfer-Encoding: binary\r\n\r\n` +
@@ -1954,6 +1966,23 @@ const _claimMission = async function (decryptedData, cookies) {
           "Content-Type": `multipart/mixed; boundary=${postBoundary}`,
         },
       });
+      const postBatchResult =
+        (await _parseMultipartResponse(postBatchResponse)) || [];
+      //--Rewritten with batch
+
+      //--Post update
+      if (
+        !postBatchResult ||
+        (postBatchResult &&
+          postBatchResult[0] &&
+          postBatchResult[0].hasOwnProperty("error"))
+      ) {
+        if (postBatchResult[0] && postBatchResult[0].hasOwnProperty("error")) {
+          console.log("Post batch error:" + postBatchResult[0].error.message.value);
+          throw Error("Post batch error:" + postBatchResult[0].error.message.value);
+        }
+        throw Error("Error during batch post");
+      }
       //--Rewritten with batch
 
       //--Post update
@@ -5887,6 +5916,8 @@ const _getMastersBatch = async function (body, cookies) {
             pickList.d.results[0].picklistOptions
           );
           oPickListOptions.results.forEach((o) => {
+            if (o.status !== "ACTIVE") return;
+            
             let oLabelEn = _.find(o.picklistLabels.results, [
               "locale",
               "en_US",

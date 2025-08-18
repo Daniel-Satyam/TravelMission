@@ -2480,6 +2480,7 @@ sap.ui.define(
             [],
             null
           );
+          return;
         }
 
         obj.budgetTracking = aBudgetTracking;
