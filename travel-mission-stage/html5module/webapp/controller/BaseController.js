@@ -1322,7 +1322,20 @@ sap.ui.define(
             );
         }
       },
-
+      getDefaultHeadOfMission: function(sDecreeType){
+         switch (sDecreeType) {
+          case "01": //One Employee Mission - Administrative
+          case "05": //One Employee Mission - Ministerial
+          case "03": //Group Without Head of Mission - Administrative
+          case "07": //Group Without Head of Mission - Ministerial
+            return "N";
+          case "09": //Head of Mission Without Members - Ministerial
+          case "10": //Head of Mission Without Members - Administrative
+            return "Y"; 
+          default:
+            return "";
+        }
+      },
       isHeadOfMissionEditable: function (sDecreeType) {
         switch (sDecreeType) {
           case "01": //One Employee Mission - Administrative
