@@ -3351,6 +3351,21 @@ sap.ui.define(
         if(!bItineraryValid) return;
         //--Check at least one itinerary
 
+        //--Check decree type and head of mission
+        const decreeTypeValidationMessage = this.validateMissionForDecreeType(missionInfoModelData.decreeType, missionMembersData);
+
+        if(decreeTypeValidationMessage){
+          this.alertMessage(
+            "E",
+            "errorOperation",
+            decreeTypeValidationMessage.message,
+            decreeTypeValidationMessage.params,
+            null
+          );
+          return;
+        }
+        //--Check decree type and head of mission
+
         const aManagerCheckSectors = [
           "17555", //Assistant Undersecretary for Support Services Affairs (17555)
           "15917555", //Assistant Undersecretary for Support Services Affairs (17555)
