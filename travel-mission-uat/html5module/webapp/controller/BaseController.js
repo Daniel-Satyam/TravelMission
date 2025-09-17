@@ -122,6 +122,47 @@ sap.ui.define(
           this.oBusyDialog = null;
         }
       },
+
+      alertMessageHtml: function (
+        sType,
+        sTitle,
+        sMessage,
+        aMessageParam,
+        opts = {}
+      ) {
+        var sIcon;
+
+        switch (sType) {
+          case "W":
+            sIcon = "warning";
+            break;
+          case "E":
+            sIcon = "error";
+            break;
+          case "S":
+            sIcon = "success";
+            break;
+          case "I":
+            sIcon = "info";
+            break;
+          case "Q":
+            sIcon = "question";
+            break;
+          default:
+            sIcon = "success";
+        }
+
+        this.showMessage({
+          html: this.getText(sMessage, aMessageParam),
+          title: this.getText(sTitle),
+          icon: sIcon,
+          showConfirmButton: true,
+          timer: undefined,
+          toast: false,
+          position: "center",
+          ...opts,
+        });
+      },
       alertMessage: function (
         sType,
         sTitle,
@@ -1482,7 +1523,6 @@ sap.ui.define(
 
 
       },
-
 
       checkIsArabic: function (sContent) {
         const text = sContent.trim();

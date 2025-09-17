@@ -1441,7 +1441,7 @@ sap.ui.define(
         const decreeTypeValidationMessage = this.validateMissionForDecreeType(missionInfoModelData.decreeType, missionMembersData);
 
         if(decreeTypeValidationMessage){
-          this.alertMessage(
+          this.alertMessageHtml(
             "E",
             "errorOperation",
             decreeTypeValidationMessage.message,

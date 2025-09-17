@@ -121,6 +121,46 @@ sap.ui.define(
           this.oBusyDialog = null;
         }
       },
+      alertMessageHtml: function (
+        sType,
+        sTitle,
+        sMessage,
+        aMessageParam,
+        opts = {}
+      ) {
+        var sIcon;
+
+        switch (sType) {
+          case "W":
+            sIcon = "warning";
+            break;
+          case "E":
+            sIcon = "error";
+            break;
+          case "S":
+            sIcon = "success";
+            break;
+          case "I":
+            sIcon = "info";
+            break;
+          case "Q":
+            sIcon = "question";
+            break;
+          default:
+            sIcon = "success";
+        }
+
+        this.showMessage({
+          html: this.getText(sMessage, aMessageParam),
+          title: this.getText(sTitle),
+          icon: sIcon,
+          showConfirmButton: true,
+          timer: undefined,
+          toast: false,
+          position: "center",
+          ...opts,
+        });
+      },
       alertMessage: function (
         sType,
         sTitle,
@@ -1291,6 +1331,148 @@ sap.ui.define(
             },
           });
         });
+      },
+            validateMissionForDecreeType:function(sDecreeType, aMissionMembers){
+        const oAppModel =
+          this.getModel("appModel") ||
+          this.getOwnerComponent().getModel("appModel");
+        const sLang = oAppModel.getProperty("/language");
+        
+        const aValidationRules = [
+          {
+            "externalCode": "01",
+            "localeLabel": "One Employee Mission - Administrative",
+            "localeARLabel": "مهمة رسمية لموظف - إداري",
+            "maxMembersCount": 1,
+            "minMembersCount": 1,
+            "headOfMissionExists":false
+          },
+           {
+            "externalCode": "02",
+            "localeLabel": "Group with Head Mission - Administrative",
+            "localeARLabel": "مهمة رسمية لوفد مع رئيس للوفد - إداري",
+            "maxMembersCount": 999,
+            "minMembersCount": 2,
+            "headOfMissionExists":true
+          },
+          {
+            "externalCode": "03",
+            "localeLabel": "Group without Head Mission - Administrative",
+            "localeARLabel": "مهمة رسمية لمجموعة موظفين - إداري",
+            "maxMembersCount": 999,
+            "minMembersCount": 2,
+            "headOfMissionExists":false
+          },
+          {
+            "externalCode": "04",
+            "localeLabel": "One Employee with Head of Mission - Administrative",
+            "localeARLabel": "بمهمة رسمية لموظف مع رئيس وفد - إداري",
+            "maxMembersCount": 2,
+            "minMembersCount": 2,
+            "headOfMissionExists":true
+          },
+        
+           {
+            "externalCode": "05",
+            "localeLabel": "One Employee Mission - Ministerial",
+            "localeARLabel": "مهمة رسمية لموظف - وزاري",
+            "maxMembersCount": 1,
+            "minMembersCount": 1,
+            "headOfMissionExists":false
+          },
+          {
+            "externalCode": "06",
+            "localeLabel": "Group with Head of Mission - Ministerial",
+            "localeARLabel": "مهمة رسمية لوفد مع رئيس للوفد - وزاري",
+            "maxMembersCount": 999,
+            "minMembersCount": 2,
+            "headOfMissionExists":true
+          },
+          {
+            "externalCode": "07",
+            "localeLabel": "Group without Head Mission - Ministerial",
+            "localeARLabel": "مهمة رسمية لمجموعة موظفين - وزاري",
+            "maxMembersCount": 999,
+            "minMembersCount": 2,
+            "headOfMissionExists":false
+          },
+          {
+            "externalCode": "08",
+            "localeLabel": "One Employee with Head of Mission - Ministerial",
+            "localeARLabel": "بمهمة رسمية لموظف مع رئيس وفد - وزاري",
+            "maxMembersCount": 2,
+            "minMembersCount": 2,
+            "headOfMissionExists":true
+          },
+           {
+            "externalCode": "09",
+            "localeLabel": "Head of Mission without Members - Ministerial ",
+            "localeARLabel": "لا يوجد",
+            "maxMembersCount": 1,
+            "minMembersCount": 1,
+            "headOfMissionExists":true
+          },
+          {
+            "externalCode": "10",
+            "localeLabel": "Head of Mission without Members - Administrative",
+            "localeARLabel": "لا يوجد",
+            "maxMembersCount": 1,
+            "minMembersCount": 1,
+            "headOfMissionExists":true
+          }
+        ];
+
+        const oRule = _.find(aValidationRules, ["externalCode", sDecreeType]);
+
+        if(!oRule){
+          return null;
+        }
+
+        const aMembers = []; // -- Total members count
+        const aHOM = []; // --Head of missions
+
+        aMissionMembers.forEach((oMember)=>{
+          aMembers.push(oMember.employeeID);
+
+          const hom = _.findIndex(oMember.itinerary, ["headOfMission", "Y"]);
+          
+          if(hom !== -1){
+            aHOM.push(oMember.employeeID);
+          }
+        });
+
+        //--Validations
+        //1--Max Members Count
+        if(aMembers.length === 0){
+          return {message: "noMembersFound", params:[]};
+        }  
+
+        if(aMembers.length < oRule.minMembersCount){
+          return {message:"tooLessMembersFound", params:[oRule[sLang === "en" ? "localeLabel" : "localArLabel"],oRule.minMembersCount, aMembers.length]};
+        }  
+
+        if(aMembers.length > oRule.maxMembersCount){
+          return {message:"tooManyMembersFound", params:[oRule[sLang === "en" ? "localeLabel" : "localArLabel"],oRule.maxMembersCount, aMembers.length]};
+        }  
+        //1--Max Members Count
+
+        //2--Head Of Mission Check
+        if(aHOM.length === 0 && oRule.headOfMissionExists){
+          return {message:"noHeadOfMissionFound", params:[oRule[sLang === "en" ? "localeLabel" : "localArLabel"]]};
+        }
+
+        if(aHOM.length > 1 && oRule.headOfMissionExists){
+          return {message:"tooManyHeadOfMissionFound", params:[oRule[sLang === "en" ? "localeLabel" : "localArLabel"]]};
+        }
+
+        if(aHOM.length > 0 && !oRule.headOfMissionExists){
+          return  {message:"noHeadOfMissionShouldExist", params:[oRule[sLang === "en" ? "localeLabel" : "localArLabel"]]};
+        }
+        //2--Head Of Mission Check
+        //--Validations
+
+
+
       },
       checkIsArabic: function (sContent) {
         const text = sContent.trim();

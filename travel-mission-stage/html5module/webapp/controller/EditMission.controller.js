@@ -3136,6 +3136,21 @@ sap.ui.define(
         }
         //--Check arabic description
 
+        //--Check decree type and head of mission
+        const decreeTypeValidationMessage = this.validateMissionForDecreeType(missionInfoModelData.decreeType, missionMembersData);
+
+        if(decreeTypeValidationMessage){
+          this.alertMessageHtml(
+            "E",
+            "errorOperation",
+            decreeTypeValidationMessage.message,
+            decreeTypeValidationMessage.params,
+            null
+          );
+          return;
+        }
+        //--Check decree type and head of mission
+
         var sectorAvailableBudget = 0;
         var sectorParkedBudget = 0;
 
