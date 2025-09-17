@@ -1352,6 +1352,7 @@ sap.ui.define(
             "localeLabel": "One Employee Mission - Administrative",
             "localeARLabel": "مهمة رسمية لموظف - إداري",
             "maxMembersCount": 1,
+            "minMembersCount": 1,
             "headOfMissionExists":false
           },
            {
@@ -1359,6 +1360,7 @@ sap.ui.define(
             "localeLabel": "Group with Head Mission - Administrative",
             "localeARLabel": "مهمة رسمية لوفد مع رئيس للوفد - إداري",
             "maxMembersCount": 999,
+            "minMembersCount": 2,
             "headOfMissionExists":true
           },
           {
@@ -1366,6 +1368,7 @@ sap.ui.define(
             "localeLabel": "Group without Head Mission - Administrative",
             "localeARLabel": "مهمة رسمية لمجموعة موظفين - إداري",
             "maxMembersCount": 999,
+            "minMembersCount": 2,
             "headOfMissionExists":false
           },
           {
@@ -1373,6 +1376,7 @@ sap.ui.define(
             "localeLabel": "One Employee with Head of Mission - Administrative",
             "localeARLabel": "بمهمة رسمية لموظف مع رئيس وفد - إداري",
             "maxMembersCount": 2,
+            "minMembersCount": 2,
             "headOfMissionExists":true
           },
         
@@ -1381,6 +1385,7 @@ sap.ui.define(
             "localeLabel": "One Employee Mission - Ministerial",
             "localeARLabel": "مهمة رسمية لموظف - وزاري",
             "maxMembersCount": 1,
+            "minMembersCount": 1,
             "headOfMissionExists":false
           },
           {
@@ -1388,6 +1393,7 @@ sap.ui.define(
             "localeLabel": "Group with Head of Mission - Ministerial",
             "localeARLabel": "مهمة رسمية لوفد مع رئيس للوفد - وزاري",
             "maxMembersCount": 999,
+            "minMembersCount": 2,
             "headOfMissionExists":true
           },
           {
@@ -1395,6 +1401,7 @@ sap.ui.define(
             "localeLabel": "Group without Head Mission - Ministerial",
             "localeARLabel": "مهمة رسمية لمجموعة موظفين - وزاري",
             "maxMembersCount": 999,
+            "minMembersCount": 2,
             "headOfMissionExists":false
           },
           {
@@ -1402,6 +1409,7 @@ sap.ui.define(
             "localeLabel": "One Employee with Head of Mission - Ministerial",
             "localeARLabel": "بمهمة رسمية لموظف مع رئيس وفد - وزاري",
             "maxMembersCount": 2,
+            "minMembersCount": 2,
             "headOfMissionExists":true
           },
            {
@@ -1409,6 +1417,7 @@ sap.ui.define(
             "localeLabel": "Head of Mission without Members - Ministerial ",
             "localeARLabel": "لا يوجد",
             "maxMembersCount": 1,
+            "minMembersCount": 1,
             "headOfMissionExists":true
           },
           {
@@ -1416,6 +1425,7 @@ sap.ui.define(
             "localeLabel": "Head of Mission without Members - Administrative",
             "localeARLabel": "لا يوجد",
             "maxMembersCount": 1,
+            "minMembersCount": 1,
             "headOfMissionExists":true
           }
         ];
@@ -1443,6 +1453,10 @@ sap.ui.define(
         //1--Max Members Count
         if(aMembers.length === 0){
           return {message: "noMembersFound", params:[]};
+        }  
+
+        if(aMembers.length < oRule.minMembersCount){
+          return {message:"tooLessMembersFound", params:[oRule[sLang === "en" ? "localeLabel" : "localArLabel"],oRule.minMembersCount, aMembers.length]};
         }  
 
         if(aMembers.length > oRule.maxMembersCount){
