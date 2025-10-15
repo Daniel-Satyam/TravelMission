@@ -177,6 +177,11 @@ sap.ui.define(
             pendingWithUser: null,
             decreeType: "",
             externalEntity: "",
+            externalEntity2: "",
+            externalEntity3: "",
+            externalEntity4: "",
+            externalEntity5: "",
+            externalEntities: [],
             flightType: "",
             budgetParked: 0,
             missionID: "",
@@ -392,10 +397,19 @@ sap.ui.define(
                 pendingWithUser: null,
                 decreeType: missionInfo.decreeType,
                 externalEntity: missionInfo.externalEntity,
+                externalEntity2: missionInfo.externalEntity2,
+                externalEntity3: missionInfo.externalEntity3,
+                externalEntity4: missionInfo.externalEntity4,
+                externalEntity5: missionInfo.externalEntity5,
+                externalEntities: [],
                 flightType: missionInfo.filightType,
                 budgetParked: missionInfo.budgetParked,
                 missionID: missionInfo.id,
               };
+
+              //--Get external entities
+              that.getExternalEntities(missionInfoObj);
+              //--Get external entities
 
               var missionInfoModel = new JSONModel({
                 info: missionInfoObj,
@@ -3454,7 +3468,12 @@ sap.ui.define(
           );
           return;
         } else {
-          var missionRequest = {
+          
+          //--Set external entities
+          this.setExternalEntities(missionInfoModelData);
+          //--Set external entities
+
+          let missionRequest = {
             info: {
               missionId: "",
               budgetAvailable: missionBudgetAvailable,
@@ -3463,6 +3482,10 @@ sap.ui.define(
               createdBy: "",
               decreeType: "",
               externalEntity: "",
+              externalEntity2: "",
+              externalEntity3: "",
+              externalEntity4: "",
+              externalEntity5: "",
               destination: "",
               flightType: "",
               hospitality_Type: "",
@@ -3508,6 +3531,10 @@ sap.ui.define(
           ) {
             if(missionInfoModelData.externalEntity !== null && missionInfoModelData.externalEntity !== ""){
               missionRequest.info.externalEntity = missionInfoModelData.externalEntity;
+              missionRequest.info.externalEntity2 = missionInfoModelData.externalEntity2;
+              missionRequest.info.externalEntity3 = missionInfoModelData.externalEntity3;
+              missionRequest.info.externalEntity4 = missionInfoModelData.externalEntity4;
+              missionRequest.info.externalEntity5 = missionInfoModelData.externalEntity5;
             }else{
               validationError = true;
             }

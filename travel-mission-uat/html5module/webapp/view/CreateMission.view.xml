@@ -9,6 +9,7 @@
 		Formatter: 'ui5appuat/model/formatter'
 	}"
 	xmlns:upload="sap.m.upload"
+	xmlns:ui="ui5appuat.ui"
 	>
 	<Page class="sapUiResponsiveContentPadding travelMissionPage" enableScrolling="true">
 		<customHeader>
@@ -22,7 +23,7 @@
 					</Toolbar>
 				</headerToolbar>
 				<content>
-					<f:GridList id="createMissionFormItems">
+					<f:GridList id="createMissionFormItems" class="customGrid">
 						<f:customLayout>
 							<grid:GridBoxLayout boxMinWidth="15rem" boxesPerRowConfig="XL5 L4 M2 S1"/>
 						</f:customLayout>
@@ -237,14 +238,34 @@
 								<Text class="errorInfoTxt" text="{i18n>validateMissionDecreeType}" visible="{=${missionInfoModel>/info/decreeType} === '' &amp;&amp; ${screenModel>/info/validationError}}"/>
 							</VBox>
 						</f:GridListItem>
-						<f:GridListItem visible="{= ${missionInfoModel>/info/decreeType} === '09' || ${missionInfoModel>/info/decreeType} === '10' }">
+						<f:GridListItem visible="{= ${missionInfoModel>/info/decreeType} === '09' || ${missionInfoModel>/info/decreeType} === '10' }"
+							class="gridItemSpanCol2"
+						>
 							<VBox class="sapUiSmallMargin">
 								<layoutData>
 									<FlexItemData growFactor="1" shrinkFactor="0" />
 								</layoutData>
 
 								<Label text="{i18n>externalEntity}" labelFor="missionExternalEntity" required="{= ${missionInfoModel>/info/decreeType} === '09' || ${missionInfoModel>/info/decreeType} === '10' }" />
-								<ComboBox
+								<ui:MultiSelectComboBox
+									placeholder="{i18n>SELECT_EXTERNAL_ENTITY}"
+									searchPlaceholder="{i18n>SEARCH_PLACEHOLDER}"
+									minSelection="1"
+									maxSelection="5"
+									width="100%"
+									selectedKeys="{missionInfoModel>/info/externalEntities}"
+									items="{
+										path: 'externalEntityModel>/externalEntitySet',
+										length : 500,
+										sorter: { path: 'localeLabel' },
+										templateShareable: false
+									}"
+								>
+									<ui:items>
+										<core:Item key="{externalEntityModel>externalCode}" text="{= ${appModel>/language} === 'en' ? ${externalEntityModel>localeLabel} : ${externalEntityModel>localeARLabel} }" />
+									</ui:items>
+								</ui:MultiSelectComboBox>
+								<!-- <ComboBox
 									visible="{= ${appModel>/language} === 'en' }"
 									class="createMissionDropdown"
 									showClearIcon="true"
@@ -271,7 +292,7 @@
 									}"
 									>
 									<core:Item key="{externalEntityModel>externalCode}" text="{externalEntityModel>localeARLabel}" />
-								</ComboBox>
+								</ComboBox> -->
 								<Text class="errorInfoTxt" text="{i18n>validateMissionExternalEntity}" visible="{= ( ${missionInfoModel>/info/decreeType} === '09' || ${missionInfoModel>/info/decreeType} === '10' ) &amp;&amp; ${missionInfoModel>/info/externalEntity} === '' &amp;&amp; ${screenModel>/info/validationError}}"/>
 							</VBox>
 						</f:GridListItem>

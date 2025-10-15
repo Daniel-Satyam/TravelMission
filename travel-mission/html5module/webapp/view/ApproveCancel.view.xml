@@ -8,7 +8,7 @@
 	core:require="{
 		Formatter: 'ui5app/model/formatter'
 	}"
-	xmlns:upload="sap.m.upload">
+	xmlns:upload="sap.m.upload" xmlns:ui="ui5appuat.ui">
 	<Page class="sapUiResponsiveContentPadding travelMissionPage" enableScrolling="true">
 		<customHeader>
 			<core:Fragment fragmentName="ui5app.view.fragments.Header" type="XML" />

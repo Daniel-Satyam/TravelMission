@@ -1937,3 +1937,11 @@ html[dir="rtl"]
     max-width: calc(34% - 1.5rem) !important;
   }
 }
+
+.gridItemSpanCol2{
+  grid-column: span 2 !important;
+}
+
+.customGrid .sapUiLayoutCSSGridBoxLayoutContainer{
+  grid-auto-rows: unset !important;
+}

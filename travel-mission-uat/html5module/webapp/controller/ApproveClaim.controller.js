@@ -243,7 +243,8 @@ sap.ui.define(
               cust_Parked_Amount:
                 parseFloat(oFormerSubSector.cust_Parked_Amount) -
                 missionTotalExpenseDifference,
-              cust_Comments: "Approve/reject claim (Sector change - Budget revised)",
+              cust_Comments:
+                "Approve/reject claim (Sector change - Budget revised)",
               real_Consumption: 0,
             };
             aBudgetTracking.push(oSubBudgetTracking);
@@ -259,7 +260,8 @@ sap.ui.define(
               cust_Parked_Amount:
                 parseFloat(oFormerMainSector.cust_Parked_Amount) -
                 missionTotalExpenseDifference,
-              cust_Comments: "Approve/reject claim (Sector change - Budget revised)",
+              cust_Comments:
+                "Approve/reject claim (Sector change - Budget revised)",
               real_Consumption: 0,
             };
             aBudgetTracking.push(oMainBudgetTracking);
@@ -349,8 +351,12 @@ sap.ui.define(
         }
 
         //--Return as is, becuase we will update using budget tracking (New S4-SF Scenario)
-        missionBudgetAvailable =  parseFloat(oSubSector.cust_Available_budget) - parseFloat(missionTotalExpenseDifference);
-        missionParkedAmount = parseFloat(oSubSector.cust_Parked_Amount) + parseFloat(missionTotalExpenseDifference);
+        missionBudgetAvailable =
+          parseFloat(oSubSector.cust_Available_budget) -
+          parseFloat(missionTotalExpenseDifference);
+        missionParkedAmount =
+          parseFloat(oSubSector.cust_Parked_Amount) +
+          parseFloat(missionTotalExpenseDifference);
 
         //   missionBudgetAvailable =
         //   parseFloat(oSubSector.cust_Available_budget) -
@@ -477,6 +483,10 @@ sap.ui.define(
           return null;
         }
 
+        //--Set external entities
+        this.setExternalEntities(oMission);
+        //--Set external entities
+
         //--Prepare payload
         let oMissionRequest = {
           info: {
@@ -485,6 +495,10 @@ sap.ui.define(
             budgetParked: missionParkedAmount.toString(),
             decreeType: oMission.decreeType,
             externalEntity: oMission.externalEntity,
+            externalEntity2: oMission.externalEntity2,
+            externalEntity3: oMission.externalEntity3,
+            externalEntity4: oMission.externalEntity4,
+            externalEntity5: oMission.externalEntity5,
             destination: oMission.destination,
             flightType: oMission.flightType,
             hospitality_Type: oMission.hospitality_Type,
@@ -664,16 +678,16 @@ sap.ui.define(
         for (var i = 0; i < membersModelData.length; i++) {
           var memberItinerary = membersModelData[i].itinerary;
           for (var j = 0; j < memberItinerary.length; j++) {
-            if(memberItinerary.length === 1) {
-            	if(aInfo.missionStartDate != null) {
-            		memberItinerary[j].startDate = aInfo.missionStartDate;
-            	}
-            	if(aInfo.missionEndDate != null) {
-            		memberItinerary[j].endDate = aInfo.missionEndDate;
-            	}
+            if (memberItinerary.length === 1) {
+              if (aInfo.missionStartDate != null) {
+                memberItinerary[j].startDate = aInfo.missionStartDate;
+              }
+              if (aInfo.missionEndDate != null) {
+                memberItinerary[j].endDate = aInfo.missionEndDate;
+              }
             } else {
-            memberItinerary[j].startDate = null;
-            memberItinerary[j].endDate = null;
+              memberItinerary[j].startDate = null;
+              memberItinerary[j].endDate = null;
             }
 
             // if (aInfo.missionStartDate != null) {
@@ -1312,6 +1326,11 @@ sap.ui.define(
             pendingWithUser: null,
             decreeType: "",
             externalEntity: "",
+            externalEntity2: "",
+            externalEntity3: "",
+            externalEntity4: "",
+            externalEntity5: "",
+            externalEntities: [],
             flightType: "",
             budgetParked: 0,
             missionID: "",
@@ -1539,28 +1558,26 @@ sap.ui.define(
                   that.missionTotalExpense = missionInfo.totalExpenseOnMission;
                   that.missionFormerSector = missionInfo.sector;
 
+                  //--Startdate - Enddate mix max
+                  var mStartDtMin = null;
+                  var mEndDtMin = null;
+                  var mStartDtMax = null;
+                  var mEndDtMax = null;
 
-                      //--Startdate - Enddate mix max
-                      var mStartDtMin = null;
-                      var mEndDtMin = null;
-                      var mStartDtMax = null;
-                      var mEndDtMax = null;
-        
-                      if (missionInfo["startDate"] != null) {
-                        mStartDtMin = new Date(missionInfo["startDate"]);
-                        mStartDtMax = new Date(missionInfo["startDate"]);
-                        mStartDtMin.setDate(mStartDtMin.getDate() - 1);
-                        mStartDtMax.setDate(mStartDtMax.getDate() + 1);
-                      }
-        
-                      if (missionInfo["endDate"] != null) {
-                        mEndDtMin = new Date(missionInfo["endDate"]);
-                        mEndDtMax = new Date(missionInfo["endDate"]);
-                        mEndDtMin.setDate(mEndDtMin.getDate() - 1);
-                        mEndDtMax.setDate(mEndDtMax.getDate() + 1);
-                      }  
-                      //--Startdate - Enddate mix max  
-   
+                  if (missionInfo["startDate"] != null) {
+                    mStartDtMin = new Date(missionInfo["startDate"]);
+                    mStartDtMax = new Date(missionInfo["startDate"]);
+                    mStartDtMin.setDate(mStartDtMin.getDate() - 1);
+                    mStartDtMax.setDate(mStartDtMax.getDate() + 1);
+                  }
+
+                  if (missionInfo["endDate"] != null) {
+                    mEndDtMin = new Date(missionInfo["endDate"]);
+                    mEndDtMax = new Date(missionInfo["endDate"]);
+                    mEndDtMin.setDate(mEndDtMin.getDate() - 1);
+                    mEndDtMax.setDate(mEndDtMax.getDate() + 1);
+                  }
+                  //--Startdate - Enddate mix max
 
                   var missionInfoObj = {
                     missionDescription: missionInfo.description,
@@ -1582,6 +1599,10 @@ sap.ui.define(
                     pendingWithUser: null,
                     decreeType: missionInfo.decreeType,
                     externalEntity: missionInfo.externalEntity,
+                    externalEntity2: missionInfo.externalEntity2,
+                    externalEntity3: missionInfo.externalEntity3,
+                    externalEntity4: missionInfo.externalEntity4,
+                    externalEntity5: missionInfo.externalEntity5,
                     flightType: missionInfo.filightType,
                     budgetParked: missionInfo.budgetParked,
                     missionID: missionInfo.id,
@@ -1602,7 +1623,10 @@ sap.ui.define(
                   //   endDtModified.setDate(endDtModified.getDate());
                   // }
 
-               
+                  //--Get external entities
+                  that.getExternalEntities(missionInfoObj);
+                  //--Get external entities
+
                   var missionInfoModel = new JSONModel({
                     info: missionInfoObj,
                   });
