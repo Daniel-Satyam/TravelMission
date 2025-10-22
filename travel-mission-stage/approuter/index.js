@@ -6257,7 +6257,7 @@ const _getAdminMissionReport = async function (body, cookies) {
           decreeType: _readValue("decreeType", m0.cust_Decree_Type),
           externalEntity: _readValue("externalEntity", m0.cust_ExternalEntity),
           hospitality: _readValue("hospitality", m0.cust_Hospitality_Type),
-          flighType: _readValue("flightType", m0.cust_Flight_type),
+          flightType: _readValue("flightType", m0.cust_Flight_type),
           budgetAvailable: _formatCurrency(m0.cust_Budget_Available),
           budgetParked: _formatCurrency(m0.cust_Budget_Parked),
           noOfDays: m0.cust_No_Of_Days,
@@ -6408,7 +6408,7 @@ const _getAdminMissionReport = async function (body, cookies) {
       },
       {
         Colsq: 10,
-        Colid: "flighType",
+        Colid: "flightType",
         Coltx: "Flight Type",
         Colwd: "9rem",
         Coldt: "string",

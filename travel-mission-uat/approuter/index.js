@@ -563,6 +563,13 @@ const _fetchTicketAndPerDiem = async function (decryptedData, cookies) {
     };
 
     const response = await axios.request(config);
+
+    //--Make ticket costs zero for private and military
+    if(decryptedData.hasOwnProperty("flightType") && (decryptedData.flightType === "2" || decryptedData.flightType === "3")) {
+      response.data["ticketAverage"] = 0;
+    }
+    //--Make ticket costs zero  for private and military
+
     return response.data;
   } catch (error) {
     if (
@@ -1531,9 +1538,7 @@ const _claimMission = async function (decryptedData, cookies) {
         _.cloneDeep(batchResult[2].d.results[0]);
 
       const sectorFetchResponse =
-        batchResult[3] &&
-        batchResult[3].d &&
-        batchResult[3].d.results;
+        batchResult[3] && batchResult[3].d && batchResult[3].d.results;
 
       //--Prepare post bodies
 
@@ -1548,9 +1553,10 @@ const _claimMission = async function (decryptedData, cookies) {
       } else {
         claimUpdateHeader["__metadata"] = {
           uri: cookies.SF.URL + "cust_BenefitTravelClaim",
-          type: "SFOData.cust_BenefitTravelClaim"
+          type: "SFOData.cust_BenefitTravelClaim",
         };
-        claimUpdateHeader["externalName"] = "The claim creation in mission " + decryptedData.missionId;
+        claimUpdateHeader["externalName"] =
+          "The claim creation in mission " + decryptedData.missionId;
         claimUpdateHeader["mdfSystemEffectiveStartDate"] = decryptedData.date;
       }
       let claimUpdateRequest = {
@@ -1567,10 +1573,10 @@ const _claimMission = async function (decryptedData, cookies) {
         cust_Pending_with: approveGroup,
         cust_Claim_Parked: decryptedData.claimParked,
         cust_Description:
-        "The claim creation for " +
-        decryptedData.employeeId +
-        " on mission " +
-        decryptedData.missionId,
+          "The claim creation for " +
+          decryptedData.employeeId +
+          " on mission " +
+          decryptedData.missionId,
         cust_attachmentNav: {
           __metadata: {
             uri: cookies.SF.URL + "Attachment(" + attachmentId + ")",
@@ -1581,7 +1587,8 @@ const _claimMission = async function (decryptedData, cookies) {
 
       //--Mission update
       let missionClone = _.clone(missionFetchResponse);
-      let missionUpdateRequest = { ...missionClone,
+      let missionUpdateRequest = {
+        ...missionClone,
         __metadata: missionFetchResponse.__metadata,
         //--Update related fields
         cust_TicketAverage: decryptedData.missionTotalTicketCost,
@@ -1636,28 +1643,29 @@ const _claimMission = async function (decryptedData, cookies) {
 
       //--Sector update
       let sectorUpdateRequest = [];
-      sectorFetchResponse && sectorFetchResponse.forEach((s) => {
-        let budgetUpdate =
-          _.find(budgetTracking, ["cust_SFSector", s.externalCode]) || null;
-        if (budgetUpdate) {
-          sectorUpdateRequest.push({
-            __metadata: {
-              uri: cookies.SF.URL + "cust_SectorBudget",
-              type: "SFOData.cust_SectorBudget"
-            },
-            externalCode: s.externalCode,
-            effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-            cust_Available_budget: budgetUpdate.cust_Remaining_Budget,
-          });
-        }
-      });
+      sectorFetchResponse &&
+        sectorFetchResponse.forEach((s) => {
+          let budgetUpdate =
+            _.find(budgetTracking, ["cust_SFSector", s.externalCode]) || null;
+          if (budgetUpdate) {
+            sectorUpdateRequest.push({
+              __metadata: {
+                uri: cookies.SF.URL + "cust_SectorBudget",
+                type: "SFOData.cust_SectorBudget",
+              },
+              externalCode: s.externalCode,
+              effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+              cust_Available_budget: budgetUpdate.cust_Remaining_Budget,
+            });
+          }
+        });
 
       let budgetTrackingUpdateRequest = [];
       budgetTracking.forEach((t, i) => {
         budgetTrackingUpdateRequest.push({
           __metadata: {
             uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
-            type: "SFOData.cust_Budget_Tracking_Missions"
+            type: "SFOData.cust_Budget_Tracking_Missions",
           },
           externalCode:
             decryptedData.missionId + "-" + new Date().getTime() + "-" + i,
@@ -1682,7 +1690,7 @@ const _claimMission = async function (decryptedData, cookies) {
       const auditLogUpdateRequest = {
         __metadata: {
           uri: cookies.SF.URL + "cust_Audit_Log",
-          type: "SFOData.cust_Audit_Log"
+          type: "SFOData.cust_Audit_Log",
         },
         externalCode: "1234",
         cust_Timestamp: decryptedData.date,
@@ -1717,7 +1725,7 @@ const _claimMission = async function (decryptedData, cookies) {
         `Content-Type: application/json;charset=utf-8\r\n` +
         `Accept: application/json\r\n\r\n` +
         `${JSON.stringify(missionUpdateRequest)}\r\n\r\n`;
-      if (sectorUpdateRequest && sectorUpdateRequest.length>0) {
+      if (sectorUpdateRequest && sectorUpdateRequest.length > 0) {
         postBatchBody =
           postBatchBody +
           `--${changeSet}\r\n` +
@@ -1728,7 +1736,10 @@ const _claimMission = async function (decryptedData, cookies) {
           `Accept: application/json\r\n\r\n` +
           `${JSON.stringify(sectorUpdateRequest)}\r\n\r\n`;
       }
-      if (budgetTrackingUpdateRequest && budgetTrackingUpdateRequest.length>0) {
+      if (
+        budgetTrackingUpdateRequest &&
+        budgetTrackingUpdateRequest.length > 0
+      ) {
         postBatchBody =
           postBatchBody +
           `--${changeSet}\r\n` +
@@ -1764,10 +1775,19 @@ const _claimMission = async function (decryptedData, cookies) {
       //--Rewritten with batch
 
       //--Post update
-      if (!postBatchResult || ( postBatchResult && postBatchResult[0] && postBatchResult[0].hasOwnProperty("error") )) {
-        if(postBatchResult[0] && postBatchResult[0].hasOwnProperty("error")){
-          console.log("Post batch error:" + postBatchResult[0].error.message.value);
-          throw Error("Post batch error:" + postBatchResult[0].error.message.value);
+      if (
+        !postBatchResult ||
+        (postBatchResult &&
+          postBatchResult[0] &&
+          postBatchResult[0].hasOwnProperty("error"))
+      ) {
+        if (postBatchResult[0] && postBatchResult[0].hasOwnProperty("error")) {
+          console.log(
+            "Post batch error:" + postBatchResult[0].error.message.value
+          );
+          throw Error(
+            "Post batch error:" + postBatchResult[0].error.message.value
+          );
         }
         throw Error("Error during batch post");
       }
@@ -7443,7 +7463,7 @@ const _getAdminMissionReport = async function (body, cookies) {
           decreeType: _readValue("decreeType", m0.cust_Decree_Type),
           externalEntity: _readValue("externalEntity", m0.cust_ExternalEntity),
           hospitality: _readValue("hospitality", m0.cust_Hospitality_Type),
-          flighType: _readValue("flightType", m0.cust_Flight_type),
+          flightType: _readValue("flightType", m0.cust_Flight_type),
           budgetAvailable: _formatCurrency(m0.cust_Budget_Available),
           budgetParked: _formatCurrency(m0.cust_Budget_Parked),
           noOfDays: m0.cust_No_Of_Days,
@@ -7594,7 +7614,7 @@ const _getAdminMissionReport = async function (body, cookies) {
       },
       {
         Colsq: 10,
-        Colid: "flighType",
+        Colid: "flightType",
         Coltx: "Flight Type",
         Colwd: "9rem",
         Coldt: "string",

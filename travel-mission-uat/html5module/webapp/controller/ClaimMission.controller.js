@@ -1068,6 +1068,7 @@ sap.ui.define(
           paygradeLevel: "",
           payGrade: "",
           ticketType: "",
+          flightType: "",
         };
 
         var mModelData = this.getModel("membersModel").getData().members;
@@ -1083,6 +1084,8 @@ sap.ui.define(
             obj.payGrade = mModelData[i].grade;
 
             obj.sector = aInfo.sector;
+
+            obj.flightType = aInfo.flightType;
 
             var itineraryData = mModelData[i].itinerary;
 
