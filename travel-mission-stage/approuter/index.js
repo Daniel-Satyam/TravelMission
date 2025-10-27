@@ -558,6 +558,11 @@ const _fetchTicketAndPerDiem = async function (decryptedData, cookies) {
     };
 
     const response = await axios.request(config);
+    //--Make ticket costs zero for private and military
+    if(decryptedData.hasOwnProperty("flightType") && (decryptedData.flightType === "2" || decryptedData.flightType === "3")) {
+      response.data["ticketAverage"] = 0;
+    }
+    //--Make ticket costs zero  for private and military
     return response.data;
   } catch (error) {
     if (
