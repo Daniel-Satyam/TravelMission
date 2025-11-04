@@ -133,6 +133,11 @@ sap.ui.define(
             pendingWithUser: null,
             decreeType: "",
             externalEntity: "",
+            externalEntity2: "",
+            externalEntity3: "",
+            externalEntity4: "",
+            externalEntity5: "",
+            externalEntities: [],
             flightType: "",
             budgetParked: 0,
             missionID: "",
@@ -1349,6 +1354,11 @@ sap.ui.define(
           //   dependentOn: that.getView(),
           // });
         } else {
+          
+          //--Set external entities
+          this.setExternalEntities(missionInfoModelData);
+          //--Set external entities
+
           var missionRequest = {
             info: {
               budgetAvailable: missionBudgetAvailable,
@@ -1357,6 +1367,10 @@ sap.ui.define(
               createdBy: "",
               decreeType: "",
               externalEntity:"",
+              externalEntity2:"",
+              externalEntity3:"",
+              externalEntity4:"",
+              externalEntity5:"",
               destination: "",
               flightType: "",
               hospitality_Type: "",
@@ -1392,11 +1406,19 @@ sap.ui.define(
           ) {
             if(missionInfoModelData.externalEntity !== null && missionInfoModelData.externalEntity !== ""){
               missionRequest.info.externalEntity = missionInfoModelData.externalEntity;
+              missionRequest.info.externalEntity2 = missionInfoModelData.externalEntity2;
+              missionRequest.info.externalEntity3 = missionInfoModelData.externalEntity3;
+              missionRequest.info.externalEntity4 = missionInfoModelData.externalEntity4;
+              missionRequest.info.externalEntity5 = missionInfoModelData.externalEntity5;
             }else{
               validationError = true;
             }
           }else{
             missionRequest.info.externalEntity = "";
+            missionRequest.info.externalEntity2 = "";
+            missionRequest.info.externalEntity3 = "";
+            missionRequest.info.externalEntity4 = "";
+            missionRequest.info.externalEntity5 = "";
           }  
 
           if (

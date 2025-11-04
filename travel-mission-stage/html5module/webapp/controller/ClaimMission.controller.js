@@ -163,6 +163,11 @@ sap.ui.define(
             pendingWithUser: null,
             decreeType: "",
             externalEntity: "",
+            externalEntity2: "",
+            externalEntity3: "",
+            externalEntity4: "",
+            externalEntity5: "",
+            externalEntities: [],
             flightType: "",
             budgetParked: 0,
             missionID: "",
@@ -367,6 +372,10 @@ sap.ui.define(
                 pendingWithUser: null,
                 decreeType: missionInfo.decreeType,
                 externalEntity: missionInfo.externalEntity,
+                externalEntity2: missionInfo.externalEntity2,
+                externalEntity3: missionInfo.externalEntity3,
+                externalEntity4: missionInfo.externalEntity4,
+                externalEntity5: missionInfo.externalEntity5,
                 flightType: missionInfo.filightType,
                 budgetParked: missionInfo.budgetParked,
                 missionID: missionInfo.id,
@@ -376,6 +385,10 @@ sap.ui.define(
                 endDateMaxDate: mEndDtMax,
               };
 
+              //--Get external entities
+              that.getExternalEntities(missionInfoObj);
+              //--Get external entities
+              
               var missionInfoModel = new JSONModel({
                 info: missionInfoObj,
               });

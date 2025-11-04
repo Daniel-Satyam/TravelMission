@@ -176,6 +176,11 @@ sap.ui.define(
             pendingWithUser: null,
             decreeType: "",
             externalEntity: "",
+            externalEntity2: "",
+            externalEntity3: "",
+            externalEntity4: "",
+            externalEntity5: "",
+            externalEntities: [],
             flightType: "",
             budgetParked: 0,
             missionID: "",
@@ -200,7 +205,7 @@ sap.ui.define(
               employeeName: "",
               salutation: "",
               employeeID: "",
-              userID:"",
+              userID: "",
               grade: "",
               gradeLevel: "",
               department: "",
@@ -391,10 +396,19 @@ sap.ui.define(
                 pendingWithUser: null,
                 decreeType: missionInfo.decreeType,
                 externalEntity: missionInfo.externalEntity,
+                externalEntity2: missionInfo.externalEntity2,
+                externalEntity3: missionInfo.externalEntity3,
+                externalEntity4: missionInfo.externalEntity4,
+                externalEntity5: missionInfo.externalEntity5,
+                externalEntities: [],
                 flightType: missionInfo.filightType,
                 budgetParked: missionInfo.budgetParked,
                 missionID: missionInfo.id,
               };
+
+              //--Get external entities
+              that.getExternalEntities(missionInfoObj);
+              //--Get external entities
 
               var missionInfoModel = new JSONModel({
                 info: missionInfoObj,
@@ -1222,7 +1236,7 @@ sap.ui.define(
           this.setModel(membersModel, "membersModel");
         }
       },
-      
+
       addMembers: function () {
         var aInfo = this.getModel("missionInfoModel").getData().info;
 
@@ -1288,9 +1302,11 @@ sap.ui.define(
           // ],
           attachments: [],
         };
-        
-        const bHeadOfMissionEditable = this.isHeadOfMissionEditable(aInfo.decreeType);
-        
+
+        const bHeadOfMissionEditable = this.isHeadOfMissionEditable(
+          aInfo.decreeType
+        );
+
         //--Set the first members itinerarys to the new member
         const oFirstMember = aMembers[0];
         if (oFirstMember) {
@@ -1410,7 +1426,9 @@ sap.ui.define(
 
       resetFirstItinerary: function (guid, oEvent) {
         var aInfo = this.getModel("missionInfoModel").getData().info;
-        const bHeadOfMissionEditable = this.isHeadOfMissionEditable(aInfo.decreeType);
+        const bHeadOfMissionEditable = this.isHeadOfMissionEditable(
+          aInfo.decreeType
+        );
 
         var startDtModified = null;
         var endDtModified = null;
@@ -1438,7 +1456,8 @@ sap.ui.define(
                 mModelData[k].itinerary[l].startDateMaxDate = endDtModified;
                 mModelData[k].itinerary[l].endDateMinDate = startDtModified;
                 mModelData[k].itinerary[l].endDateMaxDate = endDtModified;
-                mModelData[k].itinerary[l].headOfMission = bHeadOfMissionEditable ? "" : "N";
+                mModelData[k].itinerary[l].headOfMission =
+                  bHeadOfMissionEditable ? "" : "N";
                 mModelData[k].itinerary[l].hospitalityDefault = "";
                 mModelData[k].itinerary[l].perDiemPerCity = 0;
                 mModelData[k].itinerary[l].ticketAverage = 0;
@@ -1562,7 +1581,9 @@ sap.ui.define(
 
       addItinerary: function (guid, oEvent) {
         var aInfo = this.getModel("missionInfoModel").getData().info;
-        const bHeadOfMissionEditable = this.isHeadOfMissionEditable(aInfo.decreeType);
+        const bHeadOfMissionEditable = this.isHeadOfMissionEditable(
+          aInfo.decreeType
+        );
 
         var startDtModified = null;
         var endDtModified = null;
@@ -1601,7 +1622,10 @@ sap.ui.define(
               endDateMinDate: startDtModified,
               endDateMaxDate: endDtModified,
               //headOfMission: bHeadOfMissionEditable ? "" : "N",
-              headOfMission: itineraryData.length > 0 ? itineraryData[0].headOfMission : this.getDefaultHeadOfMission(aInfo.decreeType),
+              headOfMission:
+                itineraryData.length > 0
+                  ? itineraryData[0].headOfMission
+                  : this.getDefaultHeadOfMission(aInfo.decreeType),
               hospitalityDefault: "",
               perDiemPerCity: 0,
               ticketAverage: 0,
@@ -3110,7 +3134,7 @@ sap.ui.define(
 
         //--Check arabic description
         const oDescrField = this.byId("missionDescription");
-        if(oDescrField){
+        if (oDescrField) {
           oDescrField.setValueState("None");
           oDescrField.setValueStateText("");
         }
@@ -3125,13 +3149,15 @@ sap.ui.define(
             "arabicDescriptionOnly",
             [],
             {
-              confirmCallbackFn: ()=>{
-                if(oDescrField){
+              confirmCallbackFn: () => {
+                if (oDescrField) {
                   oDescrField.focus();
                   oDescrField.setValueState("Error");
-                  oDescrField.setValueStateText(this.getText("arabicDescriptionOnly", []));
+                  oDescrField.setValueStateText(
+                    this.getText("arabicDescriptionOnly", [])
+                  );
                 }
-              }
+              },
             }
           );
           return;
@@ -3139,9 +3165,12 @@ sap.ui.define(
         //--Check arabic description
 
         //--Check decree type and head of mission
-        const decreeTypeValidationMessage = this.validateMissionForDecreeType(missionInfoModelData.decreeType, missionMembersData);
+        const decreeTypeValidationMessage = this.validateMissionForDecreeType(
+          missionInfoModelData.decreeType,
+          missionMembersData
+        );
 
-        if(decreeTypeValidationMessage){
+        if (decreeTypeValidationMessage) {
           this.alertMessageHtml(
             "E",
             "errorOperation",
@@ -3152,8 +3181,6 @@ sap.ui.define(
           return;
         }
         //--Check decree type and head of mission
-
-
 
         var sectorAvailableBudget = 0;
         var sectorParkedBudget = 0;
@@ -3268,6 +3295,9 @@ sap.ui.define(
           //   dependentOn: that.getView(),
           // });
         } else {
+          //--Set external entities
+          this.setExternalEntities(missionInfoModelData);
+          //--Set external entities
           var missionRequest = {
             info: {
               missionId: "",
@@ -3277,6 +3307,10 @@ sap.ui.define(
               createdBy: "",
               decreeType: "",
               externalEntity: "",
+              externalEntity2: "",
+              externalEntity3: "",
+              externalEntity4: "",
+              externalEntity5: "",
               destination: "",
               flightType: "",
               hospitality_Type: "",
@@ -3317,16 +3351,33 @@ sap.ui.define(
           }
 
           if (
-            missionInfoModelData.decreeType === "09" || missionInfoModelData.decreeType === "10" 
+            missionInfoModelData.decreeType === "09" ||
+            missionInfoModelData.decreeType === "10"
           ) {
-            if(missionInfoModelData.externalEntity !== null && missionInfoModelData.externalEntity !== ""){
-              missionRequest.info.externalEntity = missionInfoModelData.externalEntity;
-            }else{
+            if (
+              missionInfoModelData.externalEntity !== null &&
+              missionInfoModelData.externalEntity !== ""
+            ) {
+              missionRequest.info.externalEntity =
+                missionInfoModelData.externalEntity;
+              missionRequest.info.externalEntity2 =
+                missionInfoModelData.externalEntity2;
+              missionRequest.info.externalEntity3 =
+                missionInfoModelData.externalEntity3;
+              missionRequest.info.externalEntity4 =
+                missionInfoModelData.externalEntity4;
+              missionRequest.info.externalEntity5 =
+                missionInfoModelData.externalEntity5;
+            } else {
               validationError = true;
             }
-          }else{
+          } else {
             missionRequest.info.externalEntity = "";
-          }  
+            missionRequest.info.externalEntity2 = "";
+            missionRequest.info.externalEntity3 = "";
+            missionRequest.info.externalEntity4 = "";
+            missionRequest.info.externalEntity5 = "";
+          }
 
           if (
             missionInfoModelData.destination != "" &&

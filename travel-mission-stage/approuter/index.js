@@ -1711,8 +1711,10 @@ const _claimMission = async function (decryptedData, cookies) {
       const missionSelectQuery =
         "externalCode,effectiveStartDate,transactionSequence,cust_Mission_Start_Date,cust_Mission_End_Date,cust_No_Of_Days," +
         "cust_ReplicationFlag,cust_Hospitality_Type,cust_Flight_type,cust_Destination,cust_TotalPerdiemMission,cust_TicketAverage," +
-        "cust_Total_Expense,cust_Budget_Available,cust_Budget_Parked,cust_Members/cust_Mission_effectiveStartDate,cust_Members/cust_Mission_externalCode," +
-        "cust_Members/cust_Mission_transactionSequence,cust_Members/cust_Employee_ID,cust_Members/cust_Employee_Total_Ticket," +
+        "cust_Total_Expense,cust_Budget_Available,cust_Budget_Parked," + 
+        "cust_Members/cust_Mission_effectiveStartDate,cust_Members/cust_Mission_externalCode," +
+        "cust_Members/cust_Mission_transactionSequence,cust_Members/externalCode," + 
+        "cust_Members/cust_Employee_ID,cust_Members/cust_Employee_Total_Ticket," +
         "cust_Members/cust_Employee_Total_Perdiem,cust_Members/cust_Employee_Total_Expense,cust_Members/cust_Claimed," +
         "cust_Members/cust_itinerary_details_child/cust_Mission_effectiveStartDate," +
         "cust_Members/cust_itinerary_details_child/cust_Mission_externalCode,cust_Members/cust_itinerary_details_child/cust_Members_externalCode," +
@@ -1833,7 +1835,10 @@ const _claimMission = async function (decryptedData, cookies) {
       let missionClone = _.clone(missionFetchResponse);
       let missionUpdateRequest = {
         ...missionClone,
-        __metadata: missionFetchResponse.__metadata,
+        __metadata: {
+          uri: cookies.SF.URL + "cust_Mission",
+          type: "SFOData.cust_Mission"
+        },
         //--Update related fields
         cust_TicketAverage: decryptedData.missionTotalTicketCost,
         cust_Total_Expense: decryptedData.missionTotalExpense,
@@ -1845,6 +1850,11 @@ const _claimMission = async function (decryptedData, cookies) {
 
       missionFetchResponse.cust_Members.results.forEach((oMember) => {
         let memberUpdateRequest = _.cloneDeep(oMember);
+
+        memberUpdateRequest["__metadata"] = {
+          uri: cookies.SF.URL + "cust_Members",
+          type: "SFOData.cust_Members"
+        };
 
         if (oMember.cust_Employee_ID === decryptedData.employeeId) {
           memberUpdateRequest.cust_itinerary_details_child = {
@@ -1866,6 +1876,10 @@ const _claimMission = async function (decryptedData, cookies) {
 
             if (oItineraryFound) {
               let itineraryUpdateRequest = _.cloneDeep(oItineraryFound);
+              itineraryUpdateRequest["__metadata"] = {
+                uri: cookies.SF.URL + "cust_itinerary_details_child",
+                type: "SFOData.cust_itinerary_details_child"
+              };
               itineraryUpdateRequest.cust_start_date =
                 decryptedData.itinerary[i].itineraryStartDate;
               itineraryUpdateRequest.cust_end_date =
@@ -1928,20 +1942,21 @@ const _claimMission = async function (decryptedData, cookies) {
 
       postBatchBody =
         postBatchBody +
+         `--${changeSet}\r\n` +
+        `Content-Type: application/http\r\n` +
+        `Content-Transfer-Encoding: binary\r\n\r\n` +
+        `POST upsert?$format=json HTTP/1.1\r\n` +
+        `Content-Type: application/json;charset=utf-8\r\n` +
+        `Accept: application/json\r\n\r\n` +
+        `${JSON.stringify(missionUpdateRequest)}\r\n\r\n`+
         `--${changeSet}\r\n` +
         `Content-Type: application/http\r\n` +
         `Content-Transfer-Encoding: binary\r\n\r\n` +
         `POST upsert?$format=json HTTP/1.1\r\n` +
         `Content-Type: application/json;charset=utf-8\r\n` +
         `Accept: application/json\r\n\r\n` +
-        `${JSON.stringify(claimUpdateRequest)}\r\n\r\n` +
-        `--${changeSet}\r\n` +
-        `Content-Type: application/http\r\n` +
-        `Content-Transfer-Encoding: binary\r\n\r\n` +
-        `POST upsert?$format=json HTTP/1.1\r\n` +
-        `Content-Type: application/json;charset=utf-8\r\n` +
-        `Accept: application/json\r\n\r\n` +
-        `${JSON.stringify(missionUpdateRequest)}\r\n\r\n`;
+        `${JSON.stringify(claimUpdateRequest)}\r\n\r\n` ;
+       
       if (sectorUpdateRequest) {
         postBatchBody =
           postBatchBody +
@@ -4615,6 +4630,10 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
         cust_Status: "2",
         cust_Decree_Type: body.info.decreeType,
         cust_ExternalEntity: body.info.externalEntity,
+        cust_ExternalEntity2: body.info.externalEntity2,
+        cust_ExternalEntity3: body.info.externalEntity3,
+        cust_ExternalEntity4: body.info.externalEntity4,
+        cust_ExternalEntity5: body.info.externalEntity5,
         cust_Flight_type: body.info.flightType,
         cust_ReplicationFlag: "01",
         cust_Pending_With_user: body.info.pendingWithUser,
@@ -6095,7 +6114,8 @@ const _getAdminMissionReport = async function (body, cookies) {
     const selectQuery =
       "externalCode,externalName,cust_Pending_With_Group,cust_Pending_With_user,effectiveStartDate,transactionSequence,cust_Mission_Start_Date,cust_Mission_End_Date,cust_No_Of_Days," +
       "cust_ReplicationFlag,cust_Hospitality_Type,cust_Flight_type,cust_Destination,cust_TotalPerdiemMission,cust_TicketAverage,cust_Sector," +
-      "cust_Total_Expense,cust_Budget_Available,cust_Budget_Parked,cust_Decree_Type,cust_ExternalEntity,cust_Status,createdDateTime,createdBy," +
+      "cust_Total_Expense,cust_Budget_Available,cust_Budget_Parked,cust_Decree_Type,cust_ExternalEntity,cust_ExternalEntity2,cust_ExternalEntity3,cust_ExternalEntity4,cust_ExternalEntity5" +
+      "cust_Status,createdDateTime,createdBy," +
       "cust_Members/cust_Mission_effectiveStartDate,cust_Members/cust_Mission_externalCode,cust_Members/cust_Mission_transactionSequence," +
       "cust_Members/cust_Employee_ID,cust_Members/cust_EmployeeID,cust_Members/cust_First_Name,cust_Members/cust_Last_Name,cust_Members/cust_Title_Of_Employee," +
       "cust_Members/cust_Employee_Total_Ticket,cust_Members/cust_Employee_Total_Perdiem,cust_Members/cust_Employee_Total_Expense," +
@@ -6261,6 +6281,10 @@ const _getAdminMissionReport = async function (body, cookies) {
           sectorCode: m0.cust_Sector,
           decreeType: _readValue("decreeType", m0.cust_Decree_Type),
           externalEntity: _readValue("externalEntity", m0.cust_ExternalEntity),
+          externalEntity2: _readValue("externalEntity", m0.cust_ExternalEntity2),
+          externalEntity3: _readValue("externalEntity", m0.cust_ExternalEntity3),
+          externalEntity4: _readValue("externalEntity", m0.cust_ExternalEntity4),
+          externalEntity5: _readValue("externalEntity", m0.cust_ExternalEntity5),     
           hospitality: _readValue("hospitality", m0.cust_Hospitality_Type),
           flightType: _readValue("flightType", m0.cust_Flight_type),
           budgetAvailable: _formatCurrency(m0.cust_Budget_Available),

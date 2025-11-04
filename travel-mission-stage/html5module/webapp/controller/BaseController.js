@@ -1332,147 +1332,199 @@ sap.ui.define(
           });
         });
       },
-            validateMissionForDecreeType:function(sDecreeType, aMissionMembers){
+      setExternalEntities: function (oMissionInfo) {
+        oMissionInfo.externalEntity = "";
+        oMissionInfo.externalEntity2 = "";
+        oMissionInfo.externalEntity3 = "";
+        oMissionInfo.externalEntity4 = "";
+        oMissionInfo.externalEntity5 = "";
+
+        oMissionInfo.externalEntities &&
+          oMissionInfo.externalEntities.length > 0 &&
+          oMissionInfo.externalEntities.forEach((oEntity, i) => {
+            let sField = `externalEntity`;
+            if (i > 0) {
+              sField = sField + i;
+            }
+            if (oMissionInfo.hasOwnProperty(sField)) {
+              oMissionInfo[sField] = oEntity;
+            }
+          });  
+      },
+      getExternalEntities: function (oMissionInfo) {
+        oMissionInfo.externalEntities = [];
+
+        for (let i = 0; i < 5; i++) {
+          let sField = `externalEntity`;
+          if (i > 0) {
+            sField = sField + i;
+          }
+          if (oMissionInfo.hasOwnProperty(sField) &&  oMissionInfo[sField] !== "" && oMissionInfo[sField] !== undefined &&  oMissionInfo[sField] !== null) {
+            oMissionInfo.externalEntities.push(oMissionInfo[sField]);
+          }
+        }
+      },
+      validateMissionForDecreeType: function (sDecreeType, aMissionMembers) {
         const oAppModel =
           this.getModel("appModel") ||
           this.getOwnerComponent().getModel("appModel");
         const sLang = oAppModel.getProperty("/language");
-        
+
         const aValidationRules = [
           {
-            "externalCode": "01",
-            "localeLabel": "One Employee Mission - Administrative",
-            "localeARLabel": "مهمة رسمية لموظف - إداري",
-            "maxMembersCount": 1,
-            "minMembersCount": 1,
-            "headOfMissionExists":false
-          },
-           {
-            "externalCode": "02",
-            "localeLabel": "Group with Head Mission - Administrative",
-            "localeARLabel": "مهمة رسمية لوفد مع رئيس للوفد - إداري",
-            "maxMembersCount": 999,
-            "minMembersCount": 2,
-            "headOfMissionExists":true
+            externalCode: "01",
+            localeLabel: "One Employee Mission - Administrative",
+            localeARLabel: "مهمة رسمية لموظف - إداري",
+            maxMembersCount: 1,
+            minMembersCount: 1,
+            headOfMissionExists: false,
           },
           {
-            "externalCode": "03",
-            "localeLabel": "Group without Head Mission - Administrative",
-            "localeARLabel": "مهمة رسمية لمجموعة موظفين - إداري",
-            "maxMembersCount": 999,
-            "minMembersCount": 2,
-            "headOfMissionExists":false
+            externalCode: "02",
+            localeLabel: "Group with Head Mission - Administrative",
+            localeARLabel: "مهمة رسمية لوفد مع رئيس للوفد - إداري",
+            maxMembersCount: 999,
+            minMembersCount: 2,
+            headOfMissionExists: true,
           },
           {
-            "externalCode": "04",
-            "localeLabel": "One Employee with Head of Mission - Administrative",
-            "localeARLabel": "بمهمة رسمية لموظف مع رئيس وفد - إداري",
-            "maxMembersCount": 2,
-            "minMembersCount": 2,
-            "headOfMissionExists":true
-          },
-        
-           {
-            "externalCode": "05",
-            "localeLabel": "One Employee Mission - Ministerial",
-            "localeARLabel": "مهمة رسمية لموظف - وزاري",
-            "maxMembersCount": 1,
-            "minMembersCount": 1,
-            "headOfMissionExists":false
+            externalCode: "03",
+            localeLabel: "Group without Head Mission - Administrative",
+            localeARLabel: "مهمة رسمية لمجموعة موظفين - إداري",
+            maxMembersCount: 999,
+            minMembersCount: 2,
+            headOfMissionExists: false,
           },
           {
-            "externalCode": "06",
-            "localeLabel": "Group with Head of Mission - Ministerial",
-            "localeARLabel": "مهمة رسمية لوفد مع رئيس للوفد - وزاري",
-            "maxMembersCount": 999,
-            "minMembersCount": 2,
-            "headOfMissionExists":true
+            externalCode: "04",
+            localeLabel: "One Employee with Head of Mission - Administrative",
+            localeARLabel: "بمهمة رسمية لموظف مع رئيس وفد - إداري",
+            maxMembersCount: 2,
+            minMembersCount: 2,
+            headOfMissionExists: true,
+          },
+
+          {
+            externalCode: "05",
+            localeLabel: "One Employee Mission - Ministerial",
+            localeARLabel: "مهمة رسمية لموظف - وزاري",
+            maxMembersCount: 1,
+            minMembersCount: 1,
+            headOfMissionExists: false,
           },
           {
-            "externalCode": "07",
-            "localeLabel": "Group without Head Mission - Ministerial",
-            "localeARLabel": "مهمة رسمية لمجموعة موظفين - وزاري",
-            "maxMembersCount": 999,
-            "minMembersCount": 2,
-            "headOfMissionExists":false
+            externalCode: "06",
+            localeLabel: "Group with Head of Mission - Ministerial",
+            localeARLabel: "مهمة رسمية لوفد مع رئيس للوفد - وزاري",
+            maxMembersCount: 999,
+            minMembersCount: 2,
+            headOfMissionExists: true,
           },
           {
-            "externalCode": "08",
-            "localeLabel": "One Employee with Head of Mission - Ministerial",
-            "localeARLabel": "بمهمة رسمية لموظف مع رئيس وفد - وزاري",
-            "maxMembersCount": 2,
-            "minMembersCount": 2,
-            "headOfMissionExists":true
-          },
-           {
-            "externalCode": "09",
-            "localeLabel": "Head of Mission without Members - Ministerial ",
-            "localeARLabel": "لا يوجد",
-            "maxMembersCount": 1,
-            "minMembersCount": 1,
-            "headOfMissionExists":true
+            externalCode: "07",
+            localeLabel: "Group without Head Mission - Ministerial",
+            localeARLabel: "مهمة رسمية لمجموعة موظفين - وزاري",
+            maxMembersCount: 999,
+            minMembersCount: 2,
+            headOfMissionExists: false,
           },
           {
-            "externalCode": "10",
-            "localeLabel": "Head of Mission without Members - Administrative",
-            "localeARLabel": "لا يوجد",
-            "maxMembersCount": 1,
-            "minMembersCount": 1,
-            "headOfMissionExists":true
-          }
+            externalCode: "08",
+            localeLabel: "One Employee with Head of Mission - Ministerial",
+            localeARLabel: "بمهمة رسمية لموظف مع رئيس وفد - وزاري",
+            maxMembersCount: 2,
+            minMembersCount: 2,
+            headOfMissionExists: true,
+          },
+          {
+            externalCode: "09",
+            localeLabel: "Head of Mission without Members - Ministerial ",
+            localeARLabel: "لا يوجد",
+            maxMembersCount: 1,
+            minMembersCount: 1,
+            headOfMissionExists: true,
+          },
+          {
+            externalCode: "10",
+            localeLabel: "Head of Mission without Members - Administrative",
+            localeARLabel: "لا يوجد",
+            maxMembersCount: 1,
+            minMembersCount: 1,
+            headOfMissionExists: true,
+          },
         ];
 
         const oRule = _.find(aValidationRules, ["externalCode", sDecreeType]);
 
-        if(!oRule){
+        if (!oRule) {
           return null;
         }
 
         const aMembers = []; // -- Total members count
         const aHOM = []; // --Head of missions
 
-        aMissionMembers.forEach((oMember)=>{
+        aMissionMembers.forEach((oMember) => {
           aMembers.push(oMember.employeeID);
 
           const hom = _.findIndex(oMember.itinerary, ["headOfMission", "Y"]);
-          
-          if(hom !== -1){
+
+          if (hom !== -1) {
             aHOM.push(oMember.employeeID);
           }
         });
 
         //--Validations
         //1--Max Members Count
-        if(aMembers.length === 0){
-          return {message: "noMembersFound", params:[]};
-        }  
+        if (aMembers.length === 0) {
+          return { message: "noMembersFound", params: [] };
+        }
 
-        if(aMembers.length < oRule.minMembersCount){
-          return {message:"tooLessMembersFound", params:[oRule[sLang === "en" ? "localeLabel" : "localArLabel"],oRule.minMembersCount, aMembers.length]};
-        }  
+        if (aMembers.length < oRule.minMembersCount) {
+          return {
+            message: "tooLessMembersFound",
+            params: [
+              oRule[sLang === "en" ? "localeLabel" : "localArLabel"],
+              oRule.minMembersCount,
+              aMembers.length,
+            ],
+          };
+        }
 
-        if(aMembers.length > oRule.maxMembersCount){
-          return {message:"tooManyMembersFound", params:[oRule[sLang === "en" ? "localeLabel" : "localArLabel"],oRule.maxMembersCount, aMembers.length]};
-        }  
+        if (aMembers.length > oRule.maxMembersCount) {
+          return {
+            message: "tooManyMembersFound",
+            params: [
+              oRule[sLang === "en" ? "localeLabel" : "localArLabel"],
+              oRule.maxMembersCount,
+              aMembers.length,
+            ],
+          };
+        }
         //1--Max Members Count
 
         //2--Head Of Mission Check
-        if(aHOM.length === 0 && oRule.headOfMissionExists){
-          return {message:"noHeadOfMissionFound", params:[oRule[sLang === "en" ? "localeLabel" : "localArLabel"]]};
+        if (aHOM.length === 0 && oRule.headOfMissionExists) {
+          return {
+            message: "noHeadOfMissionFound",
+            params: [oRule[sLang === "en" ? "localeLabel" : "localArLabel"]],
+          };
         }
 
-        if(aHOM.length > 1 && oRule.headOfMissionExists){
-          return {message:"tooManyHeadOfMissionFound", params:[oRule[sLang === "en" ? "localeLabel" : "localArLabel"]]};
+        if (aHOM.length > 1 && oRule.headOfMissionExists) {
+          return {
+            message: "tooManyHeadOfMissionFound",
+            params: [oRule[sLang === "en" ? "localeLabel" : "localArLabel"]],
+          };
         }
 
-        if(aHOM.length > 0 && !oRule.headOfMissionExists){
-          return  {message:"noHeadOfMissionShouldExist", params:[oRule[sLang === "en" ? "localeLabel" : "localArLabel"]]};
+        if (aHOM.length > 0 && !oRule.headOfMissionExists) {
+          return {
+            message: "noHeadOfMissionShouldExist",
+            params: [oRule[sLang === "en" ? "localeLabel" : "localArLabel"]],
+          };
         }
         //2--Head Of Mission Check
         //--Validations
-
-
-
       },
       checkIsArabic: function (sContent) {
         const text = sContent.trim();
@@ -1504,8 +1556,8 @@ sap.ui.define(
             );
         }
       },
-      getDefaultHeadOfMission: function(sDecreeType){
-         switch (sDecreeType) {
+      getDefaultHeadOfMission: function (sDecreeType) {
+        switch (sDecreeType) {
           case "01": //One Employee Mission - Administrative
           case "05": //One Employee Mission - Ministerial
           case "03": //Group Without Head of Mission - Administrative
@@ -1513,7 +1565,7 @@ sap.ui.define(
             return "N";
           case "09": //Head of Mission Without Members - Ministerial
           case "10": //Head of Mission Without Members - Administrative
-            return "Y"; 
+            return "Y";
           default:
             return "";
         }
@@ -1549,13 +1601,13 @@ sap.ui.define(
             return true;
         }
       },
-      
+
       onDecreeTypeChanged: function () {
         const oMembersModel = this.getModel("membersModel");
         const oMissionModel = this.getModel("missionInfoModel");
         const aMembers = oMembersModel.getProperty("/members");
         const sDecreeType = oMissionModel.getProperty("/info/decreeType");
-        
+
         if (sDecreeType !== "09" && sDecreeType !== "10") {
           oMissionModel.setProperty("/info/externalEntity", "");
         }

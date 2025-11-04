@@ -1,0 +1,273 @@
+/* SAP UI5 Multi-Select ComboBox Styles */
+
+.sapUiCustomMultiSelectComboBox {
+    position: relative;
+    display: inline-block;
+    margin: 0.25rem 0;
+}
+
+.sapUiCustomMultiSelectComboBox.sapUiCustomMultiSelectComboBoxDisabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Header */
+.sapUiCustomMultiSelectHeader {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.35rem;
+    border: 1px solid #d5dadf;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #ffffff;
+    border-radius: var(--sapField_BorderCornerRadius);
+}
+
+.sapUiCustomMultiSelectHeader:hover {
+    border-color: #b68a36;
+}
+
+.sapUiCustomMultiSelectHeader.sapUiCustomMultiSelectHeaderOpen {
+    border: 0.125rem solid #b68a36;
+    box-shadow: 0 0 0 0.1875rem rgb(182 138 54 / 19%);
+}
+
+.sapUiCustomMultiSelectHeader.sapUiCustomMultiSelectHeaderDisabled {
+    background: #f7f7f7;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Placeholder */
+.sapUiCustomMultiSelectPlaceholder {
+    color: #999999;
+    font-size: 0.875rem;
+}
+
+/* Selected Tags */
+.sapUiCustomMultiSelectTag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.625rem;
+    background: linear-gradient(135deg, #b68a36 0%, #9d7831 100%);
+    color: #ffffff;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    animation: sapUiCustomMultiSelectSlideIn 0.2s ease;
+}
+
+@keyframes sapUiCustomMultiSelectSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.sapUiCustomMultiSelectRemoveBtn {
+    background: none;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0;
+    width: 1.125rem;
+    height: 1.125rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+
+.sapUiCustomMultiSelectRemoveBtn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.sapUiCustomMultiSelectRemoveBtn:focus {
+    outline: 0.0625rem dotted #ffffff;
+    outline-offset: 0.125rem;
+}
+
+/* Dropdown */
+.sapUiCustomMultiSelectDropdown {
+    position: absolute;
+    top: calc(100% + 0.3125rem);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 0.125rem solid #b68a36;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.625rem 1.875rem rgba(0, 0, 0, 0.2);
+    max-height: 18.75rem;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+}
+/* Custom thin scrollbar for the dropdown */
+.sapUiCustomMultiSelectDropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sapUiCustomMultiSelectDropdown::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.sapUiCustomMultiSelectDropdown::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+.sapUiCustomMultiSelectDropdown::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Firefox thin scrollbar */
+.sapUiCustomMultiSelectDropdown {
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+.sapUiCustomMultiSelectDropdown.sapUiCustomMultiSelectDropdownOpen {
+    display: block;
+    animation: sapUiCustomMultiSelectDropdownOpen 0.2s ease;
+}
+
+@keyframes sapUiCustomMultiSelectDropdownOpen {
+    from {
+        opacity: 0;
+        transform: translateY(-0.625rem);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Search Box */
+.sapUiCustomMultiSelectSearchBox {
+    padding: 1rem;
+    border-bottom: 0.0625rem solid #eeeeee;
+    position: sticky;
+    top: 0;
+    background: #ffffff;
+    z-index: 1;
+    box-sizing: border-box;
+}
+
+.sapUiCustomMultiSelectSearchInput {
+    width: 100%;
+    padding: 0.5rem;
+    border: 0.0625rem solid #d9d9d9;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-family: "72", "72full", Arial, Helvetica, sans-serif;
+    outline: none;
+    transition: border-color 0.3s;
+    box-sizing: border-box;
+}
+
+.sapUiCustomMultiSelectSearchInput:focus {
+    border-color: #b68a36;
+}
+
+/* Options List */
+.sapUiCustomMultiSelectOptionsList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.sapUiCustomMultiSelectOption {
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+}
+
+.sapUiCustomMultiSelectOption:hover {
+    background: #f5f5ff;
+}
+
+.sapUiCustomMultiSelectOption.sapUiCustomMultiSelectOptionSelected {
+    background: #e8ebff;
+    color: #0854a0;
+    font-weight: 500;
+}
+
+.sapUiCustomMultiSelectOption.sapUiCustomMultiSelectOptionDisabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.sapUiCustomMultiSelectOption input[type="checkbox"] {
+    width: 1.125rem;
+    height: 1.125rem;
+    cursor: pointer;
+    accent-color: #0854a0;
+}
+
+.sapUiCustomMultiSelectOption.sapUiCustomMultiSelectOptionDisabled input[type="checkbox"] {
+    cursor: not-allowed;
+}
+
+/* Selection Info */
+.sapUiCustomMultiSelectInfo {
+    margin-top: 0.625rem;
+    font-size: 0.8125rem;
+    color: #666666;
+    font-family: "72", "72full", Arial, Helvetica, sans-serif;
+}
+
+.sapUiCustomMultiSelectInfo.warning {
+    color: #e76500;
+}
+
+.sapUiCustomMultiSelectInfo.error {
+    color: #b00;
+}
+
+/* No Results */
+.sapUiCustomMultiSelectNoResults {
+    padding: 1.25rem;
+    text-align: center;
+    color: #999999;
+}
+
+/* Compact Mode Support */
+.sapUiSizeCompact .sapUiCustomMultiSelectHeader {
+    min-height: 2rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.sapUiSizeCompact .sapUiCustomMultiSelectTag {
+    padding: 0.125rem 0.375rem;
+    font-size: 0.75rem;
+}
+
+.sapUiSizeCompact .sapUiCustomMultiSelectOption {
+    padding: 0.5rem 0.75rem;
+}
+
+/* RTL Support */
+.sapUiCustomMultiSelectComboBox[dir="rtl"] .sapUiCustomMultiSelectTag,
+[dir="rtl"] .sapUiCustomMultiSelectComboBox .sapUiCustomMultiSelectTag {
+    flex-direction: row-reverse;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .sapUiCustomMultiSelectDropdown {
+        max-height: 12.5rem;
+    }
+}

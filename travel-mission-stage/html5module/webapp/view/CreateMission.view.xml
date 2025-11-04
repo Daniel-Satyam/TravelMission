@@ -9,6 +9,7 @@
 		Formatter: 'ui5appstage/model/formatter'
 	}"
 	xmlns:upload="sap.m.upload"
+	xmlns:ui="ui5appstage.ui"
 	>
 	<Page class="sapUiResponsiveContentPadding travelMissionPage" enableScrolling="true">
 		<customHeader>
@@ -244,7 +245,26 @@
 								</layoutData>
 
 								<Label text="{i18n>externalEntity}" labelFor="missionExternalEntity" required="{= ${missionInfoModel>/info/decreeType} === '09' || ${missionInfoModel>/info/decreeType} === '10' }" />
-								<ComboBox
+								<ui:MultiSelectComboBox
+									placeholder="{i18n>SELECT_EXTERNAL_ENTITY}"
+									searchPlaceholder="{i18n>SEARCH_PLACEHOLDER}"
+									minSelection="1"
+									maxSelection="5"
+									width="100%"
+									selectedKeys="{missionInfoModel>/info/externalEntities}"
+									items="{
+										path: 'externalEntityModel>/externalEntitySet',
+										length : 500,
+										sorter: { path: 'localeLabel' },
+										templateShareable: false
+									}"
+									enabled="false"
+								>
+									<ui:items>
+										<core:Item key="{externalEntityModel>externalCode}" text="{= ${appModel>/language} === 'en' ? ${externalEntityModel>localeLabel} : ${externalEntityModel>localeARLabel} }" />
+									</ui:items>
+								</ui:MultiSelectComboBox>
+								<!-- <ComboBox
 									visible="{= ${appModel>/language} === 'en' }"
 									class="createMissionDropdown"
 									showClearIcon="true"
@@ -271,7 +291,7 @@
 									}"
 									>
 									<core:Item key="{externalEntityModel>externalCode}" text="{externalEntityModel>localeARLabel}" />
-								</ComboBox>
+								</ComboBox> -->
 								<Text class="errorInfoTxt" text="{i18n>validateMissionExternalEntity}" visible="{= ( ${missionInfoModel>/info/decreeType} === '09' || ${missionInfoModel>/info/decreeType} === '10' ) &amp;&amp; ${missionInfoModel>/info/externalEntity} === '' &amp;&amp; ${screenModel>/info/validationError}}"/>
 							</VBox>
 						</f:GridListItem>
