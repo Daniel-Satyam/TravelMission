@@ -23,7 +23,7 @@
 					</Toolbar>
 				</headerToolbar>
 				<content>
-					<f:GridList id="createMissionFormItems">
+					<f:GridList id="createMissionFormItems" class="customGrid">
 						<f:customLayout>
 							<grid:GridBoxLayout boxMinWidth="15rem" boxesPerRowConfig="XL5 L4 M2 S1"/>
 						</f:customLayout>
