@@ -258,7 +258,7 @@
 										sorter: { path: 'localeLabel' },
 										templateShareable: false
 									}"
-									enabled="false"
+									enabled="true"
 								>
 									<ui:items>
 										<core:Item key="{externalEntityModel>externalCode}" text="{= ${appModel>/language} === 'en' ? ${externalEntityModel>localeLabel} : ${externalEntityModel>localeARLabel} }" />
