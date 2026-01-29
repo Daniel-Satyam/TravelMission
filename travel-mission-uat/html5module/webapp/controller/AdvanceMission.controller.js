@@ -697,7 +697,8 @@ sap.ui.define(
             if (advanceEnDate == null) {
               advanceEnDate = itineraryEndDate;
             } else {
-              if (itineraryEndDate.getTime() > claimEnDate.getTime()) {
+             //--Fixed 22.01.2026 - Bug Fix CDA - Case - 174373
+              if (itineraryEndDate.getTime() > advanceEnDate.getTime()) {
                 advanceEnDate = itineraryEndDate;
               }
             }

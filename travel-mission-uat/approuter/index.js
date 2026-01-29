@@ -12,9 +12,9 @@ const { CustomHttpError } = require("./CustomError");
 const cookieParser = require("cookie-parser");
 const { executeHttpRequest } = require("@sap-cloud-sdk/http-client");
 const { getDestination } = require("@sap-cloud-sdk/connectivity");
-const {
-  zfmfrCreateOdataSrv,
-} = require("./srv/odata-client/zfmfr_create_odata_srv");
+// const {
+//   zfmfrCreateOdataSrv,
+// } = require("./srv/odata-client/zfmfr_create_odata_srv");
 const moment = require("moment");
 const XLSX = require("xlsx");
 
@@ -120,7 +120,7 @@ const _fetchCFAuthToken = async function () {
           Authorization:
             "Basic " + Buffer.from(sUaaCredentials).toString("base64"),
         },
-      }
+      },
     );
     return response.data.access_token;
   } catch (error) {
@@ -157,7 +157,7 @@ const _fetchCPIAuthToken = async function (CFAuthToken) {
     const destinationName = sCPIAuthDestinationName;
     const fetchCPIAuthDestinationInfo = await _fetchDestinationInfo(
       destinationName,
-      CFAuthToken
+      CFAuthToken,
     );
 
     const config = {
@@ -414,7 +414,7 @@ const _fetchMemberDetails = async function (decryptedData, cookies) {
     const { filter, missionInfo } = decryptedData;
     let employeeFetchUrl =
       cookies.SF.URL +
-      "EmpEmployment?$format=json&$top=30&$select=personIdExternal,userId,jobInfoNav/jobCode,jobInfoNav/jobTitle,jobInfoNav/payGrade,jobInfoNav/position,jobInfoNav/payGradeNav/paygradeLevel,jobInfoNav/payGradeNav/name,personNav/personalInfoNav/displayName,personNav/personalInfoNav/firstName,personNav/personalInfoNav/salutationNav/picklistLabels/label,personNav/personalInfoNav/lastName,personNav/personalInfoNav/firstNameAlt1,personNav/personalInfoNav/lastNameAlt1,userNav/title,userNav/department,jobInfoNav/customString6,jobInfoNav/emplStatusNav&$expand=jobInfoNav,jobInfoNav/payGradeNav,personNav/personalInfoNav,personNav/personalInfoNav/salutationNav/picklistLabels,userNav,jobInfoNav/emplStatusNav";
+      "EmpEmployment?$format=json&$top=30&$select=personIdExternal,userId,jobInfoNav/jobCode,jobInfoNav/jobTitle,jobInfoNav/payGrade,jobInfoNav/position,jobInfoNav/costCenter,jobInfoNav/payGradeNav/paygradeLevel,jobInfoNav/payGradeNav/name,personNav/personalInfoNav/displayName,personNav/personalInfoNav/firstName,personNav/personalInfoNav/salutationNav/picklistLabels/label,personNav/personalInfoNav/lastName,personNav/personalInfoNav/firstNameAlt1,personNav/personalInfoNav/lastNameAlt1,userNav/title,userNav/department,jobInfoNav/customString6,jobInfoNav/emplStatusNav&$expand=jobInfoNav,jobInfoNav/payGradeNav,personNav/personalInfoNav,personNav/personalInfoNav/salutationNav/picklistLabels,userNav,jobInfoNav/emplStatusNav";
 
     if (filter.type == "personIdExternal") {
       employeeFetchUrl +=
@@ -474,7 +474,7 @@ const _fetchMemberDetails = async function (decryptedData, cookies) {
 
       const memberCheckResponse = await axios.get(
         encodeURI(memberCheckUrl),
-        config
+        config,
       );
 
       if (
@@ -565,7 +565,10 @@ const _fetchTicketAndPerDiem = async function (decryptedData, cookies) {
     const response = await axios.request(config);
 
     //--Make ticket costs zero for private and military
-    if(decryptedData.hasOwnProperty("flightType") && (decryptedData.flightType === "2" || decryptedData.flightType === "3")) {
+    if (
+      decryptedData.hasOwnProperty("flightType") &&
+      (decryptedData.flightType === "2" || decryptedData.flightType === "3")
+    ) {
       response.data["ticketAverage"] = 0;
     }
     //--Make ticket costs zero  for private and military
@@ -665,46 +668,46 @@ const _updateItineraryBatch = async function (body, cookies) {
       const sectorFetchResponse = _.cloneDeep(batchResult[0]);
 
       let sectorUpdateRequest = [];
-      if (sectorFetchResponse && sectorFetchResponse.d) {
-        sectorFetchResponse.d.results.forEach((s) => {
-          let budgetUpdate =
-            _.find(budgetTracking, ["cust_SFSector", s.externalCode]) || null;
-          if (budgetUpdate) {
-            sectorUpdateRequest.push({
-              __metadata: {
-                uri: cookies.SF.URL + "cust_SectorBudget",
-              },
-              externalCode: s.externalCode,
-              effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-              cust_Available_budget: budgetUpdate.cust_Remaining_Budget,
-              cust_Utilized_Budget: budgetUpdate.cust_Utilized_Budget,
-            });
-          }
-        });
-      }
+      // if (sectorFetchResponse && sectorFetchResponse.d) {
+      //   sectorFetchResponse.d.results.forEach((s) => {
+      //     let budgetUpdate =
+      //       _.find(budgetTracking, ["cust_SFSector", s.externalCode]) || null;
+      //     if (budgetUpdate) {
+      //       sectorUpdateRequest.push({
+      //         __metadata: {
+      //           uri: cookies.SF.URL + "cust_SectorBudget",
+      //         },
+      //         externalCode: s.externalCode,
+      //         effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+      //         cust_Available_budget: budgetUpdate.cust_Remaining_Budget,
+      //         cust_Utilized_Budget: budgetUpdate.cust_Utilized_Budget,
+      //       });
+      //     }
+      //   });
+      // }
       //--Read sector budget MDF and do some updates
       //--Add budget tracking logs
       let budgetTrackingUpdateRequest = [];
-      budgetTracking.forEach((t, i) => {
-        budgetTrackingUpdateRequest.push({
-          __metadata: {
-            uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
-          },
-          externalCode:
-            body.info.missionId +
-            "-" +
-            moment(new Date()).format("YYYYMMDD") +
-            "-" +
-            i,
-          effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-          cust_MissionID: body.info.missionId,
-          cust_SFSector: t.cust_SFSector,
-          cust_S4Sector: t.cust_S4Sector,
-          cust_Consumption: t.cust_Consumption,
-          cust_Remaining_Budget: t.cust_Remaining_Budget,
-          cust_Comments: t.cust_Comments,
-        });
-      });
+      // budgetTracking.forEach((t, i) => {
+      //   budgetTrackingUpdateRequest.push({
+      //     __metadata: {
+      //       uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
+      //     },
+      //     externalCode:
+      //       body.info.missionId +
+      //       "-" +
+      //       moment(new Date()).format("YYYYMMDD") +
+      //       "-" +
+      //       i,
+      //     effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+      //     cust_MissionID: body.info.missionId,
+      //     cust_SFSector: t.cust_SFSector,
+      //     cust_S4Sector: t.cust_S4Sector,
+      //     cust_Consumption: t.cust_Consumption,
+      //     cust_Remaining_Budget: t.cust_Remaining_Budget,
+      //     cust_Comments: t.cust_Comments,
+      //   });
+      // });
       //--Add budget tracking logs
       const missionData = _.cloneDeep(batchResult[1].d.results[0]);
 
@@ -753,10 +756,10 @@ const _updateItineraryBatch = async function (body, cookies) {
                   cust_ticket_average: oItineraryFound.ticketAverage,
                 };
                 memberUpdateRequest.cust_itinerary_details_child.results.push(
-                  itineraryUpdateRequest
+                  itineraryUpdateRequest,
                 );
               }
-            }
+            },
           );
 
           missionUpdateRequest.cust_Members.results.push(memberUpdateRequest);
@@ -840,9 +843,9 @@ const _updateItineraryBatch = async function (body, cookies) {
       if (postBatchResult) {
         //--Call S4 Odata
         try {
-          const updateS4Document = await _updateS4Document(
+          const updateS4Document = await _createS4Documentv2(
             { missionId: body.info.missionId },
-            cookies
+            cookies,
           );
         } catch (e) {
           console.log(e);
@@ -884,7 +887,7 @@ const _updateItinerary = async function (decryptedData, cookies) {
     };
     const memberFetchResponse = await axios.get(
       memberFetchUrl,
-      memberFetchConfig
+      memberFetchConfig,
     );
     if (memberFetchResponse && memberFetchResponse.data) {
       const memberUpdateRequest = memberFetchResponse.data.d.results[0];
@@ -905,7 +908,7 @@ const _updateItinerary = async function (decryptedData, cookies) {
       };
       const itineraryFetchResponse = await axios.get(
         itineraryFetchUrl,
-        itineraryFetchConfig
+        itineraryFetchConfig,
       );
       if (itineraryFetchResponse && itineraryFetchResponse.data) {
         const itineraryUpdateRequest = itineraryFetchResponse.data.d.results[0];
@@ -936,7 +939,7 @@ const _updateItinerary = async function (decryptedData, cookies) {
           data: JSON.stringify(itineraryUpdateRequest),
         };
         const itineraryUpdateResponse = await axios.request(
-          itineraryUpdateConfig
+          itineraryUpdateConfig,
         );
         if (itineraryUpdateResponse) {
           memberUpdateRequest.__metadata.uri = cookies.SF.URL + "cust_Members";
@@ -973,7 +976,7 @@ const _updateItinerary = async function (decryptedData, cookies) {
             };
             const missionFetchResponse = await axios.get(
               missionFetchUrl,
-              missionFetchConfig
+              missionFetchConfig,
             );
 
             if (missionFetchResponse && missionFetchResponse.data) {
@@ -1002,9 +1005,8 @@ const _updateItinerary = async function (decryptedData, cookies) {
                 },
                 data: JSON.stringify(missionUpdateRequest),
               };
-              const missionUpdateResponse = await axios.request(
-                missionUpdateConfig
-              );
+              const missionUpdateResponse =
+                await axios.request(missionUpdateConfig);
               if (missionUpdateResponse && missionUpdateResponse.data) {
                 const sectorFetchUrl =
                   cookies.SF.URL +
@@ -1018,7 +1020,7 @@ const _updateItinerary = async function (decryptedData, cookies) {
                 };
                 const sectorFetchResponse = await axios.get(
                   sectorFetchUrl,
-                  sectorFetchConfig
+                  sectorFetchConfig,
                 );
 
                 if (sectorFetchResponse && sectorFetchResponse.data) {
@@ -1043,9 +1045,8 @@ const _updateItinerary = async function (decryptedData, cookies) {
                     },
                     data: JSON.stringify(sectorUpdateRequest),
                   };
-                  const sectorUpdateResponse = await axios.request(
-                    sectorUpdateConfig
-                  );
+                  const sectorUpdateResponse =
+                    await axios.request(sectorUpdateConfig);
                   if (sectorUpdateResponse && sectorUpdateResponse.data) {
                     var auditLogUrl =
                       cookies.SF.URL + "cust_Audit_Log?$format=json";
@@ -1141,9 +1142,9 @@ const _createMission = async function (body, userInfo, cookies) {
     if (response.data) {
       //Approve
       try {
-        const createS4Document = await _createS4Document(
+        const createS4Document = await _createS4Documentv2(
           { missionId: response.data.missionId },
-          cookies
+          cookies,
         );
       } catch (e) {
         console.log("S4 document create error during 'Create Mission'", e);
@@ -1151,142 +1152,142 @@ const _createMission = async function (body, userInfo, cookies) {
     }
     //--Call S4 Odata
 
-    //--Update budget tracking
-    if (
-      response.data &&
-      response.data.missionId &&
-      body.budgetTracking &&
-      body.budgetTracking.length > 0
-    ) {
-      try {
-        const budgetTracking = body.budgetTracking;
-        const sfAuth = "Basic " + cookies.SF.basicAuth;
+    // //--Update budget tracking
+    // if (
+    //   response.data &&
+    //   response.data.missionId &&
+    //   body.budgetTracking &&
+    //   body.budgetTracking.length > 0
+    // ) {
+    //   try {
+    //     const budgetTracking = body.budgetTracking;
+    //     const sfAuth = "Basic " + cookies.SF.basicAuth;
 
-        let sSectorList = "";
-        budgetTracking.forEach((t) => {
-          sSectorList =
-            sSectorList === ""
-              ? `'${t.cust_SFSector}'`
-              : `${sSectorList},'${t.cust_SFSector}'`;
-        });
+    //     let sSectorList = "";
+    //     budgetTracking.forEach((t) => {
+    //       sSectorList =
+    //         sSectorList === ""
+    //           ? `'${t.cust_SFSector}'`
+    //           : `${sSectorList},'${t.cust_SFSector}'`;
+    //     });
 
-        //--Read sector budget MDF and do some updates
-        const sectorFetchUrl =
-          cookies.SF.URL +
-          `cust_SectorBudget?$format=json&$filter=externalCode in ${sSectorList}` +
-          `&$select=externalCode,cust_Available_budget,cust_Budget,cust_Parked_Amount,cust_Utilized_Budget,effectiveStartDate,cust_S4_Sector,cust_S4_SubSector,cust_Visible`;
+    //     //--Read sector budget MDF and do some updates
+    //     const sectorFetchUrl =
+    //       cookies.SF.URL +
+    //       `cust_SectorBudget?$format=json&$filter=externalCode in ${sSectorList}` +
+    //       `&$select=externalCode,cust_Available_budget,cust_Budget,cust_Parked_Amount,cust_Utilized_Budget,effectiveStartDate,cust_S4_Sector,cust_S4_SubSector,cust_Visible`;
 
-        const sectorFetchConfig = {
-          headers: {
-            Authorization: sfAuth,
-          },
-        };
-        const sectorFetchResponse = await axios.get(
-          sectorFetchUrl,
-          sectorFetchConfig
-        );
+    //     const sectorFetchConfig = {
+    //       headers: {
+    //         Authorization: sfAuth,
+    //       },
+    //     };
+    //     const sectorFetchResponse = await axios.get(
+    //       sectorFetchUrl,
+    //       sectorFetchConfig,
+    //     );
 
-        let sectorUpdateRequest = [];
-        if (sectorFetchResponse && sectorFetchResponse.data) {
-          sectorFetchResponse.data.d.results.forEach((s) => {
-            let budgetUpdate =
-              _.find(budgetTracking, ["cust_SFSector", s.externalCode]) || null;
-            if (budgetUpdate) {
-              sectorUpdateRequest.push({
-                __metadata: {
-                  uri: cookies.SF.URL + "cust_SectorBudget",
-                },
-                externalCode: s.externalCode,
-                effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-                cust_Available_budget: budgetUpdate.cust_Remaining_Budget,
-                cust_Parked_Amount: budgetUpdate.cust_Parked_Amount,
-              });
-            }
-          });
-        }
-        //--Read sector budget MDF and do some updates
-        let budgetTrackingUpdateRequest = [];
-        budgetTracking.forEach((t, i) => {
-          budgetTrackingUpdateRequest.push({
-            __metadata: {
-              uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
-            },
-            externalCode:
-              response.data.missionId +
-              "-" +
-              moment(new Date()).format("YYYYMMDD") +
-              "-" +
-              i,
-            effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-            cust_MissionID: response.data.missionId,
-            cust_SFSector: t.cust_SFSector,
-            cust_S4Sector: t.cust_S4Sector,
-            cust_Consumption: t.cust_Consumption,
-            cust_Remaining_Budget: t.cust_Remaining_Budget,
-            cust_Comments: t.cust_Comments,
-          });
-        });
+    //     let sectorUpdateRequest = [];
+    //     if (sectorFetchResponse && sectorFetchResponse.data) {
+    //       sectorFetchResponse.data.d.results.forEach((s) => {
+    //         let budgetUpdate =
+    //           _.find(budgetTracking, ["cust_SFSector", s.externalCode]) || null;
+    //         if (budgetUpdate) {
+    //           sectorUpdateRequest.push({
+    //             __metadata: {
+    //               uri: cookies.SF.URL + "cust_SectorBudget",
+    //             },
+    //             externalCode: s.externalCode,
+    //             effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+    //             cust_Available_budget: budgetUpdate.cust_Remaining_Budget,
+    //             cust_Parked_Amount: budgetUpdate.cust_Parked_Amount,
+    //           });
+    //         }
+    //       });
+    //     }
+    //     //--Read sector budget MDF and do some updates
+    //     let budgetTrackingUpdateRequest = [];
+    //     budgetTracking.forEach((t, i) => {
+    //       budgetTrackingUpdateRequest.push({
+    //         __metadata: {
+    //           uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
+    //         },
+    //         externalCode:
+    //           response.data.missionId +
+    //           "-" +
+    //           moment(new Date()).format("YYYYMMDD") +
+    //           "-" +
+    //           i,
+    //         effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+    //         cust_MissionID: response.data.missionId,
+    //         cust_SFSector: t.cust_SFSector,
+    //         cust_S4Sector: t.cust_S4Sector,
+    //         cust_Consumption: t.cust_Consumption,
+    //         cust_Remaining_Budget: t.cust_Remaining_Budget,
+    //         cust_Comments: t.cust_Comments,
+    //       });
+    //     });
 
-        const batchURL = cookies.SF.URL + "$batch?$format=json";
-        let postBoundary = `batch_${crypto.randomUUID()}`; // batch id
-        let changeSet = `changeset_${crypto.randomUUID()}`; // changeset id
+    //     const batchURL = cookies.SF.URL + "$batch?$format=json";
+    //     let postBoundary = `batch_${crypto.randomUUID()}`; // batch id
+    //     let changeSet = `changeset_${crypto.randomUUID()}`; // changeset id
 
-        let postBatchBody =
-          `--${postBoundary}\r\n` +
-          `Content-Type: multipart/mixed; boundary=${changeSet}\r\n\r\n` +
-          `--${changeSet}\r\n` +
-          `Content-Type: application/http\r\n` +
-          `Content-Transfer-Encoding: binary\r\n\r\n` +
-          `POST upsert?$format=json HTTP/1.1\r\n` +
-          `Content-Type: application/json;charset=utf-8\r\n` +
-          `Accept: application/json\r\n\r\n` +
-          `${JSON.stringify(sectorUpdateRequest)}\r\n\r\n` +
-          `--${changeSet}\r\n` +
-          `Content-Type: application/http\r\n` +
-          `Content-Transfer-Encoding: binary\r\n\r\n` +
-          `POST upsert?$format=json HTTP/1.1\r\n` +
-          `Content-Type: application/json;charset=utf-8\r\n` +
-          `Accept: application/json\r\n\r\n` +
-          `${JSON.stringify(budgetTrackingUpdateRequest)}\r\n\r\n` +
-          `--${changeSet}--\r\n\r\n` +
-          `--${postBoundary}--`;
+    //     let postBatchBody =
+    //       `--${postBoundary}\r\n` +
+    //       `Content-Type: multipart/mixed; boundary=${changeSet}\r\n\r\n` +
+    //       `--${changeSet}\r\n` +
+    //       `Content-Type: application/http\r\n` +
+    //       `Content-Transfer-Encoding: binary\r\n\r\n` +
+    //       `POST upsert?$format=json HTTP/1.1\r\n` +
+    //       `Content-Type: application/json;charset=utf-8\r\n` +
+    //       `Accept: application/json\r\n\r\n` +
+    //       `${JSON.stringify(sectorUpdateRequest)}\r\n\r\n` +
+    //       `--${changeSet}\r\n` +
+    //       `Content-Type: application/http\r\n` +
+    //       `Content-Transfer-Encoding: binary\r\n\r\n` +
+    //       `POST upsert?$format=json HTTP/1.1\r\n` +
+    //       `Content-Type: application/json;charset=utf-8\r\n` +
+    //       `Accept: application/json\r\n\r\n` +
+    //       `${JSON.stringify(budgetTrackingUpdateRequest)}\r\n\r\n` +
+    //       `--${changeSet}--\r\n\r\n` +
+    //       `--${postBoundary}--`;
 
-        const postBatchResponse = await axios.post(batchURL, postBatchBody, {
-          headers: {
-            Authorization: sfAuth,
-            "Content-Type": `multipart/mixed; boundary=${postBoundary}`,
-          },
-        });
+    //     const postBatchResponse = await axios.post(batchURL, postBatchBody, {
+    //       headers: {
+    //         Authorization: sfAuth,
+    //         "Content-Type": `multipart/mixed; boundary=${postBoundary}`,
+    //       },
+    //     });
 
-        //Extract and handle each individual response from the batch
-        const postBatchResult =
-          (await _parseMultipartResponse(postBatchResponse)) || [];
+    //     //Extract and handle each individual response from the batch
+    //     const postBatchResult =
+    //       (await _parseMultipartResponse(postBatchResponse)) || [];
 
-        // const budgetTrackingUpdateUrl = cookies.SF.URL + "upsert";
-        // const budgetTrackingConfig = {
-        //   method: "post",
-        //   maxBodyLength: Infinity,
-        //   url: budgetTrackingUpdateUrl,
-        //   headers: {
-        //     Authorization: sfAuth,
-        //     "Content-Type": "application/json",
-        //     Accept: "application/json",
-        //   },
-        //   data: JSON.stringify(budgetTracking),
-        // };
-        // const budgetTrackingResponse = await axios.request(
-        //   budgetTrackingConfig
-        // );
-        // console.log(
-        //   `Budget track mission updated: ${JSON.stringify(
-        //     budgetTrackingResponse.data
-        //   )}`
-        // );
-      } catch (e) {
-        console.log(`Budget track mission update failed: ${e}`);
-      }
-    }
-    //--Update budget tracking
+    //     // const budgetTrackingUpdateUrl = cookies.SF.URL + "upsert";
+    //     // const budgetTrackingConfig = {
+    //     //   method: "post",
+    //     //   maxBodyLength: Infinity,
+    //     //   url: budgetTrackingUpdateUrl,
+    //     //   headers: {
+    //     //     Authorization: sfAuth,
+    //     //     "Content-Type": "application/json",
+    //     //     Accept: "application/json",
+    //     //   },
+    //     //   data: JSON.stringify(budgetTracking),
+    //     // };
+    //     // const budgetTrackingResponse = await axios.request(
+    //     //   budgetTrackingConfig
+    //     // );
+    //     // console.log(
+    //     //   `Budget track mission updated: ${JSON.stringify(
+    //     //     budgetTrackingResponse.data
+    //     //   )}`
+    //     // );
+    //   } catch (e) {
+    //     console.log(`Budget track mission update failed: ${e}`);
+    //   }
+    // }
+    // //--Update budget tracking
 
     return response.data;
   } catch (error) {
@@ -1366,9 +1367,9 @@ const _approveRejectMission = async function (data, cookies) {
     if (response.data && data.payload.action === "1") {
       //Approve
       try {
-        const createS4Document = await _createS4Document(
+        const createS4Document = await _createS4Documentv2(
           { missionId: data.mission },
-          cookies
+          cookies,
         );
       } catch (e) {
         console.log(e);
@@ -1395,7 +1396,7 @@ const _claimMission = async function (decryptedData, cookies) {
   try {
     const auth = "Basic " + cookies.SF.basicAuth;
     const SFAuth = Buffer.from(cookies.SF.basicAuth, "base64").toString(
-      "utf-8"
+      "utf-8",
     );
     const SFAuthUsername = SFAuth.split(":")[0].split("@")[0];
 
@@ -1424,7 +1425,7 @@ const _claimMission = async function (decryptedData, cookies) {
     };
 
     const postClaimAttachmentResponse = await axios.request(
-      postClaimAttachmentConfig
+      postClaimAttachmentConfig,
     );
 
     if (
@@ -1464,7 +1465,7 @@ const _claimMission = async function (decryptedData, cookies) {
       const missionFetchUrl = `cust_Mission?$format=json&$filter=externalCode eq '${decryptedData.missionId}'&$select=${missionSelectQuery}&$expand=${missionExpandQuery}`;
 
       //--Budget tracking mission updates
-      const budgetTracking = decryptedData.budgetTracking;
+      const budgetTracking = decryptedData.budgetTracking || [];
 
       let sSectorList = "";
       budgetTracking.forEach((t) => {
@@ -1617,7 +1618,7 @@ const _claimMission = async function (decryptedData, cookies) {
           for (var i = 0; i < decryptedData.itinerary.length; i++) {
             const oItineraryFound = _.find(
               oMember.cust_itinerary_details_child.results,
-              ["cust_city", decryptedData.itinerary[i].itineraryCity]
+              ["cust_city", decryptedData.itinerary[i].itineraryCity],
             );
 
             if (oItineraryFound) {
@@ -1632,7 +1633,7 @@ const _claimMission = async function (decryptedData, cookies) {
                 decryptedData.itinerary[i].itinerayPerDiem;
 
               memberUpdateRequest.cust_itinerary_details_child.results.push(
-                itineraryUpdateRequest
+                itineraryUpdateRequest,
               );
             }
           }
@@ -1643,41 +1644,41 @@ const _claimMission = async function (decryptedData, cookies) {
 
       //--Sector update
       let sectorUpdateRequest = [];
-      sectorFetchResponse &&
-        sectorFetchResponse.forEach((s) => {
-          let budgetUpdate =
-            _.find(budgetTracking, ["cust_SFSector", s.externalCode]) || null;
-          if (budgetUpdate) {
-            sectorUpdateRequest.push({
-              __metadata: {
-                uri: cookies.SF.URL + "cust_SectorBudget",
-                type: "SFOData.cust_SectorBudget",
-              },
-              externalCode: s.externalCode,
-              effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-              cust_Available_budget: budgetUpdate.cust_Remaining_Budget,
-            });
-          }
-        });
+      // sectorFetchResponse &&
+      //   sectorFetchResponse.forEach((s) => {
+      //     let budgetUpdate =
+      //       _.find(budgetTracking, ["cust_SFSector", s.externalCode]) || null;
+      //     if (budgetUpdate) {
+      //       sectorUpdateRequest.push({
+      //         __metadata: {
+      //           uri: cookies.SF.URL + "cust_SectorBudget",
+      //           type: "SFOData.cust_SectorBudget",
+      //         },
+      //         externalCode: s.externalCode,
+      //         effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+      //         cust_Available_budget: budgetUpdate.cust_Remaining_Budget,
+      //       });
+      //     }
+      //   });
 
       let budgetTrackingUpdateRequest = [];
-      budgetTracking.forEach((t, i) => {
-        budgetTrackingUpdateRequest.push({
-          __metadata: {
-            uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
-            type: "SFOData.cust_Budget_Tracking_Missions",
-          },
-          externalCode:
-            decryptedData.missionId + "-" + new Date().getTime() + "-" + i,
-          effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-          cust_MissionID: decryptedData.missionId,
-          cust_SFSector: t.cust_SFSector,
-          cust_S4Sector: t.cust_S4Sector,
-          cust_Consumption: t.cust_Consumption,
-          cust_Remaining_Budget: t.cust_Remaining_Budget,
-          cust_Comments: t.cust_Comments,
-        });
-      });
+      // budgetTracking.forEach((t, i) => {
+      //   budgetTrackingUpdateRequest.push({
+      //     __metadata: {
+      //       uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
+      //       type: "SFOData.cust_Budget_Tracking_Missions",
+      //     },
+      //     externalCode:
+      //       decryptedData.missionId + "-" + new Date().getTime() + "-" + i,
+      //     effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+      //     cust_MissionID: decryptedData.missionId,
+      //     cust_SFSector: t.cust_SFSector,
+      //     cust_S4Sector: t.cust_S4Sector,
+      //     cust_Consumption: t.cust_Consumption,
+      //     cust_Remaining_Budget: t.cust_Remaining_Budget,
+      //     cust_Comments: t.cust_Comments,
+      //   });
+      // });
       //--Sector update
 
       //--Audit log update
@@ -1783,19 +1784,19 @@ const _claimMission = async function (decryptedData, cookies) {
       ) {
         if (postBatchResult[0] && postBatchResult[0].hasOwnProperty("error")) {
           console.log(
-            "Post batch error:" + postBatchResult[0].error.message.value
+            "Post batch error:" + postBatchResult[0].error.message.value,
           );
           throw Error(
-            "Post batch error:" + postBatchResult[0].error.message.value
+            "Post batch error:" + postBatchResult[0].error.message.value,
           );
         }
         throw Error("Error during batch post");
       }
 
       try {
-        const updateS4Document = await _updateS4Document(
+        const updateS4Document = await _createS4Documentv2(
           { missionId: decryptedData.missionId },
-          cookies
+          cookies,
         );
       } catch (e) {
         console.log("Error during document post:", e);
@@ -1816,7 +1817,7 @@ const _claimMission = async function (decryptedData, cookies) {
 
         const getApproverGroupMembersResponse = await axios.get(
           getApproverGroupMembersUrl,
-          getApproverGroupMembersConfig
+          getApproverGroupMembersConfig,
         );
         if (
           getApproverGroupMembersResponse &&
@@ -1849,7 +1850,7 @@ const _claimMission = async function (decryptedData, cookies) {
 
             const getApproverGroupMembersInfoResponse = await axios.get(
               getApproverGroupMembersInfoUrl,
-              getApproverGroupMembersInfoConfig
+              getApproverGroupMembersInfoConfig,
             );
 
             if (
@@ -1866,7 +1867,7 @@ const _claimMission = async function (decryptedData, cookies) {
               ) {
                 recipientsEmail.push(
                   getApproverGroupMembersInfoResponse.data.d.results[r]
-                    .personNav.emailNav.results[0].emailAddress
+                    .personNav.emailNav.results[0].emailAddress,
                 );
               }
 
@@ -1909,7 +1910,7 @@ const _claimMission = async function (decryptedData, cookies) {
               await _sendNotification(
                 notificationPayload,
                 cookies,
-                "sendClaimNotification"
+                "sendClaimNotification",
               );
               return true;
             }
@@ -1958,7 +1959,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
     };
 
     const postClaimAttachmentResponse = await axios.request(
-      postClaimAttachmentConfig
+      postClaimAttachmentConfig,
     );
 
     if (
@@ -1980,7 +1981,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
 
       const getApproveGroupResponse = await axios.get(
         getApproveGroupUrl,
-        getApproveGroupConfig
+        getApproveGroupConfig,
       );
 
       if (
@@ -2007,7 +2008,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
 
         const checkClaimResponse = await axios.get(
           checkClaimUrl,
-          checkClaimConfig
+          checkClaimConfig,
         );
 
         const postClaimUrl = cookies.SF.URL + "upsert?$format=json";
@@ -2115,7 +2116,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
           };
           const memberFetchResponse = await axios.get(
             memberFetchUrl,
-            memberFetchConfig
+            memberFetchConfig,
           );
           if (memberFetchResponse && memberFetchResponse.data) {
             const memberUpdateRequest = memberFetchResponse.data.d.results[0];
@@ -2138,7 +2139,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
 
               var itineraryFetchResponse = await axios.get(
                 itineraryFetchUrl,
-                itineraryFetchConfig
+                itineraryFetchConfig,
               );
               if (itineraryFetchResponse && itineraryFetchResponse.data) {
                 var itineraryUpdateRequest =
@@ -2207,7 +2208,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
           };
           const missionFetchResponse = await axios.get(
             missionFetchUrl,
-            missionFetchConfig
+            missionFetchConfig,
           );
 
           if (missionFetchResponse && missionFetchResponse.data) {
@@ -2234,13 +2235,12 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
               data: JSON.stringify(missionUpdateRequest),
             };
 
-            const missionUpdateResponse = await axios.request(
-              missionUpdateConfig
-            );
+            const missionUpdateResponse =
+              await axios.request(missionUpdateConfig);
 
             if (missionUpdateResponse && missionUpdateResponse.data) {
               //--Budget tracking mission updates
-              const budgetTracking = decryptedData.budgetTracking;
+              const budgetTracking = decryptedData.budgetTracking || [];
 
               let sSectorList = "";
               budgetTracking.forEach((t) => {
@@ -2267,55 +2267,55 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
               };
               const sectorFetchResponse = await axios.get(
                 sectorFetchUrl,
-                sectorFetchConfig
+                sectorFetchConfig,
               );
               let sectorUpdateRequest = [];
-              if (sectorFetchResponse && sectorFetchResponse.data) {
-                // const sectorUpdateRequest =
-                //   sectorFetchResponse.data.d.results[0];
-                // sectorUpdateRequest.__metadata.uri =
-                //   cookies.SF.URL + "cust_SectorBudget";
-                // sectorUpdateRequest.cust_Available_budget =
-                //   decryptedData.sectorAvailableBudget;
+              // if (sectorFetchResponse && sectorFetchResponse.data) {
+              //   // const sectorUpdateRequest =
+              //   //   sectorFetchResponse.data.d.results[0];
+              //   // sectorUpdateRequest.__metadata.uri =
+              //   //   cookies.SF.URL + "cust_SectorBudget";
+              //   // sectorUpdateRequest.cust_Available_budget =
+              //   //   decryptedData.sectorAvailableBudget;
 
-                sectorFetchResponse.data.d.results.forEach((s) => {
-                  let budgetUpdate =
-                    _.find(budgetTracking, ["cust_SFSector", s.externalCode]) ||
-                    null;
-                  if (budgetUpdate) {
-                    sectorUpdateRequest.push({
-                      __metadata: {
-                        uri: cookies.SF.URL + "cust_SectorBudget",
-                      },
-                      externalCode: s.externalCode,
-                      effectiveStartDate:
-                        "/Date(" + new Date().getTime() + ")/",
-                      cust_Available_budget: budgetUpdate.cust_Remaining_Budget,
-                    });
-                  }
-                });
+              //   sectorFetchResponse.data.d.results.forEach((s) => {
+              //     let budgetUpdate =
+              //       _.find(budgetTracking, ["cust_SFSector", s.externalCode]) ||
+              //       null;
+              //     if (budgetUpdate) {
+              //       sectorUpdateRequest.push({
+              //         __metadata: {
+              //           uri: cookies.SF.URL + "cust_SectorBudget",
+              //         },
+              //         externalCode: s.externalCode,
+              //         effectiveStartDate:
+              //           "/Date(" + new Date().getTime() + ")/",
+              //         cust_Available_budget: budgetUpdate.cust_Remaining_Budget,
+              //       });
+              //     }
+              //   });
 
                 let budgetTrackingUpdateRequest = [];
-                budgetTracking.forEach((t, i) => {
-                  budgetTrackingUpdateRequest.push({
-                    __metadata: {
-                      uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
-                    },
-                    externalCode:
-                      decryptedData.missionId +
-                      "-" +
-                      new Date().getTime() +
-                      "-" +
-                      i,
-                    effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-                    cust_MissionID: decryptedData.missionId,
-                    cust_SFSector: t.cust_SFSector,
-                    cust_S4Sector: t.cust_S4Sector,
-                    cust_Consumption: t.cust_Consumption,
-                    cust_Remaining_Budget: t.cust_Remaining_Budget,
-                    cust_Comments: t.cust_Comments,
-                  });
-                });
+                // budgetTracking.forEach((t, i) => {
+                //   budgetTrackingUpdateRequest.push({
+                //     __metadata: {
+                //       uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
+                //     },
+                //     externalCode:
+                //       decryptedData.missionId +
+                //       "-" +
+                //       new Date().getTime() +
+                //       "-" +
+                //       i,
+                //     effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+                //     cust_MissionID: decryptedData.missionId,
+                //     cust_SFSector: t.cust_SFSector,
+                //     cust_S4Sector: t.cust_S4Sector,
+                //     cust_Consumption: t.cust_Consumption,
+                //     cust_Remaining_Budget: t.cust_Remaining_Budget,
+                //     cust_Comments: t.cust_Comments,
+                //   });
+                // });
 
                 const batchURL = cookies.SF.URL + "$batch?$format=json";
                 let postBoundary = `batch_${crypto.randomUUID()}`; // batch id
@@ -2349,7 +2349,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
                       Authorization: auth,
                       "Content-Type": `multipart/mixed; boundary=${postBoundary}`,
                     },
-                  }
+                  },
                 );
 
                 //Extract and handle each individual response from the batch
@@ -2374,9 +2374,9 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
                 if (postBatchResult) {
                   //--Call S4 Odata
                   try {
-                    const updateS4Document = await _updateS4Document(
+                    const updateS4Document = await _createS4Documentv2(
                       { missionId: decryptedData.missionId },
-                      cookies
+                      cookies,
                     );
                   } catch (e) {
                     console.log(e);
@@ -2432,7 +2432,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
 
                     const getApproverGroupMembersResponse = await axios.get(
                       getApproverGroupMembersUrl,
-                      getApproverGroupMembersConfig
+                      getApproverGroupMembersConfig,
                     );
                     if (
                       getApproverGroupMembersResponse &&
@@ -2447,7 +2447,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
                         m++
                       ) {
                         groupMembers.push(
-                          getApproverGroupMembersResponse.data.d[m].userId
+                          getApproverGroupMembersResponse.data.d[m].userId,
                         );
                       }
                       if (groupMembers.length > 0) {
@@ -2469,7 +2469,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
                         const getApproverGroupMembersInfoResponse =
                           await axios.get(
                             getApproverGroupMembersInfoUrl,
-                            getApproverGroupMembersInfoConfig
+                            getApproverGroupMembersInfoConfig,
                           );
 
                         if (
@@ -2490,7 +2490,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
                             recipientsEmail.push(
                               getApproverGroupMembersInfoResponse.data.d
                                 .results[r].personNav.emailNav.results[0]
-                                .emailAddress
+                                .emailAddress,
                             );
                           }
 
@@ -2537,7 +2537,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
                           await _sendNotification(
                             notificationPayload,
                             cookies,
-                            "sendClaimNotification"
+                            "sendClaimNotification",
                           );
                           return true;
                         }
@@ -2576,7 +2576,7 @@ const _fetchSectorInfo = async function (decryptedData, cookies) {
     };
     const sectorFetchResponse = await axios.get(
       sectorFetchUrl,
-      sectorFetchConfig
+      sectorFetchConfig,
     );
     return sectorFetchResponse.data;
   } catch (error) {
@@ -2618,7 +2618,7 @@ const _fetchClaim = async function (decryptedData, cookies) {
     };
     const recoveryFetchResponse = await axios.get(
       recoveryFetchUrl,
-      recoveryFetchConfig
+      recoveryFetchConfig,
     );
 
     return {
@@ -2880,7 +2880,7 @@ const _approveRejectClaim = async function (decryptedData, cookies) {
           };
           const memberFetchResponse = await axios.get(
             memberFetchUrl,
-            memberFetchConfig
+            memberFetchConfig,
           );
           if (memberFetchResponse && memberFetchResponse.data) {
             const memberUpdateRequest = memberFetchResponse.data.d.results[0];
@@ -2916,7 +2916,7 @@ const _approveRejectClaim = async function (decryptedData, cookies) {
         };
         const sectorFetchResponse = await axios.get(
           sectorFetchUrl,
-          sectorFetchConfig
+          sectorFetchConfig,
         );
         if (sectorFetchResponse && sectorFetchResponse.data) {
           const sectorUpdateRequest = sectorFetchResponse.data.d.results[0];
@@ -3005,7 +3005,7 @@ const _approveRejectClaim = async function (decryptedData, cookies) {
 
                 const getApproverGroupMembersInfoResponse = await axios.get(
                   getApproverGroupMembersInfoUrl,
-                  getApproverGroupMembersInfoConfig
+                  getApproverGroupMembersInfoConfig,
                 );
 
                 if (
@@ -3104,7 +3104,7 @@ const _approveRejectClaim = async function (decryptedData, cookies) {
                   await _sendNotification(
                     notificationPayload,
                     cookies,
-                    "sendClaimNotification"
+                    "sendClaimNotification",
                   );
                   return true;
                 }
@@ -3171,7 +3171,7 @@ const _advanceMission = async function (decryptedData, cookies) {
 
     const getApproveGroupResponse = await axios.get(
       getApproveGroupUrl,
-      getApproveGroupConfig
+      getApproveGroupConfig,
     );
 
     if (
@@ -3197,7 +3197,7 @@ const _advanceMission = async function (decryptedData, cookies) {
 
       const checkAdvanceResponse = await axios.get(
         checkAdvanceUrl,
-        checkAdvanceConfig
+        checkAdvanceConfig,
       );
 
       const postAdvanceUrl = cookies.SF.URL + "upsert?$format=json";
@@ -3288,7 +3288,7 @@ const _advanceMission = async function (decryptedData, cookies) {
         };
         const memberFetchResponse = await axios.get(
           memberFetchUrl,
-          memberFetchConfig
+          memberFetchConfig,
         );
         if (memberFetchResponse && memberFetchResponse.data) {
           const memberUpdateRequest = memberFetchResponse.data.d.results[0];
@@ -3360,7 +3360,7 @@ const _advanceMission = async function (decryptedData, cookies) {
 
       const getApproverGroupMembersResponse = await axios.get(
         getApproverGroupMembersUrl,
-        getApproverGroupMembersConfig
+        getApproverGroupMembersConfig,
       );
       if (
         getApproverGroupMembersResponse &&
@@ -3393,7 +3393,7 @@ const _advanceMission = async function (decryptedData, cookies) {
 
           const getApproverGroupMembersInfoResponse = await axios.get(
             getApproverGroupMembersInfoUrl,
-            getApproverGroupMembersInfoConfig
+            getApproverGroupMembersInfoConfig,
           );
 
           if (
@@ -3410,7 +3410,7 @@ const _advanceMission = async function (decryptedData, cookies) {
             ) {
               recipientsEmail.push(
                 getApproverGroupMembersInfoResponse.data.d.results[r].personNav
-                  .emailNav.results[0].emailAddress
+                  .emailNav.results[0].emailAddress,
               );
             }
 
@@ -3453,7 +3453,7 @@ const _advanceMission = async function (decryptedData, cookies) {
             await _sendNotification(
               notificationPayload,
               cookies,
-              "sendAdvanceNotification"
+              "sendAdvanceNotification",
             );
           }
         }
@@ -3488,7 +3488,7 @@ const _fetchAdvance = async function (decryptedData, cookies) {
 
     const checkAdvanceResponse = await axios.get(
       checkAdvanceUrl,
-      checkAdvanceConfig
+      checkAdvanceConfig,
     );
 
     return checkAdvanceResponse.data;
@@ -3533,7 +3533,7 @@ const _fetchAdvances = async function (decryptedData, cookies) {
 
       const getAdvanceResponse = await axios.get(
         getAdvanceUrl,
-        getAdvanceConfig
+        getAdvanceConfig,
       );
 
       return getAdvanceResponse.data;
@@ -3693,7 +3693,7 @@ const _approveRejectAdvance = async function (decryptedData, cookies) {
           };
           const memberFetchResponse = await axios.get(
             memberFetchUrl,
-            memberFetchConfig
+            memberFetchConfig,
           );
           if (memberFetchResponse && memberFetchResponse.data) {
             const memberUpdateRequest = memberFetchResponse.data.d.results[0];
@@ -3777,7 +3777,7 @@ const _approveRejectAdvance = async function (decryptedData, cookies) {
 
             const getApproverGroupMembersInfoResponse = await axios.get(
               getApproverGroupMembersInfoUrl,
-              getApproverGroupMembersInfoConfig
+              getApproverGroupMembersInfoConfig,
             );
 
             if (
@@ -3871,7 +3871,7 @@ const _approveRejectAdvance = async function (decryptedData, cookies) {
               await _sendNotification(
                 notificationPayload,
                 cookies,
-                "sendAdvanceNotification"
+                "sendAdvanceNotification",
               );
               return true;
             }
@@ -3980,84 +3980,84 @@ const _cancelMission = async function (decryptedData, cookies) {
     let sectorUpdateRequest = [];
     let budgetTrackingUpdateRequest = [];
     if (oSubSector) {
-      sectorUpdateRequest.push({
-        __metadata: {
-          uri: cookies.SF.URL + "cust_SectorBudget",
-        },
-        externalCode: oSubSector.externalCode,
-        effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-        cust_Available_budget:
-          parseFloat(oSubSector.cust_Available_budget) +
-          parseFloat(missionUpdateRequest.cust_Total_Expense),
-        cust_Parked_Amount:
-          parseFloat(oSubSector.cust_Parked_Amount) -
-          parseFloat(missionUpdateRequest.cust_Total_Expense),
-        cust_Utilized_Budget:
-          parseFloat(oSubSector.cust_Utilized_Budget) -
-          parseFloat(missionUpdateRequest.cust_Total_Expense),
-      });
+      // sectorUpdateRequest.push({
+      //   __metadata: {
+      //     uri: cookies.SF.URL + "cust_SectorBudget",
+      //   },
+      //   externalCode: oSubSector.externalCode,
+      //   effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+      //   cust_Available_budget:
+      //     parseFloat(oSubSector.cust_Available_budget) +
+      //     parseFloat(missionUpdateRequest.cust_Total_Expense),
+      //   cust_Parked_Amount:
+      //     parseFloat(oSubSector.cust_Parked_Amount) -
+      //     parseFloat(missionUpdateRequest.cust_Total_Expense),
+      //   cust_Utilized_Budget:
+      //     parseFloat(oSubSector.cust_Utilized_Budget) -
+      //     parseFloat(missionUpdateRequest.cust_Total_Expense),
+      // });
 
       //--Add budget tracking logs
-      budgetTrackingUpdateRequest.push({
-        __metadata: {
-          uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
-        },
-        externalCode:
-          decryptedData.missionId +
-          "-" +
-          moment(new Date()).format("YYYYMMDD") +
-          "-0",
-        effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-        cust_MissionID: decryptedData.missionId,
-        cust_SFSector: oSubSector.externalCode,
-        cust_S4Sector: oSubSector.cust_S4Sector,
-        cust_Consumption: 0,
-        cust_Remaining_Budget:
-          parseFloat(oSubSector.cust_Available_budget) +
-          parseFloat(missionUpdateRequest.cust_Total_Expense),
-        cust_Comments: "Mission cancelled",
-      });
+      // budgetTrackingUpdateRequest.push({
+      //   __metadata: {
+      //     uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
+      //   },
+      //   externalCode:
+      //     decryptedData.missionId +
+      //     "-" +
+      //     moment(new Date()).format("YYYYMMDD") +
+      //     "-0",
+      //   effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+      //   cust_MissionID: decryptedData.missionId,
+      //   cust_SFSector: oSubSector.externalCode,
+      //   cust_S4Sector: oSubSector.cust_S4Sector,
+      //   cust_Consumption: 0,
+      //   cust_Remaining_Budget:
+      //     parseFloat(oSubSector.cust_Available_budget) +
+      //     parseFloat(missionUpdateRequest.cust_Total_Expense),
+      //   cust_Comments: "Mission cancelled",
+      // });
       //--Add budget tracking logs
     }
 
     if (oMainSector) {
-      sectorUpdateRequest.push({
-        __metadata: {
-          uri: cookies.SF.URL + "cust_SectorBudget",
-        },
-        externalCode: oMainSector.externalCode,
-        effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-        cust_Available_budget:
-          parseFloat(oMainSector.cust_Available_budget) +
-          parseFloat(missionUpdateRequest.cust_Total_Expense),
-        cust_Parked_Amount:
-          parseFloat(oMainSector.cust_Parked_Amount) -
-          parseFloat(missionUpdateRequest.cust_Total_Expense),
-        cust_Utilized_Budget:
-          parseFloat(oMainSector.cust_Utilized_Budget) -
-          parseFloat(missionUpdateRequest.cust_Total_Expense),
-      });
+      // sectorUpdateRequest.push({
+      //   __metadata: {
+      //     uri: cookies.SF.URL + "cust_SectorBudget",
+      //   },
+      //   externalCode: oMainSector.externalCode,
+      //   effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+      //   cust_Available_budget:
+      //     parseFloat(oMainSector.cust_Available_budget) +
+      //     parseFloat(missionUpdateRequest.cust_Total_Expense),
+      //   cust_Parked_Amount:
+      //     parseFloat(oMainSector.cust_Parked_Amount) -
+      //     parseFloat(missionUpdateRequest.cust_Total_Expense),
+      //   cust_Utilized_Budget:
+      //     parseFloat(oMainSector.cust_Utilized_Budget) -
+      //     parseFloat(missionUpdateRequest.cust_Total_Expense),
+      // });
 
       //--Add budget tracking logs
-      budgetTrackingUpdateRequest.push({
-        __metadata: {
-          uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
-        },
-        externalCode:
-          decryptedData.missionId +
-          "-" +
-          moment(new Date()).format("YYYYMMDD") +
-          "-1",
-        effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-        cust_MissionID: decryptedData.missionId,
-        cust_SFSector: oMainSector.externalCode,
-        cust_S4Sector: oMainSector.cust_S4Sector,
-        cust_Consumption: 0,
-        cust_Remaining_Budget:
-          parseFloat(oMainSector.cust_Available_budget) +
-          parseFloat(missionUpdateRequest.cust_Total_Expense),
-        cust_Comments: "Mission cancelled",
-      });
+      // budgetTrackingUpdateRequest.push({
+      //   __metadata: {
+      //     uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
+      //   },
+      //   externalCode:
+      //     decryptedData.missionId +
+      //     "-" +
+      //     moment(new Date()).format("YYYYMMDD") +
+      //     "-1",
+      //   effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+      //   cust_MissionID: decryptedData.missionId,
+      //   cust_SFSector: oMainSector.externalCode,
+      //   cust_S4Sector: oMainSector.cust_S4Sector,
+      //   cust_Consumption: 0,
+      //   cust_Remaining_Budget:
+      //     parseFloat(oMainSector.cust_Available_budget) +
+      //     parseFloat(missionUpdateRequest.cust_Total_Expense),
+      //   cust_Comments: "Mission cancelled",
+      // });
       //--Add budget tracking logs
     }
     //-->1. Update sector data
@@ -4194,9 +4194,9 @@ const _cancelMission = async function (decryptedData, cookies) {
     if (postBatchResult) {
       //--Call S4 Odata
       try {
-        const deleteS4Document = await _deleteS4Document(
+        const deleteS4Document = await _deleteS4Documentv2(
           { missionId: decryptedData.missionId },
-          cookies
+          cookies,
         );
       } catch (e) {
         console.log(e);
@@ -4227,7 +4227,7 @@ const _cancelMission_v1 = async function (decryptedData, cookies) {
     };
     const missionFetchResponse = await axios.get(
       missionFetchUrl,
-      missionFetchConfig
+      missionFetchConfig,
     );
 
     if (missionFetchResponse && missionFetchResponse.data) {
@@ -4245,7 +4245,7 @@ const _cancelMission_v1 = async function (decryptedData, cookies) {
       };
       const sectorFetchResponse = await axios.get(
         sectorFetchUrl,
-        sectorFetchConfig
+        sectorFetchConfig,
       );
 
       if (
@@ -4369,7 +4369,7 @@ const _approveRejectCancel_v1 = async function (decryptedData, cookies) {
 
     const missionFetchResponse = await axios.get(
       missionFetchUrl,
-      missionFetchConfig
+      missionFetchConfig,
     );
 
     if (missionFetchResponse && missionFetchResponse.data) {
@@ -4387,7 +4387,7 @@ const _approveRejectCancel_v1 = async function (decryptedData, cookies) {
       };
       const sectorFetchResponse = await axios.get(
         sectorFetchUrl,
-        sectorFetchConfig
+        sectorFetchConfig,
       );
 
       if (
@@ -4409,7 +4409,7 @@ const _approveRejectCancel_v1 = async function (decryptedData, cookies) {
 
         const getApproveGroupResponse = await axios.get(
           getApproveGroupUrl,
-          getApproveGroupConfig
+          getApproveGroupConfig,
         );
 
         var approveGroup = null;
@@ -4625,78 +4625,78 @@ const _approveRejectCancel = async function (decryptedData, cookies) {
         //--Approve cancel
 
         if (oSubSector) {
-          sectorUpdateRequest.push({
-            __metadata: {
-              uri: cookies.SF.URL + "cust_SectorBudget",
-            },
-            externalCode: oSubSector.externalCode,
-            effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-            cust_Available_budget:
-              parseFloat(oSubSector.cust_Available_budget) +
-              parseFloat(missionUpdateRequest.cust_Total_Expense),
-            cust_Parked_Amount:
-              parseFloat(oSubSector.cust_Parked_Amount) -
-              parseFloat(missionUpdateRequest.cust_Total_Expense),
-          });
+          // sectorUpdateRequest.push({
+          //   __metadata: {
+          //     uri: cookies.SF.URL + "cust_SectorBudget",
+          //   },
+          //   externalCode: oSubSector.externalCode,
+          //   effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+          //   cust_Available_budget:
+          //     parseFloat(oSubSector.cust_Available_budget) +
+          //     parseFloat(missionUpdateRequest.cust_Total_Expense),
+          //   cust_Parked_Amount:
+          //     parseFloat(oSubSector.cust_Parked_Amount) -
+          //     parseFloat(missionUpdateRequest.cust_Total_Expense),
+          // });
 
           //--Add budget tracking logs
-          budgetTrackingUpdateRequest.push({
-            __metadata: {
-              uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
-            },
-            externalCode:
-              decryptedData.missionId +
-              "-" +
-              moment(new Date()).format("YYYYMMDD") +
-              "-0",
-            effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-            cust_MissionID: decryptedData.missionId,
-            cust_SFSector: oSubSector.externalCode,
-            cust_S4Sector: oSubSector.cust_S4Sector,
-            cust_Consumption: 0,
-            cust_Remaining_Budget:
-              parseFloat(oSubSector.cust_Available_budget) +
-              parseFloat(missionUpdateRequest.cust_Total_Expense),
-            cust_Comments: "Approve cancel",
-          });
+          // budgetTrackingUpdateRequest.push({
+          //   __metadata: {
+          //     uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
+          //   },
+          //   externalCode:
+          //     decryptedData.missionId +
+          //     "-" +
+          //     moment(new Date()).format("YYYYMMDD") +
+          //     "-0",
+          //   effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+          //   cust_MissionID: decryptedData.missionId,
+          //   cust_SFSector: oSubSector.externalCode,
+          //   cust_S4Sector: oSubSector.cust_S4Sector,
+          //   cust_Consumption: 0,
+          //   cust_Remaining_Budget:
+          //     parseFloat(oSubSector.cust_Available_budget) +
+          //     parseFloat(missionUpdateRequest.cust_Total_Expense),
+          //   cust_Comments: "Approve cancel",
+          // });
           //--Add budget tracking logs
         }
 
         if (oMainSector) {
-          sectorUpdateRequest.push({
-            __metadata: {
-              uri: cookies.SF.URL + "cust_SectorBudget",
-            },
-            externalCode: oMainSector.externalCode,
-            effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-            cust_Available_budget:
-              parseFloat(oMainSector.cust_Available_budget) +
-              parseFloat(missionUpdateRequest.cust_Total_Expense),
-            cust_Parked_Amount:
-              parseFloat(oMainSector.cust_Parked_Amount) -
-              parseFloat(missionUpdateRequest.cust_Total_Expense),
-          });
+          // sectorUpdateRequest.push({
+          //   __metadata: {
+          //     uri: cookies.SF.URL + "cust_SectorBudget",
+          //   },
+          //   externalCode: oMainSector.externalCode,
+          //   effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+          //   cust_Available_budget:
+          //     parseFloat(oMainSector.cust_Available_budget) +
+          //     parseFloat(missionUpdateRequest.cust_Total_Expense),
+          //   cust_Parked_Amount:
+          //     parseFloat(oMainSector.cust_Parked_Amount) -
+          //     parseFloat(missionUpdateRequest.cust_Total_Expense),
+          // });
 
           //--Add budget tracking logs
-          budgetTrackingUpdateRequest.push({
-            __metadata: {
-              uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
-            },
-            externalCode:
-              decryptedData.missionId +
-              "-" +
-              moment(new Date()).format("YYYYMMDD") +
-              "-1",
-            effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-            cust_MissionID: decryptedData.missionId,
-            cust_SFSector: oMainSector.externalCode,
-            cust_S4Sector: oMainSector.cust_S4Sector,
-            cust_Consumption: 0,
-            cust_Remaining_Budget:
-              parseFloat(oMainSector.cust_Available_budget) +
-              parseFloat(missionUpdateRequest.cust_Total_Expense),
-            cust_Comments: "Approve cancel",
-          });
+          // budgetTrackingUpdateRequest.push({
+          //   __metadata: {
+          //     uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
+          //   },
+          //   externalCode:
+          //     decryptedData.missionId +
+          //     "-" +
+          //     moment(new Date()).format("YYYYMMDD") +
+          //     "-1",
+          //   effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+          //   cust_MissionID: decryptedData.missionId,
+          //   cust_SFSector: oMainSector.externalCode,
+          //   cust_S4Sector: oMainSector.cust_S4Sector,
+          //   cust_Consumption: 0,
+          //   cust_Remaining_Budget:
+          //     parseFloat(oMainSector.cust_Available_budget) +
+          //     parseFloat(missionUpdateRequest.cust_Total_Expense),
+          //   cust_Comments: "Approve cancel",
+          // });
           //--Add budget tracking logs
         }
 
@@ -4707,35 +4707,35 @@ const _approveRejectCancel = async function (decryptedData, cookies) {
         //--Reject cancel
 
         if (oSubSector) {
-          sectorUpdateRequest.push({
-            __metadata: {
-              uri: cookies.SF.URL + "cust_SectorBudget",
-            },
-            externalCode: oSubSector.externalCode,
-            effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-            cust_Utilized_Budget:
-              parseFloat(oSubSector.cust_Utilized_Budget) +
-              parseFloat(missionUpdateRequest.cust_Total_Expense),
-            cust_Parked_Amount:
-              parseFloat(oSubSector.cust_Parked_Amount) -
-              parseFloat(missionUpdateRequest.cust_Total_Expense),
-          });
+          // sectorUpdateRequest.push({
+          //   __metadata: {
+          //     uri: cookies.SF.URL + "cust_SectorBudget",
+          //   },
+          //   externalCode: oSubSector.externalCode,
+          //   effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+          //   cust_Utilized_Budget:
+          //     parseFloat(oSubSector.cust_Utilized_Budget) +
+          //     parseFloat(missionUpdateRequest.cust_Total_Expense),
+          //   cust_Parked_Amount:
+          //     parseFloat(oSubSector.cust_Parked_Amount) -
+          //     parseFloat(missionUpdateRequest.cust_Total_Expense),
+          // });
         }
 
         if (oMainSector) {
-          sectorUpdateRequest.push({
-            __metadata: {
-              uri: cookies.SF.URL + "cust_SectorBudget",
-            },
-            externalCode: oMainSector.externalCode,
-            effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-            cust_Utilized_Budget:
-              parseFloat(oMainSector.cust_Utilized_Budget) +
-              parseFloat(missionUpdateRequest.cust_Total_Expense),
-            cust_Parked_Amount:
-              parseFloat(oMainSector.cust_Parked_Amount) -
-              parseFloat(missionUpdateRequest.cust_Total_Expense),
-          });
+          // sectorUpdateRequest.push({
+          //   __metadata: {
+          //     uri: cookies.SF.URL + "cust_SectorBudget",
+          //   },
+          //   externalCode: oMainSector.externalCode,
+          //   effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+          //   cust_Utilized_Budget:
+          //     parseFloat(oMainSector.cust_Utilized_Budget) +
+          //     parseFloat(missionUpdateRequest.cust_Total_Expense),
+          //   cust_Parked_Amount:
+          //     parseFloat(oMainSector.cust_Parked_Amount) -
+          //     parseFloat(missionUpdateRequest.cust_Total_Expense),
+          // });
         }
 
         missionUpdateRequest.cust_Status = "1";
@@ -4834,9 +4834,9 @@ const _approveRejectCancel = async function (decryptedData, cookies) {
         if (decryptedData.action === "1") {
           //Approve cancel
           try {
-            const deleteS4Document = await _deleteS4Document(
+            const deleteS4Document = await _deleteS4Documentv2(
               { missionId: decryptedData.missionId },
-              cookies
+              cookies,
             );
           } catch (e) {
             console.log(e);
@@ -4984,47 +4984,47 @@ const _updateMissionPayrollBatch = async function (body, cookies) {
       const sectorFetchResponse = _.cloneDeep(batchResult[0]);
 
       let sectorUpdateRequest = [];
-      if (sectorFetchResponse && sectorFetchResponse.d) {
-        sectorFetchResponse.d.results.forEach((s) => {
-          let budgetUpdate =
-            _.find(budgetTracking, ["cust_SFSector", s.externalCode]) || null;
-          if (budgetUpdate) {
-            sectorUpdateRequest.push({
-              __metadata: {
-                uri: cookies.SF.URL + "cust_SectorBudget",
-              },
-              externalCode: s.externalCode,
-              effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-              cust_Available_budget: budgetUpdate.cust_Remaining_Budget,
-              cust_Parked_Amount: budgetUpdate.cust_Parked_Amount,
-            });
-          }
-        });
-      }
+      // if (sectorFetchResponse && sectorFetchResponse.d) {
+      //   sectorFetchResponse.d.results.forEach((s) => {
+      //     let budgetUpdate =
+      //       _.find(budgetTracking, ["cust_SFSector", s.externalCode]) || null;
+      //     if (budgetUpdate) {
+      //       sectorUpdateRequest.push({
+      //         __metadata: {
+      //           uri: cookies.SF.URL + "cust_SectorBudget",
+      //         },
+      //         externalCode: s.externalCode,
+      //         effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+      //         cust_Available_budget: budgetUpdate.cust_Remaining_Budget,
+      //         cust_Parked_Amount: budgetUpdate.cust_Parked_Amount,
+      //       });
+      //     }
+      //   });
+      // }
       //--Read sector budget MDF and do some updates
 
       //--Add budget tracking logs
       let budgetTrackingUpdateRequest = [];
-      budgetTracking.forEach((t, i) => {
-        budgetTrackingUpdateRequest.push({
-          __metadata: {
-            uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
-          },
-          externalCode:
-            body.info.missionId +
-            "-" +
-            moment(new Date()).format("YYYYMMDD") +
-            "-" +
-            i,
-          effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-          cust_MissionID: body.info.missionId,
-          cust_SFSector: t.cust_SFSector,
-          cust_S4Sector: t.cust_S4Sector,
-          cust_Consumption: t.cust_Consumption,
-          cust_Remaining_Budget: t.cust_Remaining_Budget,
-          cust_Comments: t.cust_Comments,
-        });
-      });
+      // budgetTracking.forEach((t, i) => {
+      //   budgetTrackingUpdateRequest.push({
+      //     __metadata: {
+      //       uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
+      //     },
+      //     externalCode:
+      //       body.info.missionId +
+      //       "-" +
+      //       moment(new Date()).format("YYYYMMDD") +
+      //       "-" +
+      //       i,
+      //     effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+      //     cust_MissionID: body.info.missionId,
+      //     cust_SFSector: t.cust_SFSector,
+      //     cust_S4Sector: t.cust_S4Sector,
+      //     cust_Consumption: t.cust_Consumption,
+      //     cust_Remaining_Budget: t.cust_Remaining_Budget,
+      //     cust_Comments: t.cust_Comments,
+      //   });
+      // });
       //--Add budget tracking logs
 
       const missionData = _.cloneDeep(batchResult[1].d.results[0]);
@@ -5081,10 +5081,10 @@ const _updateMissionPayrollBatch = async function (body, cookies) {
                   cust_city: oItineraryFound.city,
                 };
                 memberUpdateRequest.cust_itinerary_details_child.results.push(
-                  itineraryUpdateRequest
+                  itineraryUpdateRequest,
                 );
               }
-            }
+            },
           );
 
           missionUpdateRequest.cust_Members.results.push(memberUpdateRequest);
@@ -5167,9 +5167,9 @@ const _updateMissionPayrollBatch = async function (body, cookies) {
       if (postBatchResult) {
         //--Call S4 Odata
         try {
-          const updateS4Document = await _updateS4Document(
+          const updateS4Document = await _createS4Documentv2(
             { missionId: body.info.missionId },
-            cookies
+            cookies,
           );
         } catch (e) {
           console.log(e);
@@ -5208,7 +5208,7 @@ const _updateMissionPayroll = async function (body, cookies) {
     };
     const sectorFetchResponse = await axios.get(
       sectorFetchUrl,
-      sectorFetchConfig
+      sectorFetchConfig,
     );
 
     if (sectorFetchResponse && sectorFetchResponse.data) {
@@ -5258,7 +5258,7 @@ const _updateMissionPayroll = async function (body, cookies) {
     };
     const missionFetchResponse = await axios.get(
       missionFetchUrl,
-      missionFetchConfig
+      missionFetchConfig,
     );
 
     if (missionFetchResponse && missionFetchResponse.data) {
@@ -5317,10 +5317,10 @@ const _updateMissionPayroll = async function (body, cookies) {
                   cust_city: oItineraryFound.city,
                 };
                 memberUpdateRequest.cust_itinerary_details_child.results.push(
-                  itineraryUpdateRequest
+                  itineraryUpdateRequest,
                 );
               }
-            }
+            },
           );
 
           missionUpdateRequest.cust_Members.results.push(memberUpdateRequest);
@@ -5347,7 +5347,7 @@ const _updateMissionPayroll = async function (body, cookies) {
 
     throw new CustomHttpError(
       500,
-      "Update failed. Mission data could not be fetched. Please try again later."
+      "Update failed. Mission data could not be fetched. Please try again later.",
     );
   } catch (e) {
     console.log("Update mission by Payroll Error:" + e);
@@ -5437,47 +5437,47 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
       const sectorFetchResponse = _.cloneDeep(batchResult[0]);
 
       let sectorUpdateRequest = [];
-      if (sectorFetchResponse && sectorFetchResponse.d) {
-        sectorFetchResponse.d.results.forEach((s) => {
-          let budgetUpdate =
-            _.find(budgetTracking, ["cust_SFSector", s.externalCode]) || null;
-          if (budgetUpdate) {
-            sectorUpdateRequest.push({
-              __metadata: {
-                uri: cookies.SF.URL + "cust_SectorBudget",
-              },
-              externalCode: s.externalCode,
-              effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-              cust_Available_budget: budgetUpdate.cust_Remaining_Budget,
-              cust_Parked_Amount: budgetUpdate.cust_Parked_Amount,
-            });
-          }
-        });
-      }
+      // if (sectorFetchResponse && sectorFetchResponse.d) {
+      //   sectorFetchResponse.d.results.forEach((s) => {
+      //     let budgetUpdate =
+      //       _.find(budgetTracking, ["cust_SFSector", s.externalCode]) || null;
+      //     if (budgetUpdate) {
+      //       sectorUpdateRequest.push({
+      //         __metadata: {
+      //           uri: cookies.SF.URL + "cust_SectorBudget",
+      //         },
+      //         externalCode: s.externalCode,
+      //         effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+      //         cust_Available_budget: budgetUpdate.cust_Remaining_Budget,
+      //         cust_Parked_Amount: budgetUpdate.cust_Parked_Amount,
+      //       });
+      //     }
+      //   });
+      // }
       //--Read sector budget MDF and do some updates
 
       //--Add budget tracking logs
       let budgetTrackingUpdateRequest = [];
-      budgetTracking.forEach((t, i) => {
-        budgetTrackingUpdateRequest.push({
-          __metadata: {
-            uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
-          },
-          externalCode:
-            body.info.missionId +
-            "-" +
-            moment(new Date()).format("YYYYMMDD") +
-            "-" +
-            i,
-          effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-          cust_MissionID: body.info.missionId,
-          cust_SFSector: t.cust_SFSector,
-          cust_S4Sector: t.cust_S4Sector,
-          cust_Consumption: t.cust_Consumption,
-          cust_Remaining_Budget: t.cust_Remaining_Budget,
-          cust_Comments: t.cust_Comments,
-        });
-      });
+      // budgetTracking.forEach((t, i) => {
+      //   budgetTrackingUpdateRequest.push({
+      //     __metadata: {
+      //       uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
+      //     },
+      //     externalCode:
+      //       body.info.missionId +
+      //       "-" +
+      //       moment(new Date()).format("YYYYMMDD") +
+      //       "-" +
+      //       i,
+      //     effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+      //     cust_MissionID: body.info.missionId,
+      //     cust_SFSector: t.cust_SFSector,
+      //     cust_S4Sector: t.cust_S4Sector,
+      //     cust_Consumption: t.cust_Consumption,
+      //     cust_Remaining_Budget: t.cust_Remaining_Budget,
+      //     cust_Comments: t.cust_Comments,
+      //   });
+      // });
       //--Add budget tracking logs
 
       const missionData = _.cloneDeep(batchResult[1].d.results[0]);
@@ -5570,7 +5570,7 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
               Authorization: auth,
               "Content-Type": `multipart/mixed; boundary=${uploadBoundary}`,
             },
-          }
+          },
         );
 
         //Extract and handle each individual response from the batch
@@ -5604,7 +5604,7 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
           (oItinerary, i) => {
             let sItineraryUrl = oItinerary.__metadata.uri;
             let sItineraryIndex = sItineraryUrl.indexOf(
-              "/cust_itinerary_details_child("
+              "/cust_itinerary_details_child(",
             );
             if (sItineraryIndex !== -1) {
               let sItineraryKey = sItineraryUrl.substring(sItineraryIndex + 1);
@@ -5615,7 +5615,7 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
                 `Content-Transfer-Encoding: binary\r\n\r\n` +
                 `DELETE ${sItineraryKey} HTTP/1.1\r\n\r\n`;
             }
-          }
+          },
         );
 
         if (oMember.cust_AttachmentNav) {
@@ -5652,13 +5652,13 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
             uri: cookies.SF.URL + "cust_Members",
           },
           cust_Employee_Total_Expense: _convertFloat(
-            oMember.employeeTotalExpense
+            oMember.employeeTotalExpense,
           ),
           cust_Employee_Total_Perdiem: _convertFloat(
-            oMember.employeeTotalPerdiem
+            oMember.employeeTotalPerdiem,
           ),
           cust_Employee_Total_Ticket: _convertFloat(
-            oMember.employeeTotalTicket
+            oMember.employeeTotalTicket,
           ),
           cust_Department: oMember.department,
           cust_Employee_ID: oMember.userID,
@@ -5716,7 +5716,7 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
             cust_city: oItinerary.city,
           };
           memberUpdateRequest.cust_itinerary_details_child.results.push(
-            itineraryUpdateRequest
+            itineraryUpdateRequest,
           );
         });
 
@@ -5789,9 +5789,9 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
       if (postBatchResponse) {
         //Approve
         try {
-          const createS4Document = await _createS4Document(
+          const createS4Document = await _createS4Documentv2(
             { missionId: body.info.missionId },
-            cookies
+            cookies,
           );
         } catch (e) {
           console.log("S4 document create error during 'Update Mission'", e);
@@ -5830,7 +5830,7 @@ const _updateMission = async function (body, userInfo, cookies) {
     };
     const sectorFetchResponse = await axios.get(
       sectorFetchUrl,
-      sectorFetchConfig
+      sectorFetchConfig,
     );
 
     if (sectorFetchResponse && sectorFetchResponse.data) {
@@ -5866,7 +5866,7 @@ const _updateMission = async function (body, userInfo, cookies) {
     };
     const missionFetchResponse = await axios.get(
       missionFetchUrl,
-      missionFetchConfig
+      missionFetchConfig,
     );
 
     if (missionFetchResponse && missionFetchResponse.data) {
@@ -5923,7 +5923,7 @@ const _updateMission = async function (body, userInfo, cookies) {
         };
         const memberFetchResponse = await axios.get(
           memberFetchUrl,
-          memberFetchConfig
+          memberFetchConfig,
         );
         if (
           memberFetchResponse &&
@@ -5975,7 +5975,7 @@ const _updateMission = async function (body, userInfo, cookies) {
               };
 
               var postMemberAttachmentResponse = await axios.request(
-                postMemberAttachmentConfig
+                postMemberAttachmentConfig,
               );
 
               if (
@@ -6081,7 +6081,7 @@ const _updateMission = async function (body, userInfo, cookies) {
               };
               var memberUpdateFetchResponse = await axios.get(
                 memberUpdateFetchUrl,
-                memberUpdateFetchConfig
+                memberUpdateFetchConfig,
               );
 
               if (
@@ -6161,7 +6161,7 @@ const _rejectMission = async function (decryptedData, cookies) {
     };
     const missionFetchResponse = await axios.get(
       missionFetchUrl,
-      missionFetchConfig
+      missionFetchConfig,
     );
 
     if (missionFetchResponse && missionFetchResponse.data) {
@@ -6179,7 +6179,7 @@ const _rejectMission = async function (decryptedData, cookies) {
       };
       const sectorFetchResponse = await axios.get(
         sectorFetchUrl,
-        sectorFetchConfig
+        sectorFetchConfig,
       );
 
       if (
@@ -6285,7 +6285,7 @@ const _getManagerOfHeadOfSector = async function (body, cookies) {
     };
     const managerFetchResponse = await axios.get(
       managerFetchUrl,
-      managerFetchConfig
+      managerFetchConfig,
     );
 
     if (managerFetchResponse && managerFetchResponse.data) {
@@ -6298,7 +6298,7 @@ const _getManagerOfHeadOfSector = async function (body, cookies) {
       };
       const sectorFetchResponse = await axios.get(
         sectorFetchUrl,
-        sectorFetchConfig
+        sectorFetchConfig,
       );
 
       if (
@@ -6323,7 +6323,7 @@ const _getManagerOfHeadOfSector = async function (body, cookies) {
     }
     throw new CustomHttpError(
       500,
-      "Manager could not be found. Please contact your system administrator."
+      "Manager could not be found. Please contact your system administrator.",
     );
   } catch (error) {
     throw new CustomHttpError(500, "Something went wrong. Please try again");
@@ -6347,7 +6347,7 @@ const _getRecoveryAmount = async function (body, cookies) {
     };
     const recoveryFetchResponse = await axios.get(
       recoveryFetchUrl,
-      recoveryFetchConfig
+      recoveryFetchConfig,
     );
 
     if (recoveryFetchResponse && recoveryFetchResponse.data) {
@@ -6405,36 +6405,6 @@ const _checkMissionBatch = async function (body, cookies) {
       `GET ${missionCheckUrl} HTTP/1.1\r\n` +
       `Accept: application/json\r\n\r\n`;
 
-    //--Construct member checks
-    // let { members } = body;
-    // members.forEach((m) => {
-    //   if (m.itinerary && m.itinerary.length > 0) {
-    //     m.itinerary.forEach((i) => {
-    //       let itineraryStartDate = _convertIsoDate(i.startDate);
-    //       let itineraryEndDate = _convertIsoDate(i.endDate);
-    //       let memberCheckFilter =
-    //         `cust_Employee_ID eq '${m.employeeID}' and cust_itinerary_details_child/cust_start_date le datetimeoffset'${itineraryEndDate}' and ` +
-    //         `cust_itinerary_details_child/cust_end_date ge datetimeoffset'${itineraryStartDate}'`;
-    //       if (missionId) {
-    //         memberCheckFilter =
-    //           memberCheckFilter +
-    //           ` and cust_Mission_ID ne '${missionId}'`;
-    //       }
-    //       let memberCheckSelect =
-    //         "cust_Employee_ID,cust_First_Name,cust_Last_Name,cust_Mission_ID,cust_itinerary_details_child/cust_start_date,cust_itinerary_details_child/cust_end_date,cust_itinerary_details_child/cust_city";
-    //       let memberCheckUrl = `cust_Members?$format=json&$filter=${memberCheckFilter}&$select=${memberCheckSelect}&$expand=cust_itinerary_details_child`;
-
-    //       getBatchBody =
-    //         getBatchBody +
-    //         `--${boundary}\r\n` +
-    //         `Content-Type: application/http\r\n` +
-    //         `Content-Transfer-Encoding: binary\r\n\r\n` +
-    //         `GET ${memberCheckUrl} HTTP/1.1\r\n` +
-    //         `Accept: application/json\r\n\r\n`;
-    //     });
-    //   }
-    // });
-
     let { members } = body;
     members.forEach((m) => {
       if (m.itinerary && m.itinerary.length > 0) {
@@ -6488,32 +6458,10 @@ const _checkMissionBatch = async function (body, cookies) {
   }
 };
 
-const _fetchS4Metadata = async function (body, cookies) {
-  try {
-    // Make an HTTP request to S/4HANA OData Service
-    const response = await executeHttpRequest(
-      { destinationName: sS4DestinationName },
-      {
-        method: "GET",
-        url: "/sap/opu/odata/sap/ZFMFR_CREATE_ODATA_SRV/$metadata?sap-client=650", // Replace with your actual OData service
-        //url: "/sap/opu/odata/sap/ZINT_ARIBA_S4HANA_SRV/dataSet", // Replace with your actual OData service
-        headers: {
-          Accept:
-            "application/json,text/html,application/xhtml+xml,application/xml",
-        },
-      }
-    );
-
-    console.log("S/4HANA Response:", JSON.stringify(response.data, null, 2));
-    return response.data;
-  } catch (error) {
-    console.error("Error calling S/4HANA:", error.message);
-  }
-};
 
 const _constructS4DocumentDetailsFromMissionId = async function (
   missionId,
-  cookies
+  cookies,
 ) {
   try {
     const auth = "Basic " + cookies.SF.basicAuth;
@@ -6610,218 +6558,439 @@ const _constructS4DocumentDetailsFromMissionId = async function (
   } catch (e) {
     throw new CustomHttpError(
       500,
-      "Mission and members data could not be read:" + e.message
+      "Mission and members data could not be read:" + e.message,
     );
   }
 };
 
-const _createS4Document = async function (body, cookies) {
-  try {
-    const { headerSetApi } = zfmfrCreateOdataSrv();
+// const _createS4Document = async function (body, cookies) {
+//   try {
+//     const { headerSetApi } = zfmfrCreateOdataSrv();
 
-    // Make an HTTP request to S/4HANA OData Service
-    const destination = await getDestination({
-      destinationName: sS4DestinationName,
-    });
+//     // Make an HTTP request to S/4HANA OData Service
+//     const destination = await getDestination({
+//       destinationName: sS4DestinationName,
+//     });
 
-    const oPayload = await _constructS4DocumentDetailsFromMissionId(
-      body.missionId,
-      cookies
-    );
+//     const oPayload = await _constructS4DocumentDetailsFromMissionId(
+//       body.missionId,
+//       cookies,
+//     );
 
-    if (oPayload) {
-      let s4Payload = {
-        waers: "AED",
-        ktext: oPayload.missionId,
-        bldat: moment(new Date()),
-        headerToItem: [],
-      };
+//     if (oPayload) {
+//       let s4Payload = {
+//         waers: "AED",
+//         ktext: oPayload.missionId,
+//         bldat: moment(new Date()),
+//         headerToItem: [],
+//       };
 
-      if (oPayload.s4DocumentNumber) {
-        s4Payload.status = "U";
-      }
+//       if (oPayload.s4DocumentNumber) {
+//         s4Payload.status = "U";
+//       }
 
-      oPayload.members.forEach((m, i) => {
-        s4Payload.headerToItem.push({
-          blpos: m.sequenceNo.toString(),
-          kostl: m.costCenter,
-          wrbtr: m.perdiemAmount.toString(),
-          ptext: m.employeeId,
-        });
-      });
+//       oPayload.members.forEach((m, i) => {
+//         s4Payload.headerToItem.push({
+//           blpos: m.sequenceNo.toString(),
+//           kostl: m.costCenter,
+//           wrbtr: m.perdiemAmount.toString(),
+//           ptext: m.employeeId,
+//         });
+//       });
 
-      const headerData = headerSetApi.entityBuilder().fromJson(s4Payload);
+//       const headerData = headerSetApi.entityBuilder().fromJson(s4Payload);
 
-      const result = await headerSetApi
-        .requestBuilder()
-        .create(headerData)
-        .execute(destination);
+//       const result = await headerSetApi
+//         .requestBuilder()
+//         .create(headerData)
+//         .execute(destination);
 
-      if (
-        result &&
-        result.retMsg &&
-        result.retMsg === "Success" &&
-        result.belnr
-      ) {
-        const auth = "Basic " + cookies.SF.basicAuth;
+//       if (
+//         result &&
+//         result.retMsg &&
+//         result.retMsg === "Success" &&
+//         result.belnr
+//       ) {
+//         const auth = "Basic " + cookies.SF.basicAuth;
 
-        const missionUpdateRequest = {
-          __metadata: oPayload.__metadata,
-          cust_S4_Document_Number: result.belnr,
-        };
+//         const missionUpdateRequest = {
+//           __metadata: oPayload.__metadata,
+//           cust_S4_Document_Number: result.belnr,
+//         };
 
-        const missionUpdateConfig = {
-          method: "post",
-          maxBodyLength: Infinity,
-          url: cookies.SF.URL + "upsert",
-          headers: {
-            Authorization: auth,
-            "Content-Type": "application/json",
-          },
-          data: JSON.stringify(missionUpdateRequest),
-        };
-        const missionUpdateResponse = await axios.request(missionUpdateConfig);
+//         const missionUpdateConfig = {
+//           method: "post",
+//           maxBodyLength: Infinity,
+//           url: cookies.SF.URL + "upsert",
+//           headers: {
+//             Authorization: auth,
+//             "Content-Type": "application/json",
+//           },
+//           data: JSON.stringify(missionUpdateRequest),
+//         };
+//         const missionUpdateResponse = await axios.request(missionUpdateConfig);
 
-        console.log(missionUpdateResponse.data);
-      } else {
-        throw new Error("S4 create failed:" + result.retMsg);
-      }
-      return result;
-    } else {
-      throw new Error("Payload could not be constructed");
-    }
-  } catch (error) {
-    throw new CustomHttpError(
-      500,
-      "Error creating document in S/4HANA:" + error.message
-    );
-  }
-};
+//         console.log(missionUpdateResponse.data);
+//       } else {
+//         throw new Error("S4 create failed:" + result.retMsg);
+//       }
+//       return result;
+//     } else {
+//       throw new Error("Payload could not be constructed");
+//     }
+//   } catch (error) {
+//     throw new CustomHttpError(
+//       500,
+//       "Error creating document in S/4HANA:" + error.message,
+//     );
+//   }
+// };
 
-const _updateS4Document = async function (body, cookies) {
-  try {
-    const { headerSetApi } = zfmfrCreateOdataSrv();
+// const _updateS4Document = async function (body, cookies) {
+//   try {
+//     const { headerSetApi } = zfmfrCreateOdataSrv();
 
-    // Make an HTTP request to S/4HANA OData Service
-    const destination = await getDestination({
-      destinationName: sS4DestinationName,
-    });
+//     // Make an HTTP request to S/4HANA OData Service
+//     const destination = await getDestination({
+//       destinationName: sS4DestinationName,
+//     });
 
-    const oPayload = await _constructS4DocumentDetailsFromMissionId(
-      body.missionId,
-      cookies
-    );
+//     const oPayload = await _constructS4DocumentDetailsFromMissionId(
+//       body.missionId,
+//       cookies,
+//     );
 
-    if (oPayload) {
-      let s4Payload = {
-        waers: "AED",
-        ktext: oPayload.missionId,
-        bldat: moment(new Date()),
-        status: "U",
-        headerToItem: [],
-      };
+//     if (oPayload) {
+//       let s4Payload = {
+//         waers: "AED",
+//         ktext: oPayload.missionId,
+//         bldat: moment(new Date()),
+//         status: "U",
+//         headerToItem: [],
+//       };
 
-      oPayload.members.forEach((m, i) => {
-        s4Payload.headerToItem.push({
-          blpos: m.sequenceNo.toString(),
-          kostl: m.costCenter,
-          wrbtr: m.perdiemAmount.toString(),
-          ptext: m.employeeId,
-        });
-      });
+//       oPayload.members.forEach((m, i) => {
+//         s4Payload.headerToItem.push({
+//           blpos: m.sequenceNo.toString(),
+//           kostl: m.costCenter,
+//           wrbtr: m.perdiemAmount.toString(),
+//           ptext: m.employeeId,
+//         });
+//       });
 
-      const headerData = headerSetApi.entityBuilder().fromJson(s4Payload);
+//       const headerData = headerSetApi.entityBuilder().fromJson(s4Payload);
 
-      const result = await headerSetApi
-        .requestBuilder()
-        .create(headerData)
-        .execute(destination);
+//       const result = await headerSetApi
+//         .requestBuilder()
+//         .create(headerData)
+//         .execute(destination);
 
-      return result;
-    } else {
-      throw new Error("Payload could not be constructed");
-    }
-  } catch (error) {
-    throw new CustomHttpError(
-      500,
-      "Error updating document in S/4HANA:" + error.message
-    );
-  }
-};
+//       return result;
+//     } else {
+//       throw new Error("Payload could not be constructed");
+//     }
+//   } catch (error) {
+//     throw new CustomHttpError(
+//       500,
+//       "Error updating document in S/4HANA:" + error.message,
+//     );
+//   }
+// };
 
-const _deleteS4Document = async function (body, cookies) {
-  try {
-    const { headerSetApi } = zfmfrCreateOdataSrv();
+// const _deleteS4Document = async function (body, cookies) {
+//   try {
+//     const { headerSetApi } = zfmfrCreateOdataSrv();
 
-    // Make an HTTP request to S/4HANA OData Service
-    const destination = await getDestination({
-      destinationName: sS4DestinationName,
-    });
+//     // Make an HTTP request to S/4HANA OData Service
+//     const destination = await getDestination({
+//       destinationName: sS4DestinationName,
+//     });
 
-    const oPayload = await _constructS4DocumentDetailsFromMissionId(
-      body.missionId,
-      cookies
-    );
+//     const oPayload = await _constructS4DocumentDetailsFromMissionId(
+//       body.missionId,
+//       cookies,
+//     );
 
-    if (oPayload) {
-      let s4Payload = {
-        waers: "AED",
-        ktext: oPayload.missionId,
-        bldat: moment(new Date()),
-        status: "D",
-        headerToItem: [],
-      };
+//     if (oPayload) {
+//       let s4Payload = {
+//         waers: "AED",
+//         ktext: oPayload.missionId,
+//         bldat: moment(new Date()),
+//         status: "D",
+//         headerToItem: [],
+//       };
 
-      const headerData = headerSetApi.entityBuilder().fromJson(s4Payload);
+//       const headerData = headerSetApi.entityBuilder().fromJson(s4Payload);
 
-      const result = await headerSetApi
-        .requestBuilder()
-        .create(headerData)
-        .execute(destination);
+//       const result = await headerSetApi
+//         .requestBuilder()
+//         .create(headerData)
+//         .execute(destination);
 
-      return result;
-    } else {
-      throw new Error("Payload could not be constructed");
-    }
-  } catch (error) {
-    throw new CustomHttpError(
-      500,
-      "Error deleting document in S/4HANA:" + error.message
-    );
-  }
-};
+//       return result;
+//     } else {
+//       throw new Error("Payload could not be constructed");
+//     }
+//   } catch (error) {
+//     throw new CustomHttpError(
+//       500,
+//       "Error deleting document in S/4HANA:" + error.message,
+//     );
+//   }
+// };
 
-const _fetchS4Metadata_v1 = async function (body, cookies) {
-  try {
-    const s4Url = cookies.S4.URL;
-    const s4LocationID = cookies.S4.locationId;
-    const s4Auth = "Basic " + cookies.S4.basicAuth;
-    const connJWTToken = await _fetchJwtToken(
-      conn_service.token_service_url,
-      conn_service.clientid,
-      conn_service.clientsecret
-    );
+/* NEW SERVICE DEVELOPMENTS 28.01.2026 */
+const S4_DESTINATION = sS4DestinationName;
+const S4_SERVICE_PATH = "/sap/opu/odata/sap/ZFMFR_CREATE_ODATA_SRV";
 
-    const response = await axios({
+/**
+ * Fetch CSRF token for write operations
+ */
+async function _fetchCsrfTokenv2(destinationName, servicePath) {
+  const response = await executeHttpRequest(
+    { destinationName },
+    {
       method: "GET",
-      url: `${s4Url}/sap/opu/odata/sap/ZINT_ARIBA_S4HANA_SRV/dataSet?sap-client=650`,
+      url: servicePath,
       headers: {
-        Authorization: s4Auth,
-        Accept: "application/json",
-        "Proxy-Authorization": `Bearer ${connJWTToken}`, // Required for OnPremise
-        "SAP-Connectivity-SCC-Location_ID": s4LocationID, // Optional
+        "x-csrf-token": "Fetch",
       },
-      proxy: {
-        host: conn_service.onpremise_proxy_host,
-        port: conn_service.onpremise_proxy_port,
+    },
+  );
+
+  return {
+    csrfToken: response.headers["x-csrf-token"],
+    cookies: response.headers["set-cookie"],
+  };
+}
+
+/**
+ * Create Header with Items (Deep Insert)
+ */
+async function _createS4Documentv2(body, appCookies) {
+  const oPayload = await _constructS4DocumentDetailsFromMissionId(
+    body.missionId,
+    appCookies,
+  );
+  try {
+    if (!oPayload) {
+      throw new Error("Payload could not be constructed");
+    }
+    // Build the payload
+    const s4Payload = {
+      WAERS: "AED",
+      KTEXT: oPayload.missionId,
+      BLDAT: `/Date(${moment().valueOf()})/`, // OData V2 date format
+      HeaderToItem: oPayload.members.map((m) => ({
+        BLPOS: m.sequenceNo.toString(),
+        KOSTL: m.costCenter,
+        WRBTR: m.perdiemAmount.toString(),
+        PTEXT: m.employeeId,
+      })),
+    };
+
+    if (oPayload.s4DocumentNumber) {
+      s4Payload.STATUS = "U";
+    }
+
+    // Fetch CSRF token first
+    const { csrfToken, cookies } = await _fetchCsrfTokenv2(
+      S4_DESTINATION,
+      S4_SERVICE_PATH,
+    );
+
+    // Execute POST request
+    const response = await executeHttpRequest(
+      { destinationName: S4_DESTINATION },
+      {
+        method: "POST",
+        url: `${S4_SERVICE_PATH}/HeaderSet`,
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "x-csrf-token": csrfToken,
+          Cookie: cookies?.join("; "),
+        },
+        data: s4Payload,
       },
-    });
+    );
+
+    const result = response.data.d || null;  
+
+    if (
+      s4Payload.STATUS !== "U" &&
+      result &&
+      result.RET_MSG &&
+      result.RET_MSG === "Success" &&
+      result.BELNR
+    ) {
+      const auth = "Basic " + appCookies.SF.basicAuth;
+
+      const missionUpdateRequest = {
+        __metadata: oPayload.__metadata,
+        cust_S4_Document_Number: result.BELNR,
+      };
+
+      const missionUpdateConfig = {
+        method: "post",
+        maxBodyLength: Infinity,
+        url: appCookies.SF.URL + "upsert",
+        headers: {
+          Authorization: auth,
+          "Content-Type": "application/json",
+        },
+        data: JSON.stringify(missionUpdateRequest),
+      };
+      const missionUpdateResponse = await axios.request(missionUpdateConfig);
+
+      console.log(missionUpdateResponse.data);
+    }
+
+    return result;
+  } catch (error) {
+    const message = error?.response &&  error?.response?.data && error?.response?.data?.error ? error.response.data.error.message : error.message;
+    throw new CustomHttpError(
+      500,
+      "Error creating document in S/4HANA:" + message,
+    );
+  }
+}
+
+/**
+ * Delete Header
+ */
+async function _deleteS4Documentv2(body, appCookies) {
+  const oPayload = await _constructS4DocumentDetailsFromMissionId(
+    body.missionId,
+    appCookies,
+  );
+  try {
+    if (!oPayload) {
+      throw new Error("Payload could not be constructed");
+    }
+    // Build the payload
+    const s4Payload = {
+      WAERS: "AED",
+      KTEXT: oPayload.missionId,
+      STATUS: "D",
+      BLDAT: `/Date(${moment().valueOf()})/`, // OData V2 date format
+      HeaderToItem: [],
+    };
+
+    // Fetch CSRF token first
+    const { csrfToken, cookies } = await _fetchCsrfTokenv2(
+      S4_DESTINATION,
+      S4_SERVICE_PATH,
+    );
+
+    // Execute POST request
+    const response = await executeHttpRequest(
+      { destinationName: S4_DESTINATION },
+      {
+        method: "POST",
+        url: `${S4_SERVICE_PATH}/HeaderSet`,
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "x-csrf-token": csrfToken,
+          Cookie: cookies?.join("; "),
+        },
+        data: s4Payload,
+      },
+    );
+    const result = response.data.d || null;  
+
+    return result;
+  } catch (error) {
+    const message = error?.response &&  error?.response?.data && error?.response?.data?.error ? error.response.data.error.message : error.message;
+    throw new CustomHttpError(
+      500,
+      "Error deleting document in S/4HANA:" + message,
+    );
+  }
+}
+/**
+ * Fetch S4 metadata
+ */
+const _fetchS4Metadata = async function (body, cookies) {
+  try {
+    // Make an HTTP request to S/4HANA OData Service
+    const response = await executeHttpRequest(
+      { destinationName: sS4DestinationName },
+      {
+        method: "GET",
+        url: "/sap/opu/odata/sap/ZFMFR_CREATE_ODATA_SRV/$metadata?sap-client=650", // Replace with your actual OData service
+        //url: "/sap/opu/odata/sap/ZINT_ARIBA_S4HANA_SRV/dataSet", // Replace with your actual OData service
+        headers: {
+          Accept:
+            "application/json,text/html,application/xhtml+xml,application/xml",
+        },
+      },
+    );
+
+    console.log("S/4HANA Response:", JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (error) {
-    console.log(error.message);
-    throw new CustomHttpError(500, "Something went wrong. Please try again");
+    console.error("Error calling S/4HANA:", error.message);
   }
 };
+
+
+/**
+ * Call Function Import - GetFCBudget
+ */
+async function _getFCBudget(costCenter, fiscalYear) {
+  // Fetch CSRF token first
+  const { csrfToken, cookies } = await _fetchCsrfTokenv2(
+    S4_DESTINATION,
+    S4_SERVICE_PATH,
+  );
+
+  const response = await executeHttpRequest(
+    { destinationName: S4_DESTINATION },
+    {
+      method: "GET",
+      url: `${S4_SERVICE_PATH}/GetFCBudget`,
+      params: {
+        CostCenter: `'${costCenter}'`,
+        FiscalYear: `'${fiscalYear}'`,
+        $format: "json",
+      },
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "x-csrf-token": csrfToken,
+        Cookie: cookies?.join("; "),
+      },
+    },
+  );
+  console.log(response);
+  return response.data && response.data.d ? response.data.d : null;
+}
+
+/**
+ * Generic OData V2 Read (for entity sets with filters)
+ */
+async function _readS4EntitySet(entitySet, queryOptions = {}) {
+  const response = await executeHttpRequest(
+    { destinationName: S4_DESTINATION },
+    {
+      method: "GET",
+      url: `${S4_SERVICE_PATH}/${entitySet}`,
+      params: {
+        $format: "json",
+        ...queryOptions,
+      },
+      headers: {
+        Accept: "application/json",
+      },
+    },
+  );
+
+  return response.data.d.results || response.data.d;
+}
+
+/* NEW SERVICE DEVELOPMENTS 28.01.2026 */
 
 const _getHOS = async function (body, cookies) {
   try {
@@ -6864,7 +7033,7 @@ const _checkIsAdmin = async function (body, cookies) {
 
     const getAdminGroupResponse = await axios.get(
       getAdminGroupUrl,
-      getAdminGroupConfig
+      getAdminGroupConfig,
     );
 
     if (getAdminGroupResponse && getAdminGroupResponse.data) {
@@ -7117,7 +7286,7 @@ const _getMastersBatch = async function (body, cookies) {
           pickList.d.results[0]["__metadata"]["type"] === "SFOData.Picklist"
         ) {
           const oPickListOptions = _.clone(
-            pickList.d.results[0].picklistOptions
+            pickList.d.results[0].picklistOptions,
           );
           oPickListOptions.results.forEach((o) => {
             if (o.status !== "ACTIVE") return;
@@ -7485,17 +7654,17 @@ const _getAdminMissionReport = async function (body, cookies) {
             resultRow[`employeeName`] = m1.cust_First_Name;
             resultRow[`employeeTitle`] = m1.cust_Title_Of_Employee;
             resultRow[`employeeTotalExpense`] = _formatCurrency(
-              m1.cust_Employee_Total_Expense
+              m1.cust_Employee_Total_Expense,
             );
             resultRow[`employeeTotalPerdiem`] = _formatCurrency(
-              m1.cust_Employee_Total_Perdiem
+              m1.cust_Employee_Total_Perdiem,
             );
             resultRow[`employeeTotalTicket`] = _formatCurrency(
-              m1.cust_Employee_Total_Ticket
+              m1.cust_Employee_Total_Ticket,
             );
             resultRow[`employeeMultipleCity`] = _readValue(
               "multicity",
-              m1.cust_Multiple_Cities
+              m1.cust_Multiple_Cities,
             );
             let iCity = 0;
             if (
@@ -7505,25 +7674,25 @@ const _getAdminMissionReport = async function (body, cookies) {
               m1.cust_itinerary_details_child.results.forEach((i0, j) => {
                 resultRow[`city_${j}`] = _readValue("city", i0.cust_city);
                 resultRow[`cityStartDate_${j}`] = _formatDate(
-                  i0.cust_start_date
+                  i0.cust_start_date,
                 );
                 resultRow[`cityEndDate_${j}`] = _formatDate(i0.cust_end_date);
                 resultRow[`cityHospitality_${j}`] = _readValue(
                   "hospitality",
-                  i0.cust_hospitality_default
+                  i0.cust_hospitality_default,
                 );
                 resultRow[`cityActualCost_${j}`] = _formatCurrency(
-                  i0.cust_Ticket_Actual_Cost
+                  i0.cust_Ticket_Actual_Cost,
                 );
                 resultRow[`cityTicketAverage_${j}`] = _formatCurrency(
-                  i0.cust_ticket_average
+                  i0.cust_ticket_average,
                 );
                 resultRow[`cityPerdiem_${j}`] = _formatCurrency(
-                  i0.cust_perdiem_per_city
+                  i0.cust_perdiem_per_city,
                 );
                 resultRow[`cityHeadOfMission_${j}`] = _readValue(
                   "headOfMission",
-                  i0.cust_head_of_mission
+                  i0.cust_head_of_mission,
                 );
                 iCity++;
               });
@@ -7838,23 +8007,23 @@ ar.beforeRequestHandler.use("/getEnvironmentInfo", async (req, res, next) => {
     const cfDestination = sDestinationName;
     const fetchSFDestinationInfo = await _fetchDestinationInfo(
       cfDestination,
-      fetchCFAuthToken
+      fetchCFAuthToken,
     );
 
     const cpiDestination = sCPIDestinationName;
     const fetchCPIDestinationInfo = await _fetchDestinationInfo(
       cpiDestination,
-      fetchCFAuthToken
+      fetchCFAuthToken,
     );
 
     const s4Destination = sS4DestinationName;
     const fetchS4DestinationInfo = await _fetchDestinationInfo(
       s4Destination,
-      fetchCFAuthToken
+      fetchCFAuthToken,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(response))
+      Buffer.from(JSON.stringify(response)),
     );
 
     const encryptedURLs = await _fetchEncryptedData(
@@ -7866,20 +8035,20 @@ ar.beforeRequestHandler.use("/getEnvironmentInfo", async (req, res, next) => {
           S4LocationId:
             fetchS4DestinationInfo.destinationConfiguration
               .CloudConnectorLocationId || "",
-        })
-      )
+        }),
+      ),
     );
 
     const SFBasic = Buffer.from(
       fetchSFDestinationInfo.destinationConfiguration.User +
         ":" +
-        fetchSFDestinationInfo.destinationConfiguration.Password
+        fetchSFDestinationInfo.destinationConfiguration.Password,
     ).toString("base64");
 
     const S4Basic = Buffer.from(
       fetchS4DestinationInfo.destinationConfiguration.User +
         ":" +
-        fetchS4DestinationInfo.destinationConfiguration.Password
+        fetchS4DestinationInfo.destinationConfiguration.Password,
     ).toString("base64");
 
     const cookiesArr = [];
@@ -7914,7 +8083,7 @@ ar.beforeRequestHandler.use("/getEnvironmentInfo", async (req, res, next) => {
       "Travel mission (/getEnvironmentInfo) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -7928,11 +8097,11 @@ ar.beforeRequestHandler.use("/getLoggedinInfo", async (req, res, next) => {
     const decryptedData = await _fetchDecryptedData(req.body.data);
     const fetchLoggedinInfo = await _fetchLoggedinInfo(
       JSON.parse(decryptedData),
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(fetchLoggedinInfo))
+      Buffer.from(JSON.stringify(fetchLoggedinInfo)),
     );
 
     res.end(encrypted);
@@ -7950,18 +8119,18 @@ ar.beforeRequestHandler.use("/getLoggedinInfo", async (req, res, next) => {
 
           res.setHeader(
             "Set-Cookie",
-            "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly"
+            "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly",
           );
 
           const reqCookies = await _fetchCookies(req);
           const decryptedData = await _fetchDecryptedData(req.body.data);
           const fetchLoggedinInfo = await _fetchLoggedinInfo(
             JSON.parse(decryptedData),
-            reqCookies
+            reqCookies,
           );
 
           const encrypted = await _fetchEncryptedData(
-            Buffer.from(JSON.stringify(fetchLoggedinInfo))
+            Buffer.from(JSON.stringify(fetchLoggedinInfo)),
           );
 
           res.end(encrypted);
@@ -7987,7 +8156,7 @@ ar.beforeRequestHandler.use("/getLoggedinInfo", async (req, res, next) => {
             "Travel mission (/getLoggedinInfo) -> status / " +
               errorObj.status +
               " & message / " +
-              errorObj.message
+              errorObj.message,
           );
 
           res.statusCode = errorObj.status;
@@ -8011,7 +8180,7 @@ ar.beforeRequestHandler.use("/getLoggedinInfo", async (req, res, next) => {
       "Travel mission (/getLoggedinInfo) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8051,7 +8220,7 @@ ar.beforeRequestHandler.use("/getMasters", async (req, res, next) => {
     };
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(mastersObj))
+      Buffer.from(JSON.stringify(mastersObj)),
     );
 
     res.end(encrypted);
@@ -8077,7 +8246,7 @@ ar.beforeRequestHandler.use("/getMasters", async (req, res, next) => {
       "Travel mission (/getMasters) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8099,7 +8268,7 @@ ar.beforeRequestHandler.use("/fetchSectors", async (req, res, next) => {
     }
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(mastersObj))
+      Buffer.from(JSON.stringify(mastersObj)),
     );
 
     res.end(encrypted);
@@ -8125,7 +8294,7 @@ ar.beforeRequestHandler.use("/fetchSectors", async (req, res, next) => {
       "Travel mission (/fetchSectors) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8140,7 +8309,7 @@ ar.beforeRequestHandler.use(
       const reqCookies = await _fetchCookies(req);
       const missionBudgetInfo = await _fetchMissionBudgetInfo(reqCookies);
       const encrypted = await _fetchEncryptedData(
-        Buffer.from(JSON.stringify(missionBudgetInfo))
+        Buffer.from(JSON.stringify(missionBudgetInfo)),
       );
 
       res.end(encrypted);
@@ -8166,13 +8335,13 @@ ar.beforeRequestHandler.use(
         "Travel mission (/findMissionBudgetInfo) -> status / " +
           errorObj.status +
           " & message / " +
-          errorObj.message
+          errorObj.message,
       );
 
       res.statusCode = errorObj.status;
       res.end(Buffer.from(JSON.stringify(errorObj)));
     }
-  }
+  },
 );
 
 ar.beforeRequestHandler.use("/findMemberDetails", async (req, res, next) => {
@@ -8180,7 +8349,7 @@ ar.beforeRequestHandler.use("/findMemberDetails", async (req, res, next) => {
     const reqCookies = await _fetchCookies(req);
     const memberDetails = await _fetchMemberDetails(req.body.data, reqCookies);
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(memberDetails))
+      Buffer.from(JSON.stringify(memberDetails)),
     );
 
     res.end(encrypted);
@@ -8206,7 +8375,7 @@ ar.beforeRequestHandler.use("/findMemberDetails", async (req, res, next) => {
       "Travel mission (/findMemberDetails) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8222,11 +8391,11 @@ ar.beforeRequestHandler.use("/getPhoto", async (req, res, next) => {
 
     const photoDetails = await _fetchPhoto(
       JSON.parse(decryptedData).users,
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(photoDetails))
+      Buffer.from(JSON.stringify(photoDetails)),
     );
 
     res.end(encrypted);
@@ -8252,7 +8421,7 @@ ar.beforeRequestHandler.use("/getPhoto", async (req, res, next) => {
       "Travel mission (/getPhoto) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8268,11 +8437,11 @@ ar.beforeRequestHandler.use("/getPhotoForMember", async (req, res, next) => {
 
     const photoDetails = await _fetchPhotoForMember(
       JSON.parse(decryptedData).users,
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(photoDetails))
+      Buffer.from(JSON.stringify(photoDetails)),
     );
 
     res.end(encrypted);
@@ -8298,7 +8467,7 @@ ar.beforeRequestHandler.use("/getPhotoForMember", async (req, res, next) => {
       "Travel mission (/getPhotoForMember) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8316,11 +8485,11 @@ ar.beforeRequestHandler.use(
 
       const ticketAndPerDiemDetails = await _fetchTicketAndPerDiem(
         JSON.parse(decryptedData).params,
-        reqCookies
+        reqCookies,
       );
 
       const encrypted = await _fetchEncryptedData(
-        Buffer.from(JSON.stringify(ticketAndPerDiemDetails))
+        Buffer.from(JSON.stringify(ticketAndPerDiemDetails)),
       );
 
       res.end(encrypted);
@@ -8334,13 +8503,12 @@ ar.beforeRequestHandler.use(
           try {
             const fetchCFAuthToken = await _fetchCFAuthToken();
 
-            const fetchCPIAuthToken = await _fetchCPIAuthToken(
-              fetchCFAuthToken
-            );
+            const fetchCPIAuthToken =
+              await _fetchCPIAuthToken(fetchCFAuthToken);
 
             res.setHeader(
               "Set-Cookie",
-              "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly"
+              "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly",
             );
 
             const reqCookies = await _fetchCookies(req);
@@ -8349,11 +8517,11 @@ ar.beforeRequestHandler.use(
 
             const ticketAndPerDiemDetails = await _fetchTicketAndPerDiem(
               JSON.parse(decryptedData).params,
-              reqCookies
+              reqCookies,
             );
 
             const encrypted = await _fetchEncryptedData(
-              Buffer.from(JSON.stringify(ticketAndPerDiemDetails))
+              Buffer.from(JSON.stringify(ticketAndPerDiemDetails)),
             );
 
             res.end(encrypted);
@@ -8379,7 +8547,7 @@ ar.beforeRequestHandler.use(
               "Travel mission (/findTicketAndPerDiemPerCity) -> status / " +
                 errorObj.status +
                 " & message / " +
-                errorObj.message
+                errorObj.message,
             );
 
             res.statusCode = errorObj.status;
@@ -8403,13 +8571,13 @@ ar.beforeRequestHandler.use(
         "Travel mission (/findTicketAndPerDiemPerCity) -> status / " +
           errorObj.status +
           " & message / " +
-          errorObj.message
+          errorObj.message,
       );
 
       res.statusCode = errorObj.status;
       res.end(Buffer.from(JSON.stringify(errorObj)));
     }
-  }
+  },
 );
 
 ar.beforeRequestHandler.use("/findMissions", async (req, res, next) => {
@@ -8418,7 +8586,7 @@ ar.beforeRequestHandler.use("/findMissions", async (req, res, next) => {
     const decryptedData = await _fetchDecryptedData(req.body.data);
     const findMissions = await _fetchMissions(
       JSON.parse(decryptedData),
-      reqCookies
+      reqCookies,
     );
 
     res.end(Buffer.from(JSON.stringify(findMissions)));
@@ -8436,14 +8604,14 @@ ar.beforeRequestHandler.use("/findMissions", async (req, res, next) => {
 
           res.setHeader(
             "Set-Cookie",
-            "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly"
+            "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly",
           );
 
           const reqCookies = await _fetchCookies(req);
           const decryptedData = await _fetchDecryptedData(req.body.data);
           const findMissions = await _fetchMissions(
             JSON.parse(decryptedData),
-            reqCookies
+            reqCookies,
           );
 
           res.end(Buffer.from(JSON.stringify(findMissions)));
@@ -8469,7 +8637,7 @@ ar.beforeRequestHandler.use("/findMissions", async (req, res, next) => {
             "Travel mission (/findMissions) -> status / " +
               errorObj.status +
               " & message / " +
-              errorObj.message
+              errorObj.message,
           );
 
           res.statusCode = errorObj.status;
@@ -8493,7 +8661,7 @@ ar.beforeRequestHandler.use("/findMissions", async (req, res, next) => {
       "Travel mission (/findMissions) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8507,10 +8675,10 @@ ar.beforeRequestHandler.use("/createMission", async (req, res, next) => {
     const createMission = await _createMission(
       req.body.data.params,
       req.body.data.userInfo,
-      reqCookies
+      reqCookies,
     );
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(createMission))
+      Buffer.from(JSON.stringify(createMission)),
     );
 
     res.end(encrypted);
@@ -8528,17 +8696,17 @@ ar.beforeRequestHandler.use("/createMission", async (req, res, next) => {
 
           res.setHeader(
             "Set-Cookie",
-            "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly"
+            "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly",
           );
 
           const reqCookies = await _fetchCookies(req);
           const createMission = await _createMission(
             req.body.data.params,
             req.body.data.userInfo,
-            reqCookies
+            reqCookies,
           );
           const encrypted = await _fetchEncryptedData(
-            Buffer.from(JSON.stringify(createMission))
+            Buffer.from(JSON.stringify(createMission)),
           );
 
           res.end(encrypted);
@@ -8564,7 +8732,7 @@ ar.beforeRequestHandler.use("/createMission", async (req, res, next) => {
             "Travel mission (/createMission) -> status / " +
               errorObj.status +
               " & message / " +
-              errorObj.message
+              errorObj.message,
           );
 
           res.statusCode = errorObj.status;
@@ -8588,7 +8756,7 @@ ar.beforeRequestHandler.use("/createMission", async (req, res, next) => {
       "Travel mission (/createMission) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8605,7 +8773,7 @@ ar.beforeRequestHandler.use("/getMissionById", async (req, res, next) => {
     const missionInfo = await _getMissionInfo(
       JSON.parse(decryptedData).mission,
       JSON.parse(decryptedData).user,
-      reqCookies
+      reqCookies,
     );
 
     //--Sort audit log ascending
@@ -8638,7 +8806,7 @@ ar.beforeRequestHandler.use("/getMissionById", async (req, res, next) => {
 
           res.setHeader(
             "Set-Cookie",
-            "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly"
+            "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly",
           );
 
           const reqCookies = await _fetchCookies(req);
@@ -8648,7 +8816,7 @@ ar.beforeRequestHandler.use("/getMissionById", async (req, res, next) => {
           const missionInfo = await _getMissionInfo(
             JSON.parse(decryptedData).mission,
             JSON.parse(decryptedData).user,
-            reqCookies
+            reqCookies,
           );
 
           res.end(Buffer.from(JSON.stringify(missionInfo)));
@@ -8674,7 +8842,7 @@ ar.beforeRequestHandler.use("/getMissionById", async (req, res, next) => {
             "Travel mission (/getMissionById) -> status / " +
               errorObj.status +
               " & message / " +
-              errorObj.message
+              errorObj.message,
           );
 
           res.statusCode = errorObj.status;
@@ -8698,7 +8866,7 @@ ar.beforeRequestHandler.use("/getMissionById", async (req, res, next) => {
       "Travel mission (/getMissionById) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8727,14 +8895,14 @@ ar.beforeRequestHandler.use("/approveRejectMission", async (req, res, next) => {
 
           res.setHeader(
             "Set-Cookie",
-            "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly"
+            "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly",
           );
 
           const reqCookies = await _fetchCookies(req);
 
           const missionInfo = await _approveRejectMission(
             req.body.data,
-            reqCookies
+            reqCookies,
           );
 
           res.end(Buffer.from(JSON.stringify(missionInfo)));
@@ -8760,7 +8928,7 @@ ar.beforeRequestHandler.use("/approveRejectMission", async (req, res, next) => {
             "Travel mission (/approveMission) -> status / " +
               errorObj.status +
               " & message / " +
-              errorObj.message
+              errorObj.message,
           );
 
           res.statusCode = errorObj.status;
@@ -8784,7 +8952,7 @@ ar.beforeRequestHandler.use("/approveRejectMission", async (req, res, next) => {
       "Travel mission (/approveMission) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8803,11 +8971,11 @@ ar.beforeRequestHandler.use(
       // const updateItinerary = await _updateItinerary(
       const updateItinerary = await _updateItineraryBatch(
         JSON.parse(decryptedData).params,
-        reqCookies
+        reqCookies,
       );
 
       const encrypted = await _fetchEncryptedData(
-        Buffer.from(JSON.stringify(updateItinerary))
+        Buffer.from(JSON.stringify(updateItinerary)),
       );
 
       res.end(encrypted);
@@ -8833,13 +9001,13 @@ ar.beforeRequestHandler.use(
         "Travel mission (/updateTicketItinerary) -> status / " +
           errorObj.status +
           " & message / " +
-          errorObj.message
+          errorObj.message,
       );
 
       res.statusCode = errorObj.status;
       res.end(Buffer.from(JSON.stringify(errorObj)));
     }
-  }
+  },
 );
 
 ar.beforeRequestHandler.use("/claimMission", async (req, res, next) => {
@@ -8851,7 +9019,7 @@ ar.beforeRequestHandler.use("/claimMission", async (req, res, next) => {
     const claimMission = await _claimMission(req.body.data.params, reqCookies);
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(claimMission))
+      Buffer.from(JSON.stringify(claimMission)),
     );
 
     res.end(encrypted);
@@ -8877,7 +9045,7 @@ ar.beforeRequestHandler.use("/claimMission", async (req, res, next) => {
       "Travel mission (/claimMission) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8893,11 +9061,11 @@ ar.beforeRequestHandler.use("/fetchSectorInfo", async (req, res, next) => {
 
     const sectorInfo = await _fetchSectorInfo(
       JSON.parse(decryptedData).params,
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(sectorInfo))
+      Buffer.from(JSON.stringify(sectorInfo)),
     );
 
     res.end(encrypted);
@@ -8923,7 +9091,7 @@ ar.beforeRequestHandler.use("/fetchSectorInfo", async (req, res, next) => {
       "Travel mission (/fetchSectorInfo) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8939,11 +9107,11 @@ ar.beforeRequestHandler.use("/fetchClaim", async (req, res, next) => {
 
     const claimInfo = await _fetchClaim(
       JSON.parse(decryptedData).params,
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(claimInfo))
+      Buffer.from(JSON.stringify(claimInfo)),
     );
 
     res.end(encrypted);
@@ -8969,7 +9137,7 @@ ar.beforeRequestHandler.use("/fetchClaim", async (req, res, next) => {
       "Travel mission (/fetchClaim) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8987,7 +9155,7 @@ ar.beforeRequestHandler.use("/fetchClaimsAdvances", async (req, res, next) => {
 
     const advanceInfo = await _fetchAdvances(
       JSON.parse(decryptedData),
-      reqCookies
+      reqCookies,
     );
 
     res.end(
@@ -8995,8 +9163,8 @@ ar.beforeRequestHandler.use("/fetchClaimsAdvances", async (req, res, next) => {
         JSON.stringify({
           claims: claimInfo,
           advances: advanceInfo,
-        })
-      )
+        }),
+      ),
     );
   } catch (error) {
     const errorObj = {
@@ -9020,7 +9188,7 @@ ar.beforeRequestHandler.use("/fetchClaimsAdvances", async (req, res, next) => {
       "Travel mission (/fetchClaimsAdvances) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -9038,12 +9206,12 @@ ar.beforeRequestHandler.use(
 
       const claimInfo = await _fetchPendingClaims(
         JSON.parse(decryptedData),
-        reqCookies
+        reqCookies,
       );
 
       const advanceInfo = await _fetchPendingadvances(
         JSON.parse(decryptedData),
-        reqCookies
+        reqCookies,
       );
 
       res.end(
@@ -9051,8 +9219,8 @@ ar.beforeRequestHandler.use(
           JSON.stringify({
             claims: claimInfo,
             advances: advanceInfo,
-          })
-        )
+          }),
+        ),
       );
     } catch (error) {
       const errorObj = {
@@ -9076,13 +9244,13 @@ ar.beforeRequestHandler.use(
         "Travel mission (/fetchPendingClaimsAdvances) -> status / " +
           errorObj.status +
           " & message / " +
-          errorObj.message
+          errorObj.message,
       );
 
       res.statusCode = errorObj.status;
       res.end(Buffer.from(JSON.stringify(errorObj)));
     }
-  }
+  },
 );
 
 ar.beforeRequestHandler.use("/claimMasters", async (req, res, next) => {
@@ -9099,7 +9267,7 @@ ar.beforeRequestHandler.use("/claimMasters", async (req, res, next) => {
     };
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(mastersObj))
+      Buffer.from(JSON.stringify(mastersObj)),
     );
 
     res.end(encrypted);
@@ -9125,7 +9293,7 @@ ar.beforeRequestHandler.use("/claimMasters", async (req, res, next) => {
       "Travel mission (/claimMasters) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -9138,7 +9306,7 @@ ar.beforeRequestHandler.use("/findMemberInfo", async (req, res, next) => {
     const reqCookies = await _fetchCookies(req);
     const memberDetails = await _fetchMemberInfo(
       req.body.data.filter,
-      reqCookies
+      reqCookies,
     );
 
     res.end(Buffer.from(JSON.stringify(memberDetails)));
@@ -9164,7 +9332,7 @@ ar.beforeRequestHandler.use("/findMemberInfo", async (req, res, next) => {
       "Travel mission (/findMemberInfo) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -9180,11 +9348,11 @@ ar.beforeRequestHandler.use("/fetchClaimInfo", async (req, res, next) => {
 
     const claimInfo = await _fetchClaimInfo(
       JSON.parse(decryptedData).claim,
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(claimInfo))
+      Buffer.from(JSON.stringify(claimInfo)),
     );
 
     res.end(encrypted);
@@ -9210,7 +9378,7 @@ ar.beforeRequestHandler.use("/fetchClaimInfo", async (req, res, next) => {
       "Travel mission (/fetchClaimInfo) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -9227,7 +9395,7 @@ ar.beforeRequestHandler.use("/approveRejectClaim", async (req, res, next) => {
     const claimInfo = await _approveRejectClaim(req.body.data, reqCookies);
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(claimInfo))
+      Buffer.from(JSON.stringify(claimInfo)),
     );
 
     res.end(encrypted);
@@ -9253,7 +9421,7 @@ ar.beforeRequestHandler.use("/approveRejectClaim", async (req, res, next) => {
       "Travel mission (/approveRejectClaim) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -9269,11 +9437,11 @@ ar.beforeRequestHandler.use("/advanceMission", async (req, res, next) => {
 
     const advanceMission = await _advanceMission(
       JSON.parse(decryptedData).params,
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(advanceMission))
+      Buffer.from(JSON.stringify(advanceMission)),
     );
 
     res.end(encrypted);
@@ -9299,7 +9467,7 @@ ar.beforeRequestHandler.use("/advanceMission", async (req, res, next) => {
       "Travel mission (/advanceMission) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -9315,11 +9483,11 @@ ar.beforeRequestHandler.use("/fetchAdvance", async (req, res, next) => {
 
     const advanceInfo = await _fetchAdvance(
       JSON.parse(decryptedData).params,
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(advanceInfo))
+      Buffer.from(JSON.stringify(advanceInfo)),
     );
 
     res.end(encrypted);
@@ -9345,7 +9513,7 @@ ar.beforeRequestHandler.use("/fetchAdvance", async (req, res, next) => {
       "Travel mission (/fetchAdvance) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -9361,11 +9529,11 @@ ar.beforeRequestHandler.use("/fetchAdvanceInfo", async (req, res, next) => {
 
     const advanceInfo = await _fetchAdvanceInfo(
       JSON.parse(decryptedData).advance,
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(advanceInfo))
+      Buffer.from(JSON.stringify(advanceInfo)),
     );
 
     res.end(encrypted);
@@ -9391,7 +9559,7 @@ ar.beforeRequestHandler.use("/fetchAdvanceInfo", async (req, res, next) => {
       "Travel mission (/fetchAdvanceInfo) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -9407,11 +9575,11 @@ ar.beforeRequestHandler.use("/approveRejectAdvance", async (req, res, next) => {
 
     const advanceInfo = await _approveRejectAdvance(
       JSON.parse(decryptedData),
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(advanceInfo))
+      Buffer.from(JSON.stringify(advanceInfo)),
     );
 
     res.end(encrypted);
@@ -9437,7 +9605,7 @@ ar.beforeRequestHandler.use("/approveRejectAdvance", async (req, res, next) => {
       "Travel mission (/approveRejectAdvance) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -9453,11 +9621,11 @@ ar.beforeRequestHandler.use("/cancelMission", async (req, res, next) => {
 
     const missionInfo = await _cancelMission(
       JSON.parse(decryptedData),
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(missionInfo))
+      Buffer.from(JSON.stringify(missionInfo)),
     );
 
     res.end(encrypted);
@@ -9483,7 +9651,7 @@ ar.beforeRequestHandler.use("/cancelMission", async (req, res, next) => {
       "Travel mission (/cancelMission) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -9499,11 +9667,11 @@ ar.beforeRequestHandler.use("/approveRejectCancel", async (req, res, next) => {
 
     const missionInfo = await _approveRejectCancel(
       JSON.parse(decryptedData),
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(missionInfo))
+      Buffer.from(JSON.stringify(missionInfo)),
     );
 
     res.end(encrypted);
@@ -9529,7 +9697,7 @@ ar.beforeRequestHandler.use("/approveRejectCancel", async (req, res, next) => {
       "Travel mission (/approveRejectCancel) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -9548,10 +9716,10 @@ ar.beforeRequestHandler.use("/updateMission", async (req, res, next) => {
     const updateMission = await _updateMissionBatch(
       req.body.data.params,
       req.body.data.userInfo,
-      reqCookies
+      reqCookies,
     );
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(updateMission))
+      Buffer.from(JSON.stringify(updateMission)),
     );
 
     res.end(encrypted);
@@ -9577,7 +9745,7 @@ ar.beforeRequestHandler.use("/updateMission", async (req, res, next) => {
       "Travel mission (/updateMission) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -9591,10 +9759,10 @@ ar.beforeRequestHandler.use("/updateMissionPayroll", async (req, res, next) => {
     // const updateMissionPayroll = await _updateMissionPayroll(
     const updateMissionPayroll = await _updateMissionPayrollBatch(
       req.body.data.params,
-      reqCookies
+      reqCookies,
     );
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(updateMissionPayroll))
+      Buffer.from(JSON.stringify(updateMissionPayroll)),
     );
 
     res.end(encrypted);
@@ -9620,7 +9788,7 @@ ar.beforeRequestHandler.use("/updateMissionPayroll", async (req, res, next) => {
       "Travel mission (/updateMissionPayroll) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -9635,7 +9803,7 @@ ar.beforeRequestHandler.use("/rejectMission", async (req, res, next) => {
     const missionInfo = await _rejectMission(req.body.data, reqCookies);
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(missionInfo))
+      Buffer.from(JSON.stringify(missionInfo)),
     );
 
     res.end(encrypted);
@@ -9661,7 +9829,7 @@ ar.beforeRequestHandler.use("/rejectMission", async (req, res, next) => {
       "Travel mission (/rejectMission) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -9676,10 +9844,10 @@ ar.beforeRequestHandler.use(
       const reqCookies = await _fetchCookies(req);
       const managerInfo = await _getManagerOfHeadOfSector(
         req.body.data.params,
-        reqCookies
+        reqCookies,
       );
       const encrypted = await _fetchEncryptedData(
-        Buffer.from(JSON.stringify(managerInfo))
+        Buffer.from(JSON.stringify(managerInfo)),
       );
 
       res.end(encrypted);
@@ -9705,13 +9873,13 @@ ar.beforeRequestHandler.use(
         "Travel mission (/getManagerOfHeadOfSector) -> status / " +
           errorObj.status +
           " & message / " +
-          errorObj.message
+          errorObj.message,
       );
 
       res.statusCode = errorObj.status;
       res.end(Buffer.from(JSON.stringify(errorObj)));
     }
-  }
+  },
 );
 
 ar.beforeRequestHandler.use("/getRecoveryAmount", async (req, res, next) => {
@@ -9719,10 +9887,10 @@ ar.beforeRequestHandler.use("/getRecoveryAmount", async (req, res, next) => {
     const reqCookies = await _fetchCookies(req);
     const recoveryAmount = await _getRecoveryAmount(
       req.body.data.params,
-      reqCookies
+      reqCookies,
     );
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(recoveryAmount))
+      Buffer.from(JSON.stringify(recoveryAmount)),
     );
 
     res.end(encrypted);
@@ -9748,7 +9916,7 @@ ar.beforeRequestHandler.use("/getRecoveryAmount", async (req, res, next) => {
       "Travel mission (/getRecoveryAmount) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -9762,7 +9930,7 @@ ar.beforeRequestHandler.use("/checkMission", async (req, res, next) => {
 
     const checkMissionResult = await _checkMissionBatch(req.body, reqCookies);
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(checkMissionResult))
+      Buffer.from(JSON.stringify(checkMissionResult)),
     );
 
     res.end(encrypted);
@@ -9788,7 +9956,44 @@ ar.beforeRequestHandler.use("/checkMission", async (req, res, next) => {
       "Travel mission (/checkMission) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
+    );
+
+    res.statusCode = errorObj.status;
+    res.end(Buffer.from(JSON.stringify(errorObj)));
+  }
+});
+
+ar.beforeRequestHandler.use("/getFCBudgetS4", async (req, res, next) => {
+  try {
+    //const reqCookies = await _fetchCookies(req);
+    const {costCenter, fiscalYear} = req.body;
+    const budgetResult = await _getFCBudget(costCenter,fiscalYear);
+
+    res.end(Buffer.from(JSON.stringify(budgetResult)));
+  } catch (error) {
+    const errorObj = {
+      status: 0,
+      message: "",
+    };
+    if (error instanceof CustomHttpError) {
+      errorObj.status = error.httpStatusCode;
+      errorObj.message = error.message;
+    } else {
+      if (typeof error === "string") {
+        errorObj.status = 500;
+        errorObj.message = error;
+      } else if (error instanceof Error) {
+        errorObj.status = 500;
+        errorObj.message = error.message;
+      }
+    }
+
+    console.log(
+      "Travel mission (/getFCBudget) -> status / " +
+        errorObj.status +
+        " & message / " +
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -9825,7 +10030,7 @@ ar.beforeRequestHandler.use("/fetchS4Metadata", async (req, res, next) => {
       "Travel mission (/fetchS4Metadata) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -9837,7 +10042,7 @@ ar.beforeRequestHandler.use("/createS4Document", async (req, res, next) => {
   try {
     const reqCookies = await _fetchCookies(req);
 
-    const createDocument = await _createS4Document(req.body, reqCookies);
+    const createDocument = await _createS4Documentv2(req.body, reqCookies);
 
     res.end(Buffer.from(JSON.stringify(createDocument)));
   } catch (error) {
@@ -9862,7 +10067,7 @@ ar.beforeRequestHandler.use("/createS4Document", async (req, res, next) => {
       "Travel mission create s4 document -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -9874,7 +10079,7 @@ ar.beforeRequestHandler.use("/deleteS4Document", async (req, res, next) => {
   try {
     const reqCookies = await _fetchCookies(req);
 
-    const deleteDocument = await _deleteS4Document(req.body, reqCookies);
+    const deleteDocument = await _deleteS4Documentv2(req.body, reqCookies);
 
     res.end(Buffer.from(JSON.stringify(deleteDocument)));
   } catch (error) {
@@ -9899,7 +10104,7 @@ ar.beforeRequestHandler.use("/deleteS4Document", async (req, res, next) => {
       "Travel mission delete s4 document -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -9911,7 +10116,7 @@ ar.beforeRequestHandler.use("/updateS4Document", async (req, res, next) => {
   try {
     const reqCookies = await _fetchCookies(req);
 
-    const updateDocument = await _updateS4Document(req.body, reqCookies);
+    const updateDocument = await _createS4Documentv2(req.body, reqCookies);
 
     res.end(Buffer.from(JSON.stringify(updateDocument)));
   } catch (error) {
@@ -9936,7 +10141,7 @@ ar.beforeRequestHandler.use("/updateS4Document", async (req, res, next) => {
       "Travel mission update s4 document -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -9964,7 +10169,7 @@ ar.beforeRequestHandler.use("/getValueListsBatch", async (req, res, next) => {
     const masterResult = await _getMastersBatch(req.body, reqCookies);
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(masterResult))
+      Buffer.from(JSON.stringify(masterResult)),
     );
     res.end(encrypted);
   } catch (error) {
@@ -9982,18 +10187,18 @@ ar.beforeRequestHandler.use(
 
       const adminMissionReport = await _getAdminMissionReport(
         req.body,
-        reqCookies
+        reqCookies,
       );
 
       const encrypted = await _fetchEncryptedData(
-        Buffer.from(JSON.stringify(adminMissionReport))
+        Buffer.from(JSON.stringify(adminMissionReport)),
       );
       res.end(encrypted);
     } catch (error) {
       res.statusCode = 500;
       res.end(Buffer.from(JSON.stringify({})));
     }
-  }
+  },
 );
 
 ar.beforeRequestHandler.use(
@@ -10004,7 +10209,7 @@ ar.beforeRequestHandler.use(
 
       const adminMissionReport = await _getAdminMissionReport(
         req.body,
-        reqCookies
+        reqCookies,
       );
 
       const wb = XLSX.utils.book_new();
@@ -10044,18 +10249,18 @@ ar.beforeRequestHandler.use(
 
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename="Mission Report - ${reportDateTime}.xlsx"`
+        `attachment; filename="Mission Report - ${reportDateTime}.xlsx"`,
       );
       res.setHeader(
         "Content-Type",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       );
       res.end(fileResult);
     } catch (error) {
       res.statusCode = 500;
       res.end(error.message);
     }
-  }
+  },
 );
 
 ar.start();

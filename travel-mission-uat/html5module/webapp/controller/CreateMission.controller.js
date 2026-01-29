@@ -20,7 +20,7 @@ sap.ui.define(
     UI5Date,
     MessageBox,
     MessageToast,
-    Storage
+    Storage,
   ) {
     "use strict";
 
@@ -188,6 +188,8 @@ sap.ui.define(
               title: "",
               multipleCities: "",
               noOfCities: "",
+              costCenter: "",
+              employeeAvailableBudget: 0,
               employeeTotalExpense: 0,
               employeeTotalTicket: 0,
               employeeTotalPerdiem: 0,
@@ -277,7 +279,7 @@ sap.ui.define(
                 guid,
                 memberItinerary[j].id,
                 null,
-                null
+                null,
               );
             }
           }
@@ -317,7 +319,7 @@ sap.ui.define(
                 guid,
                 memberItinerary[j].id,
                 null,
-                null
+                null,
               );
             }
           }
@@ -421,7 +423,7 @@ sap.ui.define(
                 guid,
                 memberItinerary[j].id,
                 null,
-                null
+                null,
               );
             }
           }
@@ -487,7 +489,7 @@ sap.ui.define(
               "errorsFound",
               "overlapItineraryError",
               [],
-              null
+              null,
             );
             // MessageBox.error(
             //   "Please select any other date which is not overlap with other cities dates",
@@ -594,7 +596,7 @@ sap.ui.define(
               "errorsFound",
               "overlapItineraryError",
               [],
-              null
+              null,
             );
             // MessageBox.error(
             //   "Please select any other date which is not overlap with other cities dates",
@@ -754,7 +756,7 @@ sap.ui.define(
             .getData().attachments;
 
           missionAttachmentsModelData = JSON.parse(
-            JSON.stringify(missionAttachmentsModelData)
+            JSON.stringify(missionAttachmentsModelData),
           );
 
           for (var i = missionAttachmentsModelData.length - 1; i >= 0; i--) {
@@ -927,6 +929,8 @@ sap.ui.define(
           title: "",
           multipleCities: "",
           noOfCities: "",
+          costCenter: "",
+          employeeAvailableBudget: 0,
           employeeTotalExpense: 0,
           employeeTotalTicket: 0,
           employeeTotalPerdiem: 0,
@@ -958,7 +962,9 @@ sap.ui.define(
           attachments: [],
         };
 
-        const bHeadOfMissionEditable = this.isHeadOfMissionEditable(aInfo.decreeType);
+        const bHeadOfMissionEditable = this.isHeadOfMissionEditable(
+          aInfo.decreeType,
+        );
 
         //--Set the first members itinerarys to the new member
         const oFirstMember = aMembers[0];
@@ -1047,7 +1053,9 @@ sap.ui.define(
 
       addItinerary: function (guid, oEvent) {
         var aInfo = this.getModel("missionInfoModel").getData().info;
-        const bHeadOfMissionEditable = this.isHeadOfMissionEditable(aInfo.decreeType);
+        const bHeadOfMissionEditable = this.isHeadOfMissionEditable(
+          aInfo.decreeType,
+        );
 
         var startDtModified = null;
         var endDtModified = null;
@@ -1086,7 +1094,10 @@ sap.ui.define(
               endDateMinDate: startDtModified,
               endDateMaxDate: endDtModified,
               //headOfMission: bHeadOfMissionEditable ? "" : "N",
-              headOfMission: itineraryData.length > 0 ? itineraryData[0].headOfMission : this.getDefaultHeadOfMission(aInfo.decreeType),
+              headOfMission:
+                itineraryData.length > 0
+                  ? itineraryData[0].headOfMission
+                  : this.getDefaultHeadOfMission(aInfo.decreeType),
               hospitalityDefault: "",
               perDiemPerCity: 0,
               ticketAverage: 0,
@@ -1228,13 +1239,11 @@ sap.ui.define(
           this.setModel(membersModel, "membersModel");
         }
       },
-
       checkBudgetAvailability: async function (bShowLoading = false) {
         let aBudgetTracking = [];
         let bBudgetAvailable = false;
         const oMissionInfoModel = this.getModel("missionInfoModel");
         const missionInfoModelData = oMissionInfoModel.getProperty("/info");
-
         let missionBudgetAvailable = null;
         let missionParkedAmount = null;
 
@@ -1257,140 +1266,446 @@ sap.ui.define(
           };
         }
 
-        if (bShowLoading) {
-          this.openBusyFragment("checkingBudget", []);
-        }
-        try {
-          const i = await this.refreshSectors();
-
-          if (bShowLoading) {
-            this.closeBusyFragment();
-          }
-        } catch (e) {
-          this.closeBusyFragment();
-          //--Could not refresh somehow
-        }
-
-        const oSectorsModel = this.getModel("sectorsModel");
-        const sectorsModelData = oSectorsModel.getProperty("/sectors");
-
-        const oSubSector = _.find(sectorsModelData, [
-          "externalCode",
-          missionInfoModelData.sector,
-        ]);
-
-        const oMainSector = oSubSector
-          ? _.find(sectorsModelData, {
-              cust_S4_Sector: oSubSector.cust_S4_Sector,
-              cust_S4_SubSector: oSubSector.cust_S4_Sector,
-            })
-          : null;
-
-        let remainingConsumption;
-
-        if (parseFloat(oSubSector.cust_Available_budget) > 0) {
-          remainingConsumption =
-            parseFloat(oSubSector.cust_Available_budget) -
-            parseFloat(missionInfoModelData.totalExpense);
-          let oBudgetTracking = {
-            cust_MissionID: "",
-            cust_SFSector: oSubSector.externalCode,
-            cust_S4Sector: oSubSector.cust_S4_SubSector,
-            cust_Consumption: parseFloat(missionInfoModelData.totalExpense),
-            cust_Remaining_Budget:
-              parseFloat(oSubSector.cust_Available_budget) -
-              parseFloat(missionInfoModelData.totalExpense),
-            cust_Parked_Amount:
-              parseFloat(oSubSector.cust_Parked_Amount) +
-              parseFloat(missionInfoModelData.totalExpense),
-            cust_Comments: "Create Mission",
-            real_Consumption:
-              remainingConsumption >= 0
-                ? parseFloat(missionInfoModelData.totalExpense)
-                : parseFloat(oSubSector.cust_Available_budget),
-          };
-          aBudgetTracking.push(oBudgetTracking);
-
-          if (remainingConsumption >= 0) {
-            bBudgetAvailable = true;
-            remainingConsumption = 0;
-          }
-        } else {
-          let oBudgetTracking = {
-            cust_MissionID: missionInfoModelData.missionID,
-            cust_SFSector: oSubSector.externalCode,
-            cust_S4Sector: oSubSector.cust_S4_SubSector,
-            cust_Consumption: parseFloat(missionInfoModelData.totalExpense),
-            cust_Remaining_Budget:
-              parseFloat(oSubSector.cust_Available_budget) -
-              parseFloat(missionInfoModelData.totalExpense),
-            cust_Parked_Amount:
-              parseFloat(oSubSector.cust_Parked_Amount) +
-              parseFloat(missionInfoModelData.totalExpense),
-            cust_Comments: "Create Mission",
-            real_Consumption: 0,
-          };
-          aBudgetTracking.push(oBudgetTracking);
-          remainingConsumption =
-            parseFloat(missionInfoModelData.totalExpense) * -1;
-        }
-
-        let remainingSectorBudget;
-        if (oMainSector && parseFloat(oMainSector.cust_Available_budget) > 0) {
-          //--Subsector budget may not be enough use main sector budget
-          remainingSectorBudget =
-            parseFloat(oMainSector.cust_Available_budget) -
-            parseFloat(missionInfoModelData.totalExpense);
-          let oBudgetTracking = {
-            cust_MissionID: "",
-            cust_SFSector: oMainSector.externalCode,
-            cust_S4Sector: oMainSector.cust_S4_SubSector,
-            cust_Consumption: parseFloat(missionInfoModelData.totalExpense),
-            cust_Remaining_Budget: remainingSectorBudget,
-            cust_Parked_Amount:
-              parseFloat(oMainSector.cust_Parked_Amount) +
-              parseFloat(missionInfoModelData.totalExpense),
-            cust_Comments: "Create Mission",
-            real_Consumption:
-              remainingSectorBudget >= 0
-                ? parseFloat(missionInfoModelData.totalExpense)
-                : 0,
-          };
-          aBudgetTracking.push(oBudgetTracking);
-
-          if (remainingSectorBudget >= 0) {
-            bBudgetAvailable = true;
-          } else {
-            bBudgetAvailable = false;
-          }
-        }
-
-        //--Return as is, becuase we will update using budget tracking (New S4-SF Scenario)
-        missionBudgetAvailable =
-          parseFloat(oSubSector.cust_Available_budget) -
-          parseFloat(missionInfoModelData.totalExpense);
-        missionParkedAmount =
-          parseFloat(oSubSector.cust_Parked_Amount) +
-          parseFloat(missionInfoModelData.totalExpense);
-
-        if (!bBudgetAvailable) {
-          //--Budget low error - do not return any tracking
-          aBudgetTracking = [];
-        }
-
-        return {
-          isBudgetAvailable: bBudgetAvailable,
+        return{
+          isBudgetAvailable: true,
           budgetTracking: aBudgetTracking,
           missionBudgetAvailable,
           missionParkedAmount,
-        };
+        }
+
+        // if (bShowLoading) {
+        //   this.openBusyFragment("checkingBudget", []);
+        // }
+        // try {
+        //   const i = await this.refreshSectors();
+
+        //   if (bShowLoading) {
+        //     this.closeBusyFragment();
+        //   }
+        // } catch (e) {
+        //   this.closeBusyFragment();
+        //   //--Could not refresh somehow
+        // }
+
+        // const oSectorsModel = this.getModel("sectorsModel");
+        // const sectorsModelData = oSectorsModel.getProperty("/sectors");
+
+        // const oSubSector = _.find(sectorsModelData, [
+        //   "externalCode",
+        //   missionInfoModelData.sector,
+        // ]);
+
+        // const oMainSector = oSubSector
+        //   ? _.find(sectorsModelData, {
+        //       cust_S4_Sector: oSubSector.cust_S4_Sector,
+        //       cust_S4_SubSector: oSubSector.cust_S4_Sector,
+        //     })
+        //   : null;
+
+        // let sectorAvailableBudget = 0;
+        // let sectorParkedBudget = 0;
+
+        // if (oSubSector.cust_Available_budget != null) {
+        //   sectorAvailableBudget = parseFloat(oSubSector.cust_Available_budget);
+        // }
+
+        // if (oSubSector.cust_Parked_Amount != null) {
+        //   sectorParkedBudget = parseFloat(oSubSector.cust_Parked_Amount);
+        // }
+
+        // let missionTotalExpenseDifference;
+
+        // if (
+        //   this.missionFormerSector &&
+        //   this.missionFormerSector === missionInfoModelData.sector
+        // ) {
+        //   missionTotalExpenseDifference =
+        //     parseFloat(this.missionTotalExpense) -
+        //     parseFloat(missionInfoModelData.totalExpense);
+
+        //   if (missionTotalExpenseDifference > 0) {
+        //     missionParkedAmount = sectorParkedBudget;
+        //     missionBudgetAvailable = sectorAvailableBudget;
+
+        //     let oSubBudgetTracking = {
+        //       cust_MissionID: missionInfoModelData.missionID,
+        //       cust_SFSector: oSubSector.externalCode,
+        //       cust_S4Sector: oSubSector.cust_S4_SubSector,
+        //       cust_Consumption: 0,
+        //       cust_Remaining_Budget:
+        //         parseFloat(oSubSector.cust_Available_budget) +
+        //         missionTotalExpenseDifference,
+        //       cust_Parked_Amount:
+        //         parseFloat(oSubSector.cust_Parked_Amount) -
+        //         missionTotalExpenseDifference,
+        //       cust_Comments: "Approve/reject claim",
+        //       real_Consumption: 0,
+        //     };
+        //     aBudgetTracking.push(oSubBudgetTracking);
+
+        //     let oMainBudgetTracking = {
+        //       cust_MissionID: missionInfoModelData.missionID,
+        //       cust_SFSector: oMainSector.externalCode,
+        //       cust_S4Sector: oMainSector.cust_S4_SubSector,
+        //       cust_Consumption: 0,
+        //       cust_Remaining_Budget:
+        //         parseFloat(oMainSector.cust_Available_budget) +
+        //         missionTotalExpenseDifference,
+        //       cust_Parked_Amount:
+        //         parseFloat(oMainSector.cust_Parked_Amount) -
+        //         missionTotalExpenseDifference,
+        //       cust_Comments: "Approve/reject claim",
+        //       real_Consumption: 0,
+        //     };
+        //     aBudgetTracking.push(oMainBudgetTracking);
+
+        //     bBudgetAvailable = true;
+
+        //     if (missionTotalExpenseDifference === 0) {
+        //       //--No need to update budget
+        //       aBudgetTracking = [];
+        //     }
+
+        //     missionBudgetAvailable =
+        //       parseFloat(oSubSector.cust_Available_budget) +
+        //       missionTotalExpenseDifference;
+        //     missionParkedAmount =
+        //       parseFloat(oSubSector.cust_Parked_Amount) -
+        //       missionTotalExpenseDifference;
+
+        //     return {
+        //       isBudgetAvailable: bBudgetAvailable,
+        //       budgetTracking: aBudgetTracking,
+        //       missionBudgetAvailable,
+        //       missionParkedAmount,
+        //     };
+        //   }
+        // } else {
+        //   //--Sector changed treat it as a new consumption
+        //   missionTotalExpenseDifference = parseFloat(
+        //     missionInfoModelData.totalExpense
+        //   );
+
+        //   if (this.missionFormerSector) {
+        //     const oFormerSubSector = _.find(sectorsModelData, [
+        //       "externalCode",
+        //       missionInfoModelData.sector,
+        //     ]);
+
+        //     const oFormerMainSector = oFormerSubSector
+        //       ? _.find(sectorsModelData, {
+        //           cust_S4_Sector: oFormerSubSector.cust_S4_Sector,
+        //           cust_S4_SubSector: oFormerSubSector.cust_S4_Sector,
+        //         })
+        //       : null;
+
+        //     let oSubBudgetTracking = {
+        //       cust_MissionID: missionInfoModelData.missionID,
+        //       cust_SFSector: oFormerSubSector.externalCode,
+        //       cust_S4Sector: oFormerSubSector.cust_S4_SubSector,
+        //       cust_Consumption: 0,
+        //       cust_Remaining_Budget:
+        //         parseFloat(oFormerSubSector.cust_Available_budget) +
+        //         missionTotalExpenseDifference,
+        //       cust_Parked_Amount:
+        //         parseFloat(oFormerSubSector.cust_Parked_Amount) -
+        //         missionTotalExpenseDifference,
+        //       cust_Comments:
+        //         "Approve/reject claim (Sector change - Budget revised)",
+        //       real_Consumption: 0,
+        //     };
+        //     aBudgetTracking.push(oSubBudgetTracking);
+
+        //     let oMainBudgetTracking = {
+        //       cust_MissionID: missionInfoModelData.missionID,
+        //       cust_SFSector: oFormerMainSector.externalCode,
+        //       cust_S4Sector: oFormerMainSector.cust_S4_SubSector,
+        //       cust_Consumption: 0,
+        //       cust_Remaining_Budget:
+        //         parseFloat(oFormerMainSector.cust_Available_budget) +
+        //         missionTotalExpenseDifference,
+        //       cust_Parked_Amount:
+        //         parseFloat(oFormerMainSector.cust_Parked_Amount) -
+        //         missionTotalExpenseDifference,
+        //       cust_Comments:
+        //         "Approve/reject claim (Sector change - Budget revised)",
+        //       real_Consumption: 0,
+        //     };
+        //     aBudgetTracking.push(oMainBudgetTracking);
+        //   }
+        // }
+
+        // //--Expense increased so get budget for increased part
+        // missionTotalExpenseDifference = Math.abs(missionTotalExpenseDifference);
+
+        // let remainingConsumption;
+
+        // if (parseFloat(oSubSector.cust_Available_budget) > 0) {
+        //   remainingConsumption =
+        //     parseFloat(oSubSector.cust_Available_budget) -
+        //     parseFloat(missionTotalExpenseDifference);
+        //   let oBudgetTracking = {
+        //     cust_MissionID: missionInfoModelData.missionID,
+        //     cust_SFSector: oSubSector.externalCode,
+        //     cust_S4Sector: oSubSector.cust_S4_SubSector,
+        //     cust_Consumption: parseFloat(missionTotalExpenseDifference),
+        //     cust_Remaining_Budget:
+        //       parseFloat(oSubSector.cust_Available_budget) -
+        //       parseFloat(missionTotalExpenseDifference),
+        //     cust_Parked_Amount:
+        //       parseFloat(oSubSector.cust_Parked_Amount) +
+        //       parseFloat(missionTotalExpenseDifference),
+        //     cust_Comments: "Approve/reject claim",
+        //     real_Consumption:
+        //       remainingConsumption >= 0
+        //         ? parseFloat(missionTotalExpenseDifference)
+        //         : parseFloat(oSubSector.cust_Available_budget),
+        //   };
+        //   aBudgetTracking.push(oBudgetTracking);
+
+        //   if (remainingConsumption >= 0) {
+        //     bBudgetAvailable = true;
+        //     remainingConsumption = 0;
+        //   }
+        // } else {
+        //   let oBudgetTracking = {
+        //     cust_MissionID: missionInfoModelData.missionID,
+        //     cust_SFSector: oSubSector.externalCode,
+        //     cust_S4Sector: oSubSector.cust_S4_SubSector,
+        //     cust_Consumption: parseFloat(missionTotalExpenseDifference),
+        //     cust_Remaining_Budget:
+        //       parseFloat(oSubSector.cust_Available_budget) -
+        //       parseFloat(missionTotalExpenseDifference),
+        //     cust_Parked_Amount:
+        //       parseFloat(oSubSector.cust_Parked_Amount) +
+        //       parseFloat(missionTotalExpenseDifference),
+        //     cust_Comments: "Approve/reject claim",
+        //     real_Consumption: 0,
+        //   };
+        //   aBudgetTracking.push(oBudgetTracking);
+        //   remainingConsumption = parseFloat(missionTotalExpenseDifference) * -1;
+        // }
+
+        // let remainingSectorBudget;
+        // if (oMainSector && parseFloat(oMainSector.cust_Available_budget) > 0) {
+        //   //--Subsector budget may not be enough use main sector budget
+        //   remainingSectorBudget =
+        //     parseFloat(oMainSector.cust_Available_budget) -
+        //     parseFloat(missionTotalExpenseDifference);
+
+        //   let oBudgetTracking = {
+        //     cust_MissionID: missionInfoModelData.missionID,
+        //     cust_SFSector: oMainSector.externalCode,
+        //     cust_S4Sector: oMainSector.cust_S4_SubSector,
+        //     cust_Consumption: parseFloat(missionTotalExpenseDifference),
+        //     cust_Remaining_Budget: remainingSectorBudget,
+        //     cust_Parked_Amount:
+        //       parseFloat(oMainSector.cust_Parked_Amount) +
+        //       parseFloat(missionTotalExpenseDifference),
+        //     cust_Comments: "Approve/reject claim",
+        //     real_Consumption:
+        //       remainingSectorBudget >= 0
+        //         ? parseFloat(missionTotalExpenseDifference)
+        //         : 0,
+        //   };
+        //   aBudgetTracking.push(oBudgetTracking);
+
+        //   if (remainingSectorBudget >= 0) {
+        //     bBudgetAvailable = true;
+        //   } else {
+        //     bBudgetAvailable = false;
+        //   }
+        // }
+
+        // //--Return as is, becuase we will update using budget tracking (New S4-SF Scenario)
+        // missionBudgetAvailable =
+        //   parseFloat(oSubSector.cust_Available_budget) -
+        //   parseFloat(missionTotalExpenseDifference);
+        // missionParkedAmount =
+        //   parseFloat(oSubSector.cust_Parked_Amount) +
+        //   parseFloat(missionTotalExpenseDifference);
+
+        // //   missionBudgetAvailable =
+        // //   parseFloat(oSubSector.cust_Available_budget) -
+        // //   parseFloat(missionTotalExpenseDifference);
+        // // missionParkedAmount =
+        // //   parseFloat(oSubSector.cust_Parked_Amount) +
+        // //   parseFloat(missionTotalExpenseDifference);
+
+        // if (!bBudgetAvailable) {
+        //   //--Budget low
+        //   aBudgetTracking = [];
+        // }
+
+        // return {
+        //   isBudgetAvailable: bBudgetAvailable,
+        //   budgetTracking: aBudgetTracking,
+        //   missionBudgetAvailable,
+        //   missionParkedAmount,
+        // };
       },
+        // checkBudgetAvailability: async function (bShowLoading = false) {
+      //   let aBudgetTracking = [];
+      //   let bBudgetAvailable = false;
+      //   const oMissionInfoModel = this.getModel("missionInfoModel");
+      //   const missionInfoModelData = oMissionInfoModel.getProperty("/info");
+
+      //   let missionBudgetAvailable = null;
+      //   let missionParkedAmount = null;
+
+      //   if (
+      //     !missionInfoModelData.totalExpense ||
+      //     parseFloat(missionInfoModelData.totalExpense) <= 0
+      //   ) {
+      //     this.toastMessage(
+      //       "E",
+      //       "errorOperation",
+      //       "totalMissionExpenseZero",
+      //       [],
+      //       null,
+      //     );
+      //     return {
+      //       isBudgetAvailable: bBudgetAvailable,
+      //       budgetTracking: aBudgetTracking,
+      //       missionBudgetAvailable,
+      //       missionParkedAmount,
+      //     };
+      //   }
+
+      //   if (bShowLoading) {
+      //     this.openBusyFragment("checkingBudget", []);
+      //   }
+      //   try {
+      //     const i = await this.refreshSectors();
+
+      //     if (bShowLoading) {
+      //       this.closeBusyFragment();
+      //     }
+      //   } catch (e) {
+      //     this.closeBusyFragment();
+      //     //--Could not refresh somehow
+      //   }
+
+      //   const oSectorsModel = this.getModel("sectorsModel");
+      //   const sectorsModelData = oSectorsModel.getProperty("/sectors");
+
+      //   const oSubSector = _.find(sectorsModelData, [
+      //     "externalCode",
+      //     missionInfoModelData.sector,
+      //   ]);
+
+      //   const oMainSector = oSubSector
+      //     ? _.find(sectorsModelData, {
+      //         cust_S4_Sector: oSubSector.cust_S4_Sector,
+      //         cust_S4_SubSector: oSubSector.cust_S4_Sector,
+      //       })
+      //     : null;
+
+      //   let remainingConsumption;
+
+      //   if (parseFloat(oSubSector.cust_Available_budget) > 0) {
+      //     remainingConsumption =
+      //       parseFloat(oSubSector.cust_Available_budget) -
+      //       parseFloat(missionInfoModelData.totalExpense);
+      //     let oBudgetTracking = {
+      //       cust_MissionID: "",
+      //       cust_SFSector: oSubSector.externalCode,
+      //       cust_S4Sector: oSubSector.cust_S4_SubSector,
+      //       cust_Consumption: parseFloat(missionInfoModelData.totalExpense),
+      //       cust_Remaining_Budget:
+      //         parseFloat(oSubSector.cust_Available_budget) -
+      //         parseFloat(missionInfoModelData.totalExpense),
+      //       cust_Parked_Amount:
+      //         parseFloat(oSubSector.cust_Parked_Amount) +
+      //         parseFloat(missionInfoModelData.totalExpense),
+      //       cust_Comments: "Create Mission",
+      //       real_Consumption:
+      //         remainingConsumption >= 0
+      //           ? parseFloat(missionInfoModelData.totalExpense)
+      //           : parseFloat(oSubSector.cust_Available_budget),
+      //     };
+      //     aBudgetTracking.push(oBudgetTracking);
+
+      //     if (remainingConsumption >= 0) {
+      //       bBudgetAvailable = true;
+      //       remainingConsumption = 0;
+      //     }
+      //   } else {
+      //     let oBudgetTracking = {
+      //       cust_MissionID: missionInfoModelData.missionID,
+      //       cust_SFSector: oSubSector.externalCode,
+      //       cust_S4Sector: oSubSector.cust_S4_SubSector,
+      //       cust_Consumption: parseFloat(missionInfoModelData.totalExpense),
+      //       cust_Remaining_Budget:
+      //         parseFloat(oSubSector.cust_Available_budget) -
+      //         parseFloat(missionInfoModelData.totalExpense),
+      //       cust_Parked_Amount:
+      //         parseFloat(oSubSector.cust_Parked_Amount) +
+      //         parseFloat(missionInfoModelData.totalExpense),
+      //       cust_Comments: "Create Mission",
+      //       real_Consumption: 0,
+      //     };
+      //     aBudgetTracking.push(oBudgetTracking);
+      //     remainingConsumption =
+      //       parseFloat(missionInfoModelData.totalExpense) * -1;
+      //   }
+
+      //   let remainingSectorBudget;
+      //   if (oMainSector && parseFloat(oMainSector.cust_Available_budget) > 0) {
+      //     //--Subsector budget may not be enough use main sector budget
+      //     remainingSectorBudget =
+      //       parseFloat(oMainSector.cust_Available_budget) -
+      //       parseFloat(missionInfoModelData.totalExpense);
+      //     let oBudgetTracking = {
+      //       cust_MissionID: "",
+      //       cust_SFSector: oMainSector.externalCode,
+      //       cust_S4Sector: oMainSector.cust_S4_SubSector,
+      //       cust_Consumption: parseFloat(missionInfoModelData.totalExpense),
+      //       cust_Remaining_Budget: remainingSectorBudget,
+      //       cust_Parked_Amount:
+      //         parseFloat(oMainSector.cust_Parked_Amount) +
+      //         parseFloat(missionInfoModelData.totalExpense),
+      //       cust_Comments: "Create Mission",
+      //       real_Consumption:
+      //         remainingSectorBudget >= 0
+      //           ? parseFloat(missionInfoModelData.totalExpense)
+      //           : 0,
+      //     };
+      //     aBudgetTracking.push(oBudgetTracking);
+
+      //     if (remainingSectorBudget >= 0) {
+      //       bBudgetAvailable = true;
+      //     } else {
+      //       bBudgetAvailable = false;
+      //     }
+      //   }
+
+      //   //--Return as is, becuase we will update using budget tracking (New S4-SF Scenario)
+      //   missionBudgetAvailable =
+      //     parseFloat(oSubSector.cust_Available_budget) -
+      //     parseFloat(missionInfoModelData.totalExpense);
+      //   missionParkedAmount =
+      //     parseFloat(oSubSector.cust_Parked_Amount) +
+      //     parseFloat(missionInfoModelData.totalExpense);
+
+      //   if (!bBudgetAvailable) {
+      //     //--Budget low error - do not return any tracking
+      //     aBudgetTracking = [];
+      //   }
+
+      //   return {
+      //     isBudgetAvailable: bBudgetAvailable,
+      //     budgetTracking: aBudgetTracking,
+      //     missionBudgetAvailable,
+      //     missionParkedAmount,
+      //   };
+      // },
 
       saveMission: async function () {
         const that = this;
         const oMissionInfoModel = this.getModel("missionInfoModel");
         const oMissionAttachmentsModel = this.getModel(
-          "missionAttachmentsModel"
+          "missionAttachmentsModel",
         );
         const oMembersModel = this.getModel("membersModel");
         const oSectorsModel = this.getModel("sectorsModel");
@@ -1412,7 +1727,7 @@ sap.ui.define(
           oDescrField.setValueStateText("");
         }
         const bArabicOnly = this.checkIsArabic(
-          missionInfoModelData.missionDescription
+          missionInfoModelData.missionDescription,
         );
 
         if (!bArabicOnly) {
@@ -1427,11 +1742,11 @@ sap.ui.define(
                   oDescrField.focus();
                   oDescrField.setValueState("Error");
                   oDescrField.setValueStateText(
-                    this.getText("arabicDescriptionOnly", [])
+                    this.getText("arabicDescriptionOnly", []),
                   );
                 }
               },
-            }
+            },
           );
           return;
         }
@@ -1443,15 +1758,18 @@ sap.ui.define(
         //--Check at least one itinerary
 
         //--Check decree type and head of mission
-        const decreeTypeValidationMessage = this.validateMissionForDecreeType(missionInfoModelData.decreeType, missionMembersData);
+        const decreeTypeValidationMessage = this.validateMissionForDecreeType(
+          missionInfoModelData.decreeType,
+          missionMembersData,
+        );
 
-        if(decreeTypeValidationMessage){
+        if (decreeTypeValidationMessage) {
           this.alertMessageHtml(
             "E",
             "errorOperation",
             decreeTypeValidationMessage.message,
             decreeTypeValidationMessage.params,
-            null
+            null,
           );
           return;
         }
@@ -1489,7 +1807,7 @@ sap.ui.define(
             "errorOperation",
             "sectorDataNotRead",
             [missionInfoModelData.sector],
-            null
+            null,
           );
           return;
         }
@@ -1504,7 +1822,7 @@ sap.ui.define(
             "errorOperation",
             "sectorS4CodeNotExist",
             [oSector.externalCode, oSector.localeLabel],
-            null
+            null,
           );
           return;
         }
@@ -1522,7 +1840,7 @@ sap.ui.define(
             "errorOperation",
             "sectorBudgetLowError",
             [],
-            null
+            null,
           );
           return;
           // MessageBox.error("The available budget of sector is low", {
@@ -1531,7 +1849,6 @@ sap.ui.define(
           //   dependentOn: that.getView(),
           // });
         } else {
-
           //--Set external entities
           this.setExternalEntities(missionInfoModelData);
           //--Set external entities
@@ -1543,11 +1860,11 @@ sap.ui.define(
               missionDetails: "",
               createdBy: "",
               decreeType: "",
-              externalEntity:"",
-              externalEntity2:"",
-              externalEntity3:"",
-              externalEntity4:"",
-              externalEntity5:"",
+              externalEntity: "",
+              externalEntity2: "",
+              externalEntity3: "",
+              externalEntity4: "",
+              externalEntity5: "",
               destination: "",
               flightType: "",
               hospitality_Type: "",
@@ -1580,20 +1897,28 @@ sap.ui.define(
           }
 
           if (
-            missionInfoModelData.decreeType === "09" || missionInfoModelData.decreeType === "10" 
-            
+            missionInfoModelData.decreeType === "09" ||
+            missionInfoModelData.decreeType === "10"
           ) {
-            if(missionInfoModelData.externalEntity !== null && missionInfoModelData.externalEntity !== ""){
-              missionRequest.info.externalEntity = missionInfoModelData.externalEntity;
-              missionRequest.info.externalEntity2 = missionInfoModelData.externalEntity2;
-              missionRequest.info.externalEntity3 = missionInfoModelData.externalEntity3;
-              missionRequest.info.externalEntity4 = missionInfoModelData.externalEntity4;
-              missionRequest.info.externalEntity5 = missionInfoModelData.externalEntity5;
-            }else{
+            if (
+              missionInfoModelData.externalEntity !== null &&
+              missionInfoModelData.externalEntity !== ""
+            ) {
+              missionRequest.info.externalEntity =
+                missionInfoModelData.externalEntity;
+              missionRequest.info.externalEntity2 =
+                missionInfoModelData.externalEntity2;
+              missionRequest.info.externalEntity3 =
+                missionInfoModelData.externalEntity3;
+              missionRequest.info.externalEntity4 =
+                missionInfoModelData.externalEntity4;
+              missionRequest.info.externalEntity5 =
+                missionInfoModelData.externalEntity5;
+            } else {
               validationError = true;
             }
           }
-           
+
           if (
             missionInfoModelData.destination != "" &&
             missionInfoModelData.destination != null
@@ -1651,7 +1976,7 @@ sap.ui.define(
           ) {
             var hoursToAdd = 12 * 60 * 60 * 1000;
             var missionStartDate = new Date(
-              missionInfoModelData.missionStartDate
+              missionInfoModelData.missionStartDate,
             );
             missionStartDate.setTime(missionStartDate.getTime() + hoursToAdd);
             missionRequest.info.missionStartDate =
@@ -1817,10 +2142,10 @@ sap.ui.define(
               ) {
                 var hoursToAdd = 12 * 60 * 60 * 1000;
                 var itineraryEndDate = new Date(
-                  missionMembersData[j].itinerary[k].endDate
+                  missionMembersData[j].itinerary[k].endDate,
                 );
                 itineraryEndDate.setTime(
-                  itineraryEndDate.getTime() + hoursToAdd
+                  itineraryEndDate.getTime() + hoursToAdd,
                 );
                 missionItineraryRequest.endDate =
                   "/Date(" + itineraryEndDate.getTime() + ")/";
@@ -1833,10 +2158,10 @@ sap.ui.define(
               ) {
                 var hoursToAdd = 12 * 60 * 60 * 1000;
                 var itineraryStartDate = new Date(
-                  missionMembersData[j].itinerary[k].startDate
+                  missionMembersData[j].itinerary[k].startDate,
                 );
                 itineraryStartDate.setTime(
-                  itineraryStartDate.getTime() + hoursToAdd
+                  itineraryStartDate.getTime() + hoursToAdd,
                 );
                 missionItineraryRequest.startDate =
                   "/Date(" + itineraryStartDate.getTime() + ")/";
@@ -1919,7 +2244,7 @@ sap.ui.define(
                 "errorOperation",
                 "totalMissionExpenseZero",
                 [],
-                null
+                null,
               );
               return;
               // MessageBox.error(
@@ -1941,7 +2266,7 @@ sap.ui.define(
                 this.openBusyFragment();
                 try {
                   const managerInfo = await this.getManagerOfHeadOfSector(
-                    oSector.cust_Head_of_Sector
+                    oSector.cust_Head_of_Sector,
                   );
                   this.closeBusyFragment();
                   missionRequest.info.pendingWithGroup =
@@ -1956,7 +2281,7 @@ sap.ui.define(
                     "errorOperation",
                     "managerOfHeadOfSectorNotFound",
                     [],
-                    null
+                    null,
                   );
                   return;
                 }
@@ -1967,9 +2292,8 @@ sap.ui.define(
               //--Check mission
               try {
                 await this.openBusyFragment("checkingMissionBeforeSave");
-                const checkMissionResponse = await this.checkMission(
-                  missionRequest
-                );
+                const checkMissionResponse =
+                  await this.checkMission(missionRequest);
                 await this.closeBusyFragment();
                 if (checkMissionResponse === false) {
                   this.toastMessage(
@@ -1977,7 +2301,7 @@ sap.ui.define(
                     "errorsFound",
                     "missionCheckFailed",
                     [],
-                    null
+                    null,
                   );
                   this.onOpenErrorPane();
                   return;
@@ -2011,7 +2335,7 @@ sap.ui.define(
                     xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                     xhr.setRequestHeader(
                       "x-approuter-authorization",
-                      "Bearer " + envInfo.CF.accessToken
+                      "Bearer " + envInfo.CF.accessToken,
                     );
                   }
                 },
@@ -2032,7 +2356,7 @@ sap.ui.define(
                       confirmCallbackFn: () => {
                         that.closeMission();
                       },
-                    }
+                    },
                   );
 
                   // MessageBox.success(
@@ -2063,7 +2387,7 @@ sap.ui.define(
                         confirmCallbackFn: () => {
                           that.closeMission();
                         },
-                      }
+                      },
                     );
 
                     // MessageBox.error(errorMessage.message, {
@@ -2084,7 +2408,7 @@ sap.ui.define(
                         confirmCallbackFn: () => {
                           that.closeMission();
                         },
-                      }
+                      },
                     );
                   }
                 },
@@ -2117,7 +2441,7 @@ sap.ui.define(
                 xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                 xhr.setRequestHeader(
                   "x-approuter-authorization",
-                  "Bearer " + envInfo.CF.accessToken
+                  "Bearer " + envInfo.CF.accessToken,
                 );
               }
             },
@@ -2171,7 +2495,7 @@ sap.ui.define(
             "errorOperation",
             "sectorDataNotRead",
             [missionInfoModelData.sector],
-            null
+            null,
           );
           return;
         }
@@ -2186,7 +2510,7 @@ sap.ui.define(
             "errorOperation",
             "sectorS4CodeNotExist",
             [oSector.externalCode, oSector.localeLabel],
-            null
+            null,
           );
           return;
         }
@@ -2212,7 +2536,7 @@ sap.ui.define(
               confirmCallbackFn: () => {
                 oValidatedComboBox.setSelectedKey(null);
               },
-            }
+            },
           );
           // MessageBox.error("The selected budget not having delegate approver", {
           //   actions: [MessageBox.Action.CLOSE],
@@ -2234,7 +2558,7 @@ sap.ui.define(
                 xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                 xhr.setRequestHeader(
                   "x-approuter-authorization",
-                  "Bearer " + envInfo.CF.accessToken
+                  "Bearer " + envInfo.CF.accessToken,
                 );
               }
             },
@@ -2338,7 +2662,7 @@ sap.ui.define(
                         guid,
                         mModelData[j].itinerary[k].id,
                         null,
-                        null
+                        null,
                       );
                     }
                   }
@@ -2361,7 +2685,7 @@ sap.ui.define(
               "errorOperation",
               "memberLackOfPayGrade",
               [],
-              null
+              null,
             );
             // MessageBox.error("The selected member not having payGrade", {
             //   actions: [MessageBox.Action.CLOSE],
@@ -2394,7 +2718,7 @@ sap.ui.define(
         this._oSearchEmployeeDialog.data("guid", guid);
         this._oSearchEmployeeDialog.open();
       },
-      confirmEmployeeSelection: function (oEvent) {
+      confirmEmployeeSelection: async function (oEvent) {
         //const oItem = oEvent.getParameter("selectedItem");
         const oItem = oEvent.getSource();
         if (!oItem) {
@@ -2407,7 +2731,7 @@ sap.ui.define(
             "errorsFound",
             "selectedEmployeeNotAvaible",
             [],
-            null
+            null,
           );
           return;
         }
@@ -2416,87 +2740,232 @@ sap.ui.define(
         const that = this;
         const oMembersModel = this.getModel("membersModel");
         const oEmployeesModel = this.getModel("employeesModel");
+        const oMissionInfoModel = this.getModel("missionInfoModel");
+        const oMissionInfo = oMissionInfoModel.getProperty("/info");
 
         let mModelData = oMembersModel.getProperty("/members") || [];
         let employeesModelData =
           oEmployeesModel.getProperty("/employees") || [];
         let payGradeExist = false;
 
-        for (var i = 0; i < employeesModelData.length; i++) {
-          if (
-            oItem.data("employeeID") == employeesModelData[i].personIdExternal
-          ) {
-            for (var j = 0; j < mModelData.length; j++) {
-              if (mModelData[j].guid == guid) {
-                if (
-                  employeesModelData[i].jobInfoNav.results[0].payGrade !=
-                    null &&
-                  employeesModelData[i].jobInfoNav.results[0].payGrade != "" &&
-                  employeesModelData[i].jobInfoNav.results[0].payGradeNav
-                    .paygradeLevel != null &&
-                  employeesModelData[i].jobInfoNav.results[0].payGradeNav
-                    .paygradeLevel != ""
-                ) {
-                  payGradeExist = true;
-                  mModelData[j].employeeName =
-                    employeesModelData[
-                      i
-                    ].personNav.personalInfoNav.results[0].displayName;
-                  mModelData[j].salutation =
-                    employeesModelData[
-                      i
-                    ].personNav.personalInfoNav.results[0].salutationNav.picklistLabels.results[0].label;
-                  mModelData[j].userID = oItem.data("userID"); //Person ID External
-                  mModelData[j].employeeID = oItem.data("employeeID"); //Person ID External
-
-                  mModelData[j].grade =
-                    employeesModelData[i].jobInfoNav.results[0].payGrade;
-                  mModelData[j].gradeLevel =
-                    employeesModelData[
-                      i
-                    ].jobInfoNav.results[0].payGradeNav.paygradeLevel;
-                  if (employeesModelData[i].userNav.department) {
-                    mModelData[j].department =
-                      employeesModelData[i].userNav.department;
-                  } else {
-                    mModelData[j].department = "";
-                  }
-                  mModelData[j].title =
-                    employeesModelData[i].jobInfoNav.results[0].jobTitle;
-                  mModelData[j].jobLevel =
-                    employeesModelData[i].jobInfoNav.results[0].customString6;
-
-                  for (var k = 0; k < mModelData[j].itinerary.length; k++) {
-                    that.findTicketAndPerDiemPerCity(
-                      guid,
-                      mModelData[j].itinerary[k].id,
-                      null,
-                      null
-                    );
-                  }
-                }
-              }
-            }
-          }
+        // Find employee from model
+        const oEmployee = _.find(employeesModelData, [
+          "personIdExternal",
+          oItem.data("employeeID"),
+        ]);
+        // Find employee from model
+        if (!oEmployee && j === -1) {
+          return;
         }
 
-        if (payGradeExist) {
-          oMembersModel.setProperty("/members", _.cloneDeep(mModelData));
-          this.closeEmployeeSearch();
-        } else {
+        // Find member index
+        const j = _.findIndex(mModelData, ["guid", guid]);
+        // Find member index
+
+        if (
+          oEmployee.jobInfoNav.results[0].payGrade != null &&
+          oEmployee.jobInfoNav.results[0].payGrade != "" &&
+          oEmployee.jobInfoNav.results[0].payGradeNav.paygradeLevel != null &&
+          oEmployee.jobInfoNav.results[0].payGradeNav.paygradeLevel != ""
+        ) {
+          payGradeExist = true;
+        }
+
+        if (!payGradeExist) {
           this.alertMessage(
             "E",
             "errorOperation",
             "memberLackOfPayGrade",
             [],
-            null
+            null,
           );
-          // MessageBox.error("The selected member not having payGrade", {
-          //   actions: [MessageBox.Action.CLOSE],
-          //   onClose: function (sAction) {},
-          //   dependentOn: that.getView(),
-          // });
+          return;
         }
+
+        if (
+          oEmployee.jobInfoNav.results[0].costCenter === "" ||
+          oEmployee.jobInfoNav.results[0].costCenter === null ||
+          oEmployee.jobInfoNav.results[0].costCenter === undefined
+        ) {
+          this.alertMessage(
+            "E",
+            "errorOperation",
+            "memberLackOfCostCenter",
+            [],
+            null,
+          );
+          return;
+        }
+
+        // Get avaliable budget from S4
+        this.openBusyFragment("costCenterBudgetIsBeingRead", [])
+        const oBudget = await this.getFCBudgetS4(
+          oEmployee.jobInfoNav.results[0].costCenter,
+          oMissionInfo.missionStartDate.getFullYear(),
+        );
+        this.closeBusyFragment();
+        if (oBudget && oBudget.hasOwnProperty("GetFCBudget")) {
+          if (
+            oBudget.GetFCBudget.ErrorCode === 0 &&
+            parseFloat(oBudget.GetFCBudget.AvailableBudget) > 0
+          ) {
+
+            //--Set available budget
+            mModelData[j].employeeAvailableBudget =
+            oBudget.GetFCBudget.AvailableBudget;
+            //--Set available budget
+          } else {
+            if (oBudget.GetFCBudget.Message !== "") {
+              this.alertMessage(
+                "E",
+                "errorOperation",
+                "noAvailableBudgetError",
+                [
+                  oEmployee.jobInfoNav.results[0].costCenter,
+                  oBudget.GetFCBudget.Message,
+                ],
+                null,
+              );
+            } else {
+              this.alertMessage(
+                "E",
+                "errorOperation",
+                "noAvailableBudgetExists",
+                [oEmployee.jobInfoNav.results[0].costCenter],
+                null,
+              );
+            }
+            return;
+          }
+        } else {
+          this.alertMessage(
+            "E",
+            "errorOperation",
+            "noBudgetInfoFetched",
+            [],
+            null,
+          );
+          return;
+        }
+        // Get avaliable budget from S4
+
+        mModelData[j].employeeName =
+          oEmployee.personNav.personalInfoNav.results[0].displayName;
+        mModelData[j].salutation =
+          oEmployee.personNav.personalInfoNav.results[0].salutationNav.picklistLabels.results[0].label;
+        mModelData[j].userID = oItem.data("userID"); //Person ID External
+        mModelData[j].employeeID = oItem.data("employeeID"); //Person ID External
+
+        // Cost center info
+        mModelData[j].costCenter = oEmployee.jobInfoNav.results[0].costCenter;
+        // Cost center info
+
+        mModelData[j].grade = oEmployee.jobInfoNav.results[0].payGrade;
+        mModelData[j].gradeLevel =
+          oEmployee.jobInfoNav.results[0].payGradeNav.paygradeLevel;
+        if (oEmployee.userNav.department) {
+          mModelData[j].department = oEmployee.userNav.department;
+        } else {
+          mModelData[j].department = "";
+        }
+        mModelData[j].title = oEmployee.jobInfoNav.results[0].jobTitle;
+        mModelData[j].jobLevel = oEmployee.jobInfoNav.results[0].customString6;
+
+        for (var k = 0; k < mModelData[j].itinerary.length; k++) {
+          this.findTicketAndPerDiemPerCity(
+            guid,
+            mModelData[j].itinerary[k].id,
+            null,
+            null,
+          );
+        }
+
+        oMembersModel.setProperty("/members", _.cloneDeep(mModelData));
+        this.closeEmployeeSearch();
+
+        // for (var i = 0; i < employeesModelData.length; i++) {
+        //   if (
+        //     oItem.data("employeeID") == employeesModelData[i].personIdExternal
+        //   ) {
+        //     for (var j = 0; j < mModelData.length; j++) {
+        //       if (mModelData[j].guid == guid) {
+        //         if (
+        //           employeesModelData[i].jobInfoNav.results[0].payGrade !=
+        //             null &&
+        //           employeesModelData[i].jobInfoNav.results[0].payGrade != "" &&
+        //           employeesModelData[i].jobInfoNav.results[0].payGradeNav
+        //             .paygradeLevel != null &&
+        //           employeesModelData[i].jobInfoNav.results[0].payGradeNav
+        //             .paygradeLevel != "" &&
+        //           // Cost center info
+        //           employeesModelData[i].jobInfoNav.results[0].costCenter != ""
+        //           // Cost center info
+        //         ) {
+        //           payGradeExist = true;
+        //           mModelData[j].employeeName =
+        //             employeesModelData[
+        //               i
+        //             ].personNav.personalInfoNav.results[0].displayName;
+        //           mModelData[j].salutation =
+        //             employeesModelData[
+        //               i
+        //             ].personNav.personalInfoNav.results[0].salutationNav.picklistLabels.results[0].label;
+        //           mModelData[j].userID = oItem.data("userID"); //Person ID External
+        //           mModelData[j].employeeID = oItem.data("employeeID"); //Person ID External
+
+        //           // Cost center info
+        //           mModelData[j].costCenter =
+        //             employeesModelData[i].jobInfoNav.results[0].costCenter;
+        //           // Cost center info
+
+        //           mModelData[j].grade =
+        //             employeesModelData[i].jobInfoNav.results[0].payGrade;
+        //           mModelData[j].gradeLevel =
+        //             employeesModelData[
+        //               i
+        //             ].jobInfoNav.results[0].payGradeNav.paygradeLevel;
+        //           if (employeesModelData[i].userNav.department) {
+        //             mModelData[j].department =
+        //               employeesModelData[i].userNav.department;
+        //           } else {
+        //             mModelData[j].department = "";
+        //           }
+        //           mModelData[j].title =
+        //             employeesModelData[i].jobInfoNav.results[0].jobTitle;
+        //           mModelData[j].jobLevel =
+        //             employeesModelData[i].jobInfoNav.results[0].customString6;
+
+        //           for (var k = 0; k < mModelData[j].itinerary.length; k++) {
+        //             that.findTicketAndPerDiemPerCity(
+        //               guid,
+        //               mModelData[j].itinerary[k].id,
+        //               null,
+        //               null,
+        //             );
+        //           }
+        //         }
+        //       }
+        //     }
+        //   }
+        // }
+
+        // if (payGradeExist) {
+        //   oMembersModel.setProperty("/members", _.cloneDeep(mModelData));
+        //   this.closeEmployeeSearch();
+        // } else {
+        //   this.alertMessage(
+        //     "E",
+        //     "errorOperation",
+        //     "memberLackOfPayGrade",
+        //     [],
+        //     null,
+        //   );
+        //   // MessageBox.error("The selected member not having payGrade", {
+        //   //   actions: [MessageBox.Action.CLOSE],
+        //   //   onClose: function (sAction) {},
+        //   //   dependentOn: that.getView(),
+        //   // });
+        // }
       },
       closeEmployeeSearch: function () {
         if (this._oSearchEmployeeDialog) {
@@ -2554,7 +3023,7 @@ sap.ui.define(
                 xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                 xhr.setRequestHeader(
                   "x-approuter-authorization",
-                  "Bearer " + envInfo.CF.accessToken
+                  "Bearer " + envInfo.CF.accessToken,
                 );
               }
             },
@@ -2634,7 +3103,7 @@ sap.ui.define(
                 xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                 xhr.setRequestHeader(
                   "x-approuter-authorization",
-                  "Bearer " + envInfo.CF.accessToken
+                  "Bearer " + envInfo.CF.accessToken,
                 );
               }
             },
@@ -2698,7 +3167,7 @@ sap.ui.define(
               xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
               xhr.setRequestHeader(
                 "x-approuter-authorization",
-                "Bearer " + envInfo.CF.accessToken
+                "Bearer " + envInfo.CF.accessToken,
               );
             }
           },
@@ -2731,7 +3200,7 @@ sap.ui.define(
         const envInfo = await this.getEnvInfo();
         const oEmployeesModel = this.getModel("employeesModel");
         let employeesData = _.cloneDeep(
-          oEmployeesModel.getProperty("/employees")
+          oEmployeesModel.getProperty("/employees"),
         );
         let users = "";
         for (var i = 0; i < employeesData.length; i++) {
@@ -2755,7 +3224,7 @@ sap.ui.define(
               xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
               xhr.setRequestHeader(
                 "x-approuter-authorization",
-                "Bearer " + envInfo.CF.accessToken
+                "Bearer " + envInfo.CF.accessToken,
               );
             }
           },
@@ -2811,7 +3280,7 @@ sap.ui.define(
         const envInfo = await this.getEnvInfo();
         const oEmployeesModel = this.getModel("employeesModel");
         let employeesData = _.cloneDeep(
-          oEmployeesModel.getProperty("/employees")
+          oEmployeesModel.getProperty("/employees"),
         );
         let users = "";
         for (let i = 0; i < employeesData.length; i++) {
@@ -2835,7 +3304,7 @@ sap.ui.define(
               xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
               xhr.setRequestHeader(
                 "x-approuter-authorization",
-                "Bearer " + envInfo.CF.accessToken
+                "Bearer " + envInfo.CF.accessToken,
               );
             }
           },
@@ -3064,7 +3533,7 @@ sap.ui.define(
                 xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                 xhr.setRequestHeader(
                   "x-approuter-authorization",
-                  "Bearer " + envInfo.CF.accessToken
+                  "Bearer " + envInfo.CF.accessToken,
                 );
               }
             },
@@ -3191,7 +3660,7 @@ sap.ui.define(
           "errorOperation",
           "attachmentFiletypeMismatch",
           [],
-          null
+          null,
         );
         // MessageBox.error("Please select only txt,png,pdf,jpg,xlsx file types", {
         //   actions: [MessageBox.Action.CLOSE],
@@ -3205,5 +3674,5 @@ sap.ui.define(
         this.byId("missionDetails").setValue(oTextArea.getValue());
       },
     });
-  }
+  },
 );

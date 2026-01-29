@@ -706,6 +706,72 @@ sap.ui.define(
         });
       },
 
+      testS4BudgetFunction: async function () {
+        const url = "/getFCBudgetS4";
+        const envInfo = await this.getEnvInfo();
+
+        return new Promise(async (resolve, reject) => {
+          try {
+            const headers = {
+              "Content-Type": "application/json",
+              "x-csrf-token": envInfo.CSRF,
+              "x-approuter-authorization": `Bearer ${envInfo.CF.accessToken}`,
+            };
+
+            const response = await fetch(url, {
+              method: "POST",
+              credentials: "include", // Equivalent to `xhrFields: { withCredentials: true }`
+              headers: headers,
+              body: JSON.stringify({
+                costCenter: "014101A088",
+                fiscalYear: new Date().getFullYear().toString()
+              }),
+            });
+
+            const result = await response.json();
+
+            console.log(result);
+
+            resolve(false);
+          } catch (error) {
+            console.error("Fetch error:", error);
+            resolve(false);
+          }
+        });
+      },
+
+      getFCBudgetS4: async function (costCenter, fiscalYear) {
+        const url = "/getFCBudgetS4";
+        const envInfo = await this.getEnvInfo();
+
+        return new Promise(async (resolve, reject) => {
+          try {
+            const headers = {
+              "Content-Type": "application/json",
+              "x-csrf-token": envInfo.CSRF,
+              "x-approuter-authorization": `Bearer ${envInfo.CF.accessToken}`,
+            };
+
+            const response = await fetch(url, {
+              method: "POST",
+              credentials: "include", // Equivalent to `xhrFields: { withCredentials: true }`
+              headers: headers,
+              body: JSON.stringify({
+                costCenter: costCenter,
+                fiscalYear: fiscalYear
+              }),
+            });
+
+            const result = await response.json();
+
+            resolve(result);
+          } catch (error) {
+            console.error("Fetch error:", error);
+            resolve(false);
+          }
+        });
+      },
+
       getMasters_v1: async function () {
         const that = this;
 

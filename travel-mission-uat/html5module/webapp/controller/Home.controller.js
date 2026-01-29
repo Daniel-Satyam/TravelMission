@@ -247,44 +247,45 @@ sap.ui.define(
       //     }
       //   });
       // },
-      // checkS4Connection: async function () {
-      //   const url = "/fetchS4Metadata";
-      //   const envInfo = await this.getEnvInfo();
 
-      //   return new Promise(async (resolve, reject) => {
-      //     try {
-      //       const headers = {
-      //         "Content-Type": "application/json",
-      //         "x-csrf-token": envInfo.CSRF,
-      //         "x-approuter-authorization": `Bearer ${envInfo.CF.accessToken}`,
-      //       };
+      checkS4Connection: async function () {
+        const url = "/fetchS4Metadata";
+        const envInfo = await this.getEnvInfo();
 
-      //       const response = await fetch(url, {
-      //         method: "POST",
-      //         credentials: "include", // Equivalent to `xhrFields: { withCredentials: true }`
-      //         headers: headers,
-      //         body: JSON.stringify({
-      //           odataServiceName: "ZFMFR_CREATE_ODATA_SRV",
-      //         }),
-      //       });
+        return new Promise(async (resolve, reject) => {
+          try {
+            const headers = {
+              "Content-Type": "application/json",
+              "x-csrf-token": envInfo.CSRF,
+              "x-approuter-authorization": `Bearer ${envInfo.CF.accessToken}`,
+            };
 
-      //       if (!response.ok) {
-      //         console.log(response);
-      //         resolve(false);
-      //         return;
-      //       }
+            const response = await fetch(url, {
+              method: "POST",
+              credentials: "include", // Equivalent to `xhrFields: { withCredentials: true }`
+              headers: headers,
+              body: JSON.stringify({
+                odataServiceName: "ZFMFR_CREATE_ODATA_SRV",
+              }),
+            });
 
-      //       const result = await response.text();
+            if (!response.ok) {
+              console.log(response);
+              resolve(false);
+              return;
+            }
 
-      //       console.log(result);
+            const result = await response.text();
 
-      //       resolve(false);
-      //     } catch (error) {
-      //       console.error("Fetch error:", error);
-      //       resolve(false);
-      //     }
-      //   });
-      // },
+            console.log(result);
+
+            resolve(false);
+          } catch (error) {
+            console.error("Fetch error:", error);
+            resolve(false);
+          }
+        });
+      },
 
       _onRouteMatched: function (oEvent) {
         this.initialize();
@@ -372,7 +373,8 @@ sap.ui.define(
             await this.getUserInfo();
 
             // // Sample call
-            //this.createS4Document();
+            //await this.checkS4Connection();
+            //await this.testS4BudgetFunction();
             // // Sample call
 
             try {

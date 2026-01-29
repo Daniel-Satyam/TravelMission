@@ -332,7 +332,7 @@
 								<Text class="errorInfoTxt" text="{i18n>validateMissionFlightType}" visible="{=${missionInfoModel>/info/flightType} === '' &amp;&amp; ${screenModel>/info/validationError}}"/>
 							</VBox>
 						</f:GridListItem>
-						<f:GridListItem>
+						<f:GridListItem visible="false">
 							<VBox class="sapUiSmallMargin">
 								<layoutData>
 									<FlexItemData growFactor="1" shrinkFactor="0" />
@@ -342,7 +342,7 @@
 								<Input id="missionBudgetAvailable" value="{path: 'missionInfoModel>/info/budgetAvailable', formatter: 'Formatter.formatAmount'}" enabled="false"/>
 							</VBox>
 						</f:GridListItem>
-						<f:GridListItem>
+						<f:GridListItem visible="false">
 							<VBox class="sapUiSmallMargin">
 								<layoutData>
 									<FlexItemData growFactor="1" shrinkFactor="0" />
@@ -556,6 +556,22 @@
 											<Text class="errorInfoTxt" text="{i18n>validateMissionMemberMulticity}" visible="{=${membersModel>multipleCities} === '' &amp;&amp; ${screenModel>/info/validationError}}"/>
 										</VBox>
 									</f:GridListItem>
+									<!-- New budget integration change -->
+									<f:GridListItem>
+										<VBox class="sapUiSmallMargin">
+											<layoutData>
+												<FlexItemData growFactor="1" shrinkFactor="0" />
+											</layoutData>
+
+											<Label text="{i18n>employeeAvailableBudget}" />
+											<Input value="{membersModel>employeeAvailableBudget}" enabled="false"
+												tooltip="{membersModel>costCenter}=>{membersModel>employeeAvailableBudget}"
+											 />
+										</VBox>
+									</f:GridListItem>
+									<!-- New budget integration change -->
+
+
 									<f:GridListItem>
 										<VBox class="sapUiSmallMargin">
 											<layoutData>

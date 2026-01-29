@@ -438,7 +438,7 @@
                                 </ComboBox>
                             </VBox>
                         </f:GridListItem>
-                        <f:GridListItem>
+                        <f:GridListItem visible="false">
                             <VBox class="sapUiSmallMargin">
                                 <layoutData>
                                     <FlexItemData
@@ -457,7 +457,7 @@
                                 />
                             </VBox>
                         </f:GridListItem>
-                        <f:GridListItem>
+                        <f:GridListItem visible="false">
                             <VBox class="sapUiSmallMargin">
                                 <layoutData>
                                     <FlexItemData

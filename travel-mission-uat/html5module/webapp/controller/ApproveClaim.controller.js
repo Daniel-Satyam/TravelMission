@@ -21,7 +21,7 @@ sap.ui.define(
     MessageBox,
     MessageToast,
     Storage,
-    formatter
+    formatter,
   ) {
     "use strict";
 
@@ -77,12 +77,13 @@ sap.ui.define(
 
         this.getClaimById();
       },
-
       checkBudgetAvailability: async function (bShowLoading = false) {
         let aBudgetTracking = [];
         let bBudgetAvailable = false;
         const oMissionInfoModel = this.getModel("missionInfoModel");
         const missionInfoModelData = oMissionInfoModel.getProperty("/info");
+        let missionBudgetAvailable = null;
+        let missionParkedAmount = null;
 
         if (
           !missionInfoModelData.totalExpense ||
@@ -93,7 +94,7 @@ sap.ui.define(
             "errorOperation",
             "totalMissionExpenseZero",
             [],
-            null
+            null,
           );
           return {
             isBudgetAvailable: bBudgetAvailable,
@@ -103,280 +104,582 @@ sap.ui.define(
           };
         }
 
-        if (bShowLoading) {
-          this.openBusyFragment("checkingBudget", []);
-        }
-        try {
-          const i = await this.refreshSectors();
+        return {
+          isBudgetAvailable: true,
+          budgetTracking: aBudgetTracking,
+          missionBudgetAvailable,
+          missionParkedAmount,
+        };
 
-          if (bShowLoading) {
-            this.closeBusyFragment();
-          }
-        } catch (e) {
-          this.closeBusyFragment();
-          //--Could not refresh somehow
-        }
+        // if (bShowLoading) {
+        //   this.openBusyFragment("checkingBudget", []);
+        // }
+        // try {
+        //   const i = await this.refreshSectors();
 
-        const oSectorsModel = this.getModel("sectorsModel");
-        const sectorsModelData = oSectorsModel.getProperty("/sectors");
+        //   if (bShowLoading) {
+        //     this.closeBusyFragment();
+        //   }
+        // } catch (e) {
+        //   this.closeBusyFragment();
+        //   //--Could not refresh somehow
+        // }
 
-        const oSubSector = _.find(sectorsModelData, [
-          "externalCode",
-          missionInfoModelData.sector,
-        ]);
+        // const oSectorsModel = this.getModel("sectorsModel");
+        // const sectorsModelData = oSectorsModel.getProperty("/sectors");
 
-        const oMainSector = oSubSector
-          ? _.find(sectorsModelData, {
-              cust_S4_Sector: oSubSector.cust_S4_Sector,
-              cust_S4_SubSector: oSubSector.cust_S4_Sector,
-            })
-          : null;
+        // const oSubSector = _.find(sectorsModelData, [
+        //   "externalCode",
+        //   missionInfoModelData.sector,
+        // ]);
 
-        let missionBudgetAvailable = null;
-        let missionParkedAmount = null;
+        // const oMainSector = oSubSector
+        //   ? _.find(sectorsModelData, {
+        //       cust_S4_Sector: oSubSector.cust_S4_Sector,
+        //       cust_S4_SubSector: oSubSector.cust_S4_Sector,
+        //     })
+        //   : null;
 
-        let sectorAvailableBudget = 0;
-        let sectorParkedBudget = 0;
+        // let sectorAvailableBudget = 0;
+        // let sectorParkedBudget = 0;
 
-        if (oSubSector.cust_Available_budget != null) {
-          sectorAvailableBudget = parseFloat(oSubSector.cust_Available_budget);
-        }
+        // if (oSubSector.cust_Available_budget != null) {
+        //   sectorAvailableBudget = parseFloat(oSubSector.cust_Available_budget);
+        // }
 
-        if (oSubSector.cust_Parked_Amount != null) {
-          sectorParkedBudget = parseFloat(oSubSector.cust_Parked_Amount);
-        }
+        // if (oSubSector.cust_Parked_Amount != null) {
+        //   sectorParkedBudget = parseFloat(oSubSector.cust_Parked_Amount);
+        // }
 
-        let missionTotalExpenseDifference;
+        // let missionTotalExpenseDifference;
 
-        if (
-          this.missionFormerSector &&
-          this.missionFormerSector === missionInfoModelData.sector
-        ) {
-          missionTotalExpenseDifference =
-            parseFloat(this.missionTotalExpense) -
-            parseFloat(missionInfoModelData.totalExpense);
+        // if (
+        //   this.missionFormerSector &&
+        //   this.missionFormerSector === missionInfoModelData.sector
+        // ) {
+        //   missionTotalExpenseDifference =
+        //     parseFloat(this.missionTotalExpense) -
+        //     parseFloat(missionInfoModelData.totalExpense);
 
-          if (missionTotalExpenseDifference > 0) {
-            missionParkedAmount = sectorParkedBudget;
-            missionBudgetAvailable = sectorAvailableBudget;
+        //   if (missionTotalExpenseDifference > 0) {
+        //     missionParkedAmount = sectorParkedBudget;
+        //     missionBudgetAvailable = sectorAvailableBudget;
 
-            let oSubBudgetTracking = {
-              cust_MissionID: missionInfoModelData.missionID,
-              cust_SFSector: oSubSector.externalCode,
-              cust_S4Sector: oSubSector.cust_S4_SubSector,
-              cust_Consumption: 0,
-              cust_Remaining_Budget:
-                parseFloat(oSubSector.cust_Available_budget) +
-                missionTotalExpenseDifference,
-              cust_Parked_Amount:
-                parseFloat(oSubSector.cust_Parked_Amount) -
-                missionTotalExpenseDifference,
-              cust_Comments: "Approve/reject claim",
-              real_Consumption: 0,
-            };
-            aBudgetTracking.push(oSubBudgetTracking);
+        //     let oSubBudgetTracking = {
+        //       cust_MissionID: missionInfoModelData.missionID,
+        //       cust_SFSector: oSubSector.externalCode,
+        //       cust_S4Sector: oSubSector.cust_S4_SubSector,
+        //       cust_Consumption: 0,
+        //       cust_Remaining_Budget:
+        //         parseFloat(oSubSector.cust_Available_budget) +
+        //         missionTotalExpenseDifference,
+        //       cust_Parked_Amount:
+        //         parseFloat(oSubSector.cust_Parked_Amount) -
+        //         missionTotalExpenseDifference,
+        //       cust_Comments: "Approve/reject claim",
+        //       real_Consumption: 0,
+        //     };
+        //     aBudgetTracking.push(oSubBudgetTracking);
 
-            let oMainBudgetTracking = {
-              cust_MissionID: missionInfoModelData.missionID,
-              cust_SFSector: oMainSector.externalCode,
-              cust_S4Sector: oMainSector.cust_S4_SubSector,
-              cust_Consumption: 0,
-              cust_Remaining_Budget:
-                parseFloat(oMainSector.cust_Available_budget) +
-                missionTotalExpenseDifference,
-              cust_Parked_Amount:
-                parseFloat(oMainSector.cust_Parked_Amount) -
-                missionTotalExpenseDifference,
-              cust_Comments: "Approve/reject claim",
-              real_Consumption: 0,
-            };
-            aBudgetTracking.push(oMainBudgetTracking);
+        //     let oMainBudgetTracking = {
+        //       cust_MissionID: missionInfoModelData.missionID,
+        //       cust_SFSector: oMainSector.externalCode,
+        //       cust_S4Sector: oMainSector.cust_S4_SubSector,
+        //       cust_Consumption: 0,
+        //       cust_Remaining_Budget:
+        //         parseFloat(oMainSector.cust_Available_budget) +
+        //         missionTotalExpenseDifference,
+        //       cust_Parked_Amount:
+        //         parseFloat(oMainSector.cust_Parked_Amount) -
+        //         missionTotalExpenseDifference,
+        //       cust_Comments: "Approve/reject claim",
+        //       real_Consumption: 0,
+        //     };
+        //     aBudgetTracking.push(oMainBudgetTracking);
 
-            bBudgetAvailable = true;
+        //     bBudgetAvailable = true;
 
-            if (missionTotalExpenseDifference === 0) {
-              //--No need to update budget
-              aBudgetTracking = [];
-            }
+        //     if (missionTotalExpenseDifference === 0) {
+        //       //--No need to update budget
+        //       aBudgetTracking = [];
+        //     }
 
-            missionBudgetAvailable =
-              parseFloat(oSubSector.cust_Available_budget) +
-              missionTotalExpenseDifference;
-            missionParkedAmount =
-              parseFloat(oSubSector.cust_Parked_Amount) -
-              missionTotalExpenseDifference;
+        //     missionBudgetAvailable =
+        //       parseFloat(oSubSector.cust_Available_budget) +
+        //       missionTotalExpenseDifference;
+        //     missionParkedAmount =
+        //       parseFloat(oSubSector.cust_Parked_Amount) -
+        //       missionTotalExpenseDifference;
 
-            return {
-              isBudgetAvailable: bBudgetAvailable,
-              budgetTracking: aBudgetTracking,
-              missionBudgetAvailable,
-              missionParkedAmount,
-            };
-          }
-        } else {
-          //--Sector changed treat it as a new consumption
-          missionTotalExpenseDifference = parseFloat(
-            missionInfoModelData.totalExpense
-          );
+        //     return {
+        //       isBudgetAvailable: bBudgetAvailable,
+        //       budgetTracking: aBudgetTracking,
+        //       missionBudgetAvailable,
+        //       missionParkedAmount,
+        //     };
+        //   }
+        // } else {
+        //   //--Sector changed treat it as a new consumption
+        //   missionTotalExpenseDifference = parseFloat(
+        //     missionInfoModelData.totalExpense
+        //   );
 
-          if (this.missionFormerSector) {
-            const oFormerSubSector = _.find(sectorsModelData, [
-              "externalCode",
-              missionInfoModelData.sector,
-            ]);
+        //   if (this.missionFormerSector) {
+        //     const oFormerSubSector = _.find(sectorsModelData, [
+        //       "externalCode",
+        //       missionInfoModelData.sector,
+        //     ]);
 
-            const oFormerMainSector = oFormerSubSector
-              ? _.find(sectorsModelData, {
-                  cust_S4_Sector: oFormerSubSector.cust_S4_Sector,
-                  cust_S4_SubSector: oFormerSubSector.cust_S4_Sector,
-                })
-              : null;
+        //     const oFormerMainSector = oFormerSubSector
+        //       ? _.find(sectorsModelData, {
+        //           cust_S4_Sector: oFormerSubSector.cust_S4_Sector,
+        //           cust_S4_SubSector: oFormerSubSector.cust_S4_Sector,
+        //         })
+        //       : null;
 
-            let oSubBudgetTracking = {
-              cust_MissionID: missionInfoModelData.missionID,
-              cust_SFSector: oFormerSubSector.externalCode,
-              cust_S4Sector: oFormerSubSector.cust_S4_SubSector,
-              cust_Consumption: 0,
-              cust_Remaining_Budget:
-                parseFloat(oFormerSubSector.cust_Available_budget) +
-                missionTotalExpenseDifference,
-              cust_Parked_Amount:
-                parseFloat(oFormerSubSector.cust_Parked_Amount) -
-                missionTotalExpenseDifference,
-              cust_Comments:
-                "Approve/reject claim (Sector change - Budget revised)",
-              real_Consumption: 0,
-            };
-            aBudgetTracking.push(oSubBudgetTracking);
+        //     let oSubBudgetTracking = {
+        //       cust_MissionID: missionInfoModelData.missionID,
+        //       cust_SFSector: oFormerSubSector.externalCode,
+        //       cust_S4Sector: oFormerSubSector.cust_S4_SubSector,
+        //       cust_Consumption: 0,
+        //       cust_Remaining_Budget:
+        //         parseFloat(oFormerSubSector.cust_Available_budget) +
+        //         missionTotalExpenseDifference,
+        //       cust_Parked_Amount:
+        //         parseFloat(oFormerSubSector.cust_Parked_Amount) -
+        //         missionTotalExpenseDifference,
+        //       cust_Comments:
+        //         "Approve/reject claim (Sector change - Budget revised)",
+        //       real_Consumption: 0,
+        //     };
+        //     aBudgetTracking.push(oSubBudgetTracking);
 
-            let oMainBudgetTracking = {
-              cust_MissionID: missionInfoModelData.missionID,
-              cust_SFSector: oFormerMainSector.externalCode,
-              cust_S4Sector: oFormerMainSector.cust_S4_SubSector,
-              cust_Consumption: 0,
-              cust_Remaining_Budget:
-                parseFloat(oFormerMainSector.cust_Available_budget) +
-                missionTotalExpenseDifference,
-              cust_Parked_Amount:
-                parseFloat(oFormerMainSector.cust_Parked_Amount) -
-                missionTotalExpenseDifference,
-              cust_Comments:
-                "Approve/reject claim (Sector change - Budget revised)",
-              real_Consumption: 0,
-            };
-            aBudgetTracking.push(oMainBudgetTracking);
-          }
-        }
+        //     let oMainBudgetTracking = {
+        //       cust_MissionID: missionInfoModelData.missionID,
+        //       cust_SFSector: oFormerMainSector.externalCode,
+        //       cust_S4Sector: oFormerMainSector.cust_S4_SubSector,
+        //       cust_Consumption: 0,
+        //       cust_Remaining_Budget:
+        //         parseFloat(oFormerMainSector.cust_Available_budget) +
+        //         missionTotalExpenseDifference,
+        //       cust_Parked_Amount:
+        //         parseFloat(oFormerMainSector.cust_Parked_Amount) -
+        //         missionTotalExpenseDifference,
+        //       cust_Comments:
+        //         "Approve/reject claim (Sector change - Budget revised)",
+        //       real_Consumption: 0,
+        //     };
+        //     aBudgetTracking.push(oMainBudgetTracking);
+        //   }
+        // }
 
-        //--Expense increased so get budget for increased part
-        missionTotalExpenseDifference = Math.abs(missionTotalExpenseDifference);
+        // //--Expense increased so get budget for increased part
+        // missionTotalExpenseDifference = Math.abs(missionTotalExpenseDifference);
 
-        let remainingConsumption;
+        // let remainingConsumption;
 
-        if (parseFloat(oSubSector.cust_Available_budget) > 0) {
-          remainingConsumption =
-            parseFloat(oSubSector.cust_Available_budget) -
-            parseFloat(missionTotalExpenseDifference);
-          let oBudgetTracking = {
-            cust_MissionID: missionInfoModelData.missionID,
-            cust_SFSector: oSubSector.externalCode,
-            cust_S4Sector: oSubSector.cust_S4_SubSector,
-            cust_Consumption: parseFloat(missionTotalExpenseDifference),
-            cust_Remaining_Budget:
-              parseFloat(oSubSector.cust_Available_budget) -
-              parseFloat(missionTotalExpenseDifference),
-            cust_Parked_Amount:
-              parseFloat(oSubSector.cust_Parked_Amount) +
-              parseFloat(missionTotalExpenseDifference),
-            cust_Comments: "Approve/reject claim",
-            real_Consumption:
-              remainingConsumption >= 0
-                ? parseFloat(missionTotalExpenseDifference)
-                : parseFloat(oSubSector.cust_Available_budget),
-          };
-          aBudgetTracking.push(oBudgetTracking);
+        // if (parseFloat(oSubSector.cust_Available_budget) > 0) {
+        //   remainingConsumption =
+        //     parseFloat(oSubSector.cust_Available_budget) -
+        //     parseFloat(missionTotalExpenseDifference);
+        //   let oBudgetTracking = {
+        //     cust_MissionID: missionInfoModelData.missionID,
+        //     cust_SFSector: oSubSector.externalCode,
+        //     cust_S4Sector: oSubSector.cust_S4_SubSector,
+        //     cust_Consumption: parseFloat(missionTotalExpenseDifference),
+        //     cust_Remaining_Budget:
+        //       parseFloat(oSubSector.cust_Available_budget) -
+        //       parseFloat(missionTotalExpenseDifference),
+        //     cust_Parked_Amount:
+        //       parseFloat(oSubSector.cust_Parked_Amount) +
+        //       parseFloat(missionTotalExpenseDifference),
+        //     cust_Comments: "Approve/reject claim",
+        //     real_Consumption:
+        //       remainingConsumption >= 0
+        //         ? parseFloat(missionTotalExpenseDifference)
+        //         : parseFloat(oSubSector.cust_Available_budget),
+        //   };
+        //   aBudgetTracking.push(oBudgetTracking);
 
-          if (remainingConsumption >= 0) {
-            bBudgetAvailable = true;
-            remainingConsumption = 0;
-          }
-        } else {
-          let oBudgetTracking = {
-            cust_MissionID: missionInfoModelData.missionID,
-            cust_SFSector: oSubSector.externalCode,
-            cust_S4Sector: oSubSector.cust_S4_SubSector,
-            cust_Consumption: parseFloat(missionTotalExpenseDifference),
-            cust_Remaining_Budget:
-              parseFloat(oSubSector.cust_Available_budget) -
-              parseFloat(missionTotalExpenseDifference),
-            cust_Parked_Amount:
-              parseFloat(oSubSector.cust_Parked_Amount) +
-              parseFloat(missionTotalExpenseDifference),
-            cust_Comments: "Approve/reject claim",
-            real_Consumption: 0,
-          };
-          aBudgetTracking.push(oBudgetTracking);
-          remainingConsumption = parseFloat(missionTotalExpenseDifference) * -1;
-        }
+        //   if (remainingConsumption >= 0) {
+        //     bBudgetAvailable = true;
+        //     remainingConsumption = 0;
+        //   }
+        // } else {
+        //   let oBudgetTracking = {
+        //     cust_MissionID: missionInfoModelData.missionID,
+        //     cust_SFSector: oSubSector.externalCode,
+        //     cust_S4Sector: oSubSector.cust_S4_SubSector,
+        //     cust_Consumption: parseFloat(missionTotalExpenseDifference),
+        //     cust_Remaining_Budget:
+        //       parseFloat(oSubSector.cust_Available_budget) -
+        //       parseFloat(missionTotalExpenseDifference),
+        //     cust_Parked_Amount:
+        //       parseFloat(oSubSector.cust_Parked_Amount) +
+        //       parseFloat(missionTotalExpenseDifference),
+        //     cust_Comments: "Approve/reject claim",
+        //     real_Consumption: 0,
+        //   };
+        //   aBudgetTracking.push(oBudgetTracking);
+        //   remainingConsumption = parseFloat(missionTotalExpenseDifference) * -1;
+        // }
 
-        let remainingSectorBudget;
-        if (oMainSector && parseFloat(oMainSector.cust_Available_budget) > 0) {
-          //--Subsector budget may not be enough use main sector budget
-          remainingSectorBudget =
-            parseFloat(oMainSector.cust_Available_budget) -
-            parseFloat(missionTotalExpenseDifference);
+        // let remainingSectorBudget;
+        // if (oMainSector && parseFloat(oMainSector.cust_Available_budget) > 0) {
+        //   //--Subsector budget may not be enough use main sector budget
+        //   remainingSectorBudget =
+        //     parseFloat(oMainSector.cust_Available_budget) -
+        //     parseFloat(missionTotalExpenseDifference);
 
-          let oBudgetTracking = {
-            cust_MissionID: missionInfoModelData.missionID,
-            cust_SFSector: oMainSector.externalCode,
-            cust_S4Sector: oMainSector.cust_S4_SubSector,
-            cust_Consumption: parseFloat(missionTotalExpenseDifference),
-            cust_Remaining_Budget: remainingSectorBudget,
-            cust_Parked_Amount:
-              parseFloat(oMainSector.cust_Parked_Amount) +
-              parseFloat(missionTotalExpenseDifference),
-            cust_Comments: "Approve/reject claim",
-            real_Consumption:
-              remainingSectorBudget >= 0
-                ? parseFloat(missionTotalExpenseDifference)
-                : 0,
-          };
-          aBudgetTracking.push(oBudgetTracking);
+        //   let oBudgetTracking = {
+        //     cust_MissionID: missionInfoModelData.missionID,
+        //     cust_SFSector: oMainSector.externalCode,
+        //     cust_S4Sector: oMainSector.cust_S4_SubSector,
+        //     cust_Consumption: parseFloat(missionTotalExpenseDifference),
+        //     cust_Remaining_Budget: remainingSectorBudget,
+        //     cust_Parked_Amount:
+        //       parseFloat(oMainSector.cust_Parked_Amount) +
+        //       parseFloat(missionTotalExpenseDifference),
+        //     cust_Comments: "Approve/reject claim",
+        //     real_Consumption:
+        //       remainingSectorBudget >= 0
+        //         ? parseFloat(missionTotalExpenseDifference)
+        //         : 0,
+        //   };
+        //   aBudgetTracking.push(oBudgetTracking);
 
-          if (remainingSectorBudget >= 0) {
-            bBudgetAvailable = true;
-          } else {
-            bBudgetAvailable = false;
-          }
-        }
+        //   if (remainingSectorBudget >= 0) {
+        //     bBudgetAvailable = true;
+        //   } else {
+        //     bBudgetAvailable = false;
+        //   }
+        // }
 
-        //--Return as is, becuase we will update using budget tracking (New S4-SF Scenario)
-        missionBudgetAvailable =
-          parseFloat(oSubSector.cust_Available_budget) -
-          parseFloat(missionTotalExpenseDifference);
-        missionParkedAmount =
-          parseFloat(oSubSector.cust_Parked_Amount) +
-          parseFloat(missionTotalExpenseDifference);
-
-        //   missionBudgetAvailable =
+        // //--Return as is, becuase we will update using budget tracking (New S4-SF Scenario)
+        // missionBudgetAvailable =
         //   parseFloat(oSubSector.cust_Available_budget) -
         //   parseFloat(missionTotalExpenseDifference);
         // missionParkedAmount =
         //   parseFloat(oSubSector.cust_Parked_Amount) +
         //   parseFloat(missionTotalExpenseDifference);
 
-        if (!bBudgetAvailable) {
-          //--Budget low
-          aBudgetTracking = [];
-        }
+        // //   missionBudgetAvailable =
+        // //   parseFloat(oSubSector.cust_Available_budget) -
+        // //   parseFloat(missionTotalExpenseDifference);
+        // // missionParkedAmount =
+        // //   parseFloat(oSubSector.cust_Parked_Amount) +
+        // //   parseFloat(missionTotalExpenseDifference);
 
-        return {
-          isBudgetAvailable: bBudgetAvailable,
-          budgetTracking: aBudgetTracking,
-          missionBudgetAvailable,
-          missionParkedAmount,
-        };
+        // if (!bBudgetAvailable) {
+        //   //--Budget low
+        //   aBudgetTracking = [];
+        // }
+
+        // return {
+        //   isBudgetAvailable: bBudgetAvailable,
+        //   budgetTracking: aBudgetTracking,
+        //   missionBudgetAvailable,
+        //   missionParkedAmount,
+        // };
       },
+      // checkBudgetAvailability: async function (bShowLoading = false) {
+      //   let aBudgetTracking = [];
+      //   let bBudgetAvailable = false;
+      //   const oMissionInfoModel = this.getModel("missionInfoModel");
+      //   const missionInfoModelData = oMissionInfoModel.getProperty("/info");
+      //   let missionBudgetAvailable = null;
+      //   let missionParkedAmount = null;
+
+      //   if (
+      //     !missionInfoModelData.totalExpense ||
+      //     parseFloat(missionInfoModelData.totalExpense) <= 0
+      //   ) {
+      //     this.toastMessage(
+      //       "E",
+      //       "errorOperation",
+      //       "totalMissionExpenseZero",
+      //       [],
+      //       null
+      //     );
+      //     return {
+      //       isBudgetAvailable: bBudgetAvailable,
+      //       budgetTracking: aBudgetTracking,
+      //       missionBudgetAvailable,
+      //       missionParkedAmount,
+      //     };
+      //   }
+
+      //   if (bShowLoading) {
+      //     this.openBusyFragment("checkingBudget", []);
+      //   }
+      //   try {
+      //     const i = await this.refreshSectors();
+
+      //     if (bShowLoading) {
+      //       this.closeBusyFragment();
+      //     }
+      //   } catch (e) {
+      //     this.closeBusyFragment();
+      //     //--Could not refresh somehow
+      //   }
+
+      //   const oSectorsModel = this.getModel("sectorsModel");
+      //   const sectorsModelData = oSectorsModel.getProperty("/sectors");
+
+      //   const oSubSector = _.find(sectorsModelData, [
+      //     "externalCode",
+      //     missionInfoModelData.sector,
+      //   ]);
+
+      //   const oMainSector = oSubSector
+      //     ? _.find(sectorsModelData, {
+      //         cust_S4_Sector: oSubSector.cust_S4_Sector,
+      //         cust_S4_SubSector: oSubSector.cust_S4_Sector,
+      //       })
+      //     : null;
+
+      //   let sectorAvailableBudget = 0;
+      //   let sectorParkedBudget = 0;
+
+      //   if (oSubSector.cust_Available_budget != null) {
+      //     sectorAvailableBudget = parseFloat(oSubSector.cust_Available_budget);
+      //   }
+
+      //   if (oSubSector.cust_Parked_Amount != null) {
+      //     sectorParkedBudget = parseFloat(oSubSector.cust_Parked_Amount);
+      //   }
+
+      //   let missionTotalExpenseDifference;
+
+      //   if (
+      //     this.missionFormerSector &&
+      //     this.missionFormerSector === missionInfoModelData.sector
+      //   ) {
+      //     missionTotalExpenseDifference =
+      //       parseFloat(this.missionTotalExpense) -
+      //       parseFloat(missionInfoModelData.totalExpense);
+
+      //     if (missionTotalExpenseDifference > 0) {
+      //       missionParkedAmount = sectorParkedBudget;
+      //       missionBudgetAvailable = sectorAvailableBudget;
+
+      //       let oSubBudgetTracking = {
+      //         cust_MissionID: missionInfoModelData.missionID,
+      //         cust_SFSector: oSubSector.externalCode,
+      //         cust_S4Sector: oSubSector.cust_S4_SubSector,
+      //         cust_Consumption: 0,
+      //         cust_Remaining_Budget:
+      //           parseFloat(oSubSector.cust_Available_budget) +
+      //           missionTotalExpenseDifference,
+      //         cust_Parked_Amount:
+      //           parseFloat(oSubSector.cust_Parked_Amount) -
+      //           missionTotalExpenseDifference,
+      //         cust_Comments: "Approve/reject claim",
+      //         real_Consumption: 0,
+      //       };
+      //       aBudgetTracking.push(oSubBudgetTracking);
+
+      //       let oMainBudgetTracking = {
+      //         cust_MissionID: missionInfoModelData.missionID,
+      //         cust_SFSector: oMainSector.externalCode,
+      //         cust_S4Sector: oMainSector.cust_S4_SubSector,
+      //         cust_Consumption: 0,
+      //         cust_Remaining_Budget:
+      //           parseFloat(oMainSector.cust_Available_budget) +
+      //           missionTotalExpenseDifference,
+      //         cust_Parked_Amount:
+      //           parseFloat(oMainSector.cust_Parked_Amount) -
+      //           missionTotalExpenseDifference,
+      //         cust_Comments: "Approve/reject claim",
+      //         real_Consumption: 0,
+      //       };
+      //       aBudgetTracking.push(oMainBudgetTracking);
+
+      //       bBudgetAvailable = true;
+
+      //       if (missionTotalExpenseDifference === 0) {
+      //         //--No need to update budget
+      //         aBudgetTracking = [];
+      //       }
+
+      //       missionBudgetAvailable =
+      //         parseFloat(oSubSector.cust_Available_budget) +
+      //         missionTotalExpenseDifference;
+      //       missionParkedAmount =
+      //         parseFloat(oSubSector.cust_Parked_Amount) -
+      //         missionTotalExpenseDifference;
+
+      //       return {
+      //         isBudgetAvailable: bBudgetAvailable,
+      //         budgetTracking: aBudgetTracking,
+      //         missionBudgetAvailable,
+      //         missionParkedAmount,
+      //       };
+      //     }
+      //   } else {
+      //     //--Sector changed treat it as a new consumption
+      //     missionTotalExpenseDifference = parseFloat(
+      //       missionInfoModelData.totalExpense
+      //     );
+
+      //     if (this.missionFormerSector) {
+      //       const oFormerSubSector = _.find(sectorsModelData, [
+      //         "externalCode",
+      //         missionInfoModelData.sector,
+      //       ]);
+
+      //       const oFormerMainSector = oFormerSubSector
+      //         ? _.find(sectorsModelData, {
+      //             cust_S4_Sector: oFormerSubSector.cust_S4_Sector,
+      //             cust_S4_SubSector: oFormerSubSector.cust_S4_Sector,
+      //           })
+      //         : null;
+
+      //       let oSubBudgetTracking = {
+      //         cust_MissionID: missionInfoModelData.missionID,
+      //         cust_SFSector: oFormerSubSector.externalCode,
+      //         cust_S4Sector: oFormerSubSector.cust_S4_SubSector,
+      //         cust_Consumption: 0,
+      //         cust_Remaining_Budget:
+      //           parseFloat(oFormerSubSector.cust_Available_budget) +
+      //           missionTotalExpenseDifference,
+      //         cust_Parked_Amount:
+      //           parseFloat(oFormerSubSector.cust_Parked_Amount) -
+      //           missionTotalExpenseDifference,
+      //         cust_Comments:
+      //           "Approve/reject claim (Sector change - Budget revised)",
+      //         real_Consumption: 0,
+      //       };
+      //       aBudgetTracking.push(oSubBudgetTracking);
+
+      //       let oMainBudgetTracking = {
+      //         cust_MissionID: missionInfoModelData.missionID,
+      //         cust_SFSector: oFormerMainSector.externalCode,
+      //         cust_S4Sector: oFormerMainSector.cust_S4_SubSector,
+      //         cust_Consumption: 0,
+      //         cust_Remaining_Budget:
+      //           parseFloat(oFormerMainSector.cust_Available_budget) +
+      //           missionTotalExpenseDifference,
+      //         cust_Parked_Amount:
+      //           parseFloat(oFormerMainSector.cust_Parked_Amount) -
+      //           missionTotalExpenseDifference,
+      //         cust_Comments:
+      //           "Approve/reject claim (Sector change - Budget revised)",
+      //         real_Consumption: 0,
+      //       };
+      //       aBudgetTracking.push(oMainBudgetTracking);
+      //     }
+      //   }
+
+      //   //--Expense increased so get budget for increased part
+      //   missionTotalExpenseDifference = Math.abs(missionTotalExpenseDifference);
+
+      //   let remainingConsumption;
+
+      //   if (parseFloat(oSubSector.cust_Available_budget) > 0) {
+      //     remainingConsumption =
+      //       parseFloat(oSubSector.cust_Available_budget) -
+      //       parseFloat(missionTotalExpenseDifference);
+      //     let oBudgetTracking = {
+      //       cust_MissionID: missionInfoModelData.missionID,
+      //       cust_SFSector: oSubSector.externalCode,
+      //       cust_S4Sector: oSubSector.cust_S4_SubSector,
+      //       cust_Consumption: parseFloat(missionTotalExpenseDifference),
+      //       cust_Remaining_Budget:
+      //         parseFloat(oSubSector.cust_Available_budget) -
+      //         parseFloat(missionTotalExpenseDifference),
+      //       cust_Parked_Amount:
+      //         parseFloat(oSubSector.cust_Parked_Amount) +
+      //         parseFloat(missionTotalExpenseDifference),
+      //       cust_Comments: "Approve/reject claim",
+      //       real_Consumption:
+      //         remainingConsumption >= 0
+      //           ? parseFloat(missionTotalExpenseDifference)
+      //           : parseFloat(oSubSector.cust_Available_budget),
+      //     };
+      //     aBudgetTracking.push(oBudgetTracking);
+
+      //     if (remainingConsumption >= 0) {
+      //       bBudgetAvailable = true;
+      //       remainingConsumption = 0;
+      //     }
+      //   } else {
+      //     let oBudgetTracking = {
+      //       cust_MissionID: missionInfoModelData.missionID,
+      //       cust_SFSector: oSubSector.externalCode,
+      //       cust_S4Sector: oSubSector.cust_S4_SubSector,
+      //       cust_Consumption: parseFloat(missionTotalExpenseDifference),
+      //       cust_Remaining_Budget:
+      //         parseFloat(oSubSector.cust_Available_budget) -
+      //         parseFloat(missionTotalExpenseDifference),
+      //       cust_Parked_Amount:
+      //         parseFloat(oSubSector.cust_Parked_Amount) +
+      //         parseFloat(missionTotalExpenseDifference),
+      //       cust_Comments: "Approve/reject claim",
+      //       real_Consumption: 0,
+      //     };
+      //     aBudgetTracking.push(oBudgetTracking);
+      //     remainingConsumption = parseFloat(missionTotalExpenseDifference) * -1;
+      //   }
+
+      //   let remainingSectorBudget;
+      //   if (oMainSector && parseFloat(oMainSector.cust_Available_budget) > 0) {
+      //     //--Subsector budget may not be enough use main sector budget
+      //     remainingSectorBudget =
+      //       parseFloat(oMainSector.cust_Available_budget) -
+      //       parseFloat(missionTotalExpenseDifference);
+
+      //     let oBudgetTracking = {
+      //       cust_MissionID: missionInfoModelData.missionID,
+      //       cust_SFSector: oMainSector.externalCode,
+      //       cust_S4Sector: oMainSector.cust_S4_SubSector,
+      //       cust_Consumption: parseFloat(missionTotalExpenseDifference),
+      //       cust_Remaining_Budget: remainingSectorBudget,
+      //       cust_Parked_Amount:
+      //         parseFloat(oMainSector.cust_Parked_Amount) +
+      //         parseFloat(missionTotalExpenseDifference),
+      //       cust_Comments: "Approve/reject claim",
+      //       real_Consumption:
+      //         remainingSectorBudget >= 0
+      //           ? parseFloat(missionTotalExpenseDifference)
+      //           : 0,
+      //     };
+      //     aBudgetTracking.push(oBudgetTracking);
+
+      //     if (remainingSectorBudget >= 0) {
+      //       bBudgetAvailable = true;
+      //     } else {
+      //       bBudgetAvailable = false;
+      //     }
+      //   }
+
+      //   //--Return as is, becuase we will update using budget tracking (New S4-SF Scenario)
+      //   missionBudgetAvailable =
+      //     parseFloat(oSubSector.cust_Available_budget) -
+      //     parseFloat(missionTotalExpenseDifference);
+      //   missionParkedAmount =
+      //     parseFloat(oSubSector.cust_Parked_Amount) +
+      //     parseFloat(missionTotalExpenseDifference);
+
+      //   //   missionBudgetAvailable =
+      //   //   parseFloat(oSubSector.cust_Available_budget) -
+      //   //   parseFloat(missionTotalExpenseDifference);
+      //   // missionParkedAmount =
+      //   //   parseFloat(oSubSector.cust_Parked_Amount) +
+      //   //   parseFloat(missionTotalExpenseDifference);
+
+      //   if (!bBudgetAvailable) {
+      //     //--Budget low
+      //     aBudgetTracking = [];
+      //   }
+
+      //   return {
+      //     isBudgetAvailable: bBudgetAvailable,
+      //     budgetTracking: aBudgetTracking,
+      //     missionBudgetAvailable,
+      //     missionParkedAmount,
+      //   };
+      // },
 
       prepareMissionForUpdate: async function () {
         const that = this;
@@ -389,7 +692,7 @@ sap.ui.define(
         //--Prepare request body
         const travelStorageEncrypted = Storage.get("travel_mission_storage");
         const travelStorage = await that.getDecryptedData(
-          travelStorageEncrypted
+          travelStorageEncrypted,
         );
         const travelStorageInfo = JSON.parse(travelStorage);
 
@@ -473,7 +776,7 @@ sap.ui.define(
             "errorOperation",
             "sectorBudgetLowError",
             [],
-            null
+            null,
           );
           // MessageBox.error("The available budget of sector is low", {
           //   actions: [MessageBox.Action.CLOSE],
@@ -503,7 +806,7 @@ sap.ui.define(
             flightType: oMission.flightType,
             hospitality_Type: oMission.hospitality_Type,
             missionStartDate: formatter.formatDatetoJSON(
-              oMission.missionStartDate
+              oMission.missionStartDate,
             ),
             missionEndDate: formatter.formatDatetoJSON(oMission.missionEndDate),
             noOfDays: oMission.noOfDays.toString(),
@@ -586,7 +889,7 @@ sap.ui.define(
               xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
               xhr.setRequestHeader(
                 "x-approuter-authorization",
-                "Bearer " + envInfo.CF.accessToken
+                "Bearer " + envInfo.CF.accessToken,
               );
             }
           },
@@ -601,7 +904,7 @@ sap.ui.define(
                 "successfulOperation",
                 "missionUpdated",
                 [],
-                null
+                null,
               );
             }
           },
@@ -782,7 +1085,7 @@ sap.ui.define(
               "errorsFound",
               "overlapItineraryError",
               [],
-              null
+              null,
             );
             // MessageBox.error(
             //   "Please select any other date which is not overlap with other cities dates",
@@ -889,7 +1192,7 @@ sap.ui.define(
               "errorsFound",
               "overlapItineraryError",
               [],
-              null
+              null,
             );
             // MessageBox.error(
             //   "Please select any other date which is not overlap with other cities dates",
@@ -1080,7 +1383,7 @@ sap.ui.define(
                 xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                 xhr.setRequestHeader(
                   "x-approuter-authorization",
-                  "Bearer " + envInfo.CF.accessToken
+                  "Bearer " + envInfo.CF.accessToken,
                 );
               }
             },
@@ -1195,7 +1498,7 @@ sap.ui.define(
                 null,
                 "perdiemCalculatedSaveToUpdate",
                 [],
-                { showConfirmButton: true }
+                { showConfirmButton: true },
               );
 
               that.animateSaveButton();
@@ -1249,7 +1552,7 @@ sap.ui.define(
               "errorOperation",
               "sessionExpired",
               [],
-              null
+              null,
             );
             // MessageBox.error("The session is expired. Please refresh.", {
             //   actions: [MessageBox.Action.CLOSE],
@@ -1457,7 +1760,7 @@ sap.ui.define(
                 xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                 xhr.setRequestHeader(
                   "x-approuter-authorization",
-                  "Bearer " + envInfo.CF.accessToken
+                  "Bearer " + envInfo.CF.accessToken,
                 );
               }
             },
@@ -1469,10 +1772,10 @@ sap.ui.define(
               var claimInfo = claimData.d.results[0];
 
               claimInfo.cust_startDate = formatter.formatDateStr(
-                claimInfo.cust_startDate
+                claimInfo.cust_startDate,
               );
               claimInfo.cust_EndDate = formatter.formatDateStr(
-                claimInfo.cust_EndDate
+                claimInfo.cust_EndDate,
               );
 
               var claimInfoModel = new JSONModel({
@@ -1494,7 +1797,7 @@ sap.ui.define(
                   mimetype: claimAttachment.mimeType,
                   fileSize:
                     Math.round(
-                      (parseFloat(claimAttachment.fileSize) / 1024) * 100
+                      (parseFloat(claimAttachment.fileSize) / 1024) * 100,
                     ) /
                       100 +
                     " KB",
@@ -1534,7 +1837,7 @@ sap.ui.define(
                     xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                     xhr.setRequestHeader(
                       "x-approuter-authorization",
-                      "Bearer " + envInfo.CF.accessToken
+                      "Bearer " + envInfo.CF.accessToken,
                     );
                   }
                 },
@@ -1547,7 +1850,7 @@ sap.ui.define(
 
                   for (var i = 0; i < auditInfo.length; i++) {
                     auditInfo[i]["photo"] = await that.getPhoto(
-                      auditInfo[i].user
+                      auditInfo[i].user,
                     );
                   }
 
@@ -1585,7 +1888,7 @@ sap.ui.define(
                     missionDescription: missionInfo.description,
                     missionDetails: missionInfo.details,
                     missionStartDate: formatter.formatDateUI(
-                      missionInfo.startDate
+                      missionInfo.startDate,
                     ),
                     missionEndDate: formatter.formatDateUI(missionInfo.endDate),
                     sector: missionInfo.sector,
@@ -1650,7 +1953,7 @@ sap.ui.define(
                           Math.round(
                             (parseFloat(missionAttachments[a].fileSize) /
                               1024) *
-                              100
+                              100,
                           ) /
                             100 +
                           " KB",
@@ -1668,7 +1971,7 @@ sap.ui.define(
                     .getView()
                     .setModel(
                       missionAttachmentsModel,
-                      "missionAttachmentsModel"
+                      "missionAttachmentsModel",
                     );
 
                   var membersArr = [];
@@ -1707,10 +2010,10 @@ sap.ui.define(
                           city: itineraryInfo.city,
                           ticketType: itineraryInfo.ticketType,
                           startDate: formatter.formatDateUI(
-                            itineraryInfo.startDate
+                            itineraryInfo.startDate,
                           ),
                           endDate: formatter.formatDateUI(
-                            itineraryInfo.endDate
+                            itineraryInfo.endDate,
                           ),
                           headOfMission: itineraryInfo.isHeadOfMission,
                           headOfMission: itineraryInfo.isHeadOfMission,
@@ -1741,7 +2044,7 @@ sap.ui.define(
                               Math.round(
                                 (parseFloat(memberAttachments[ma].fileSize) /
                                   1024) *
-                                  100
+                                  100,
                               ) /
                                 100 +
                               " KB",
@@ -1830,7 +2133,7 @@ sap.ui.define(
                 xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                 xhr.setRequestHeader(
                   "x-approuter-authorization",
-                  "Bearer " + envInfo.CF.accessToken
+                  "Bearer " + envInfo.CF.accessToken,
                 );
               }
             },
@@ -1898,7 +2201,7 @@ sap.ui.define(
             "errorOperation",
             "ownClaimCannotBeApproved",
             [],
-            null
+            null,
           );
           return;
         }
@@ -1938,7 +2241,7 @@ sap.ui.define(
               xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
               xhr.setRequestHeader(
                 "x-approuter-authorization",
-                "Bearer " + envInfo.CF.accessToken
+                "Bearer " + envInfo.CF.accessToken,
               );
             }
           },
@@ -1990,7 +2293,7 @@ sap.ui.define(
                   xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                   xhr.setRequestHeader(
                     "x-approuter-authorization",
-                    "Bearer " + envInfo.CF.accessToken
+                    "Bearer " + envInfo.CF.accessToken,
                   );
                 }
               },
@@ -2011,7 +2314,7 @@ sap.ui.define(
                     confirmCallbackFn: () => {
                       that.closeMission();
                     },
-                  }
+                  },
                 );
 
                 // MessageBox.success(
@@ -2038,7 +2341,7 @@ sap.ui.define(
                     "errorOperation",
                     "serverError",
                     [],
-                    null
+                    null,
                   );
                   // MessageBox.error("Something went wrong", {
                   //   actions: [MessageBox.Action.CLOSE],
@@ -2089,7 +2392,7 @@ sap.ui.define(
             "errorOperation",
             "ownClaimCannotBeSentBack",
             [],
-            null
+            null,
           );
           return;
         }
@@ -2129,7 +2432,7 @@ sap.ui.define(
               xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
               xhr.setRequestHeader(
                 "x-approuter-authorization",
-                "Bearer " + envInfo.CF.accessToken
+                "Bearer " + envInfo.CF.accessToken,
               );
             }
           },
@@ -2182,7 +2485,7 @@ sap.ui.define(
                   xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                   xhr.setRequestHeader(
                     "x-approuter-authorization",
-                    "Bearer " + envInfo.CF.accessToken
+                    "Bearer " + envInfo.CF.accessToken,
                   );
                 }
               },
@@ -2203,7 +2506,7 @@ sap.ui.define(
                     confirmCallbackFn: () => {
                       that.closeMission();
                     },
-                  }
+                  },
                 );
                 // MessageBox.success(
                 //   "The travel claim is sent back by " +
@@ -2229,7 +2532,7 @@ sap.ui.define(
                     "errorOperation",
                     "serverError",
                     [],
-                    null
+                    null,
                   );
                   // MessageBox.error("Something went wrong", {
                   //   actions: [MessageBox.Action.CLOSE],
@@ -2256,5 +2559,5 @@ sap.ui.define(
         });
       },
     });
-  }
+  },
 );

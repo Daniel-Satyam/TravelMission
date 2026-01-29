@@ -308,7 +308,8 @@
 								</ComboBox>
 							</VBox>
 						</f:GridListItem>
-						<f:GridListItem visible="{=!${screenModel>/info/isNormalMember}}">
+						<!-- <f:GridListItem visible="{=!${screenModel>/info/isNormalMember}}"> -->
+						<f:GridListItem visible="false">
 							<VBox class="sapUiSmallMargin">
 								<layoutData>
 									<FlexItemData growFactor="1" shrinkFactor="0" />
@@ -318,7 +319,8 @@
 								<Input value="{path: 'missionInfoModel>/info/budgetAvailable', formatter: 'Formatter.formatAmount'}" enabled="false"/>
 							</VBox>
 						</f:GridListItem>
-						<f:GridListItem visible="{=!${screenModel>/info/isNormalMember}}">
+						<!-- <f:GridListItem visible="{=!${screenModel>/info/isNormalMember}}"> -->
+						<f:GridListItem visible="false">
 							<VBox class="sapUiSmallMargin">
 								<layoutData>
 									<FlexItemData growFactor="1" shrinkFactor="0" />
