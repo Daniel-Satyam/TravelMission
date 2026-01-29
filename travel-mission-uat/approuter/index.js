@@ -2270,7 +2270,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
                 sectorFetchConfig,
               );
               let sectorUpdateRequest = [];
-              // if (sectorFetchResponse && sectorFetchResponse.data) {
+              if (sectorFetchResponse && sectorFetchResponse.data) {
               //   // const sectorUpdateRequest =
               //   //   sectorFetchResponse.data.d.results[0];
               //   // sectorUpdateRequest.__metadata.uri =
