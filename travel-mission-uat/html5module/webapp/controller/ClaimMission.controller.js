@@ -1428,13 +1428,13 @@ sap.ui.define(
         a.download = item.mProperties.fileName;
         a.click();
       },
-            checkBudgetAvailability: async function (bShowLoading = false) {
+      checkBudgetAvailability: async function (bShowLoading = false) {
         let aBudgetTracking = [];
         let bBudgetAvailable = false;
         const oMissionInfoModel = this.getModel("missionInfoModel");
         const missionInfoModelData = oMissionInfoModel.getProperty("/info");
-        let missionBudgetAvailable = null;
-        let missionParkedAmount = null;
+        let missionBudgetAvailable = 0;
+        let missionParkedAmount = 0;
 
         if (
           !missionInfoModelData.totalExpense ||

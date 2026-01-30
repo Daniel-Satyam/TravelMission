@@ -5785,6 +5785,15 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
         },
       });
 
+      //Extract and handle each individual response from the batch
+      const postBatchResult =
+        (await _parseMultipartResponse(postBatchResponse)) || [];
+      //--TODO: Error handling
+      if(postBatchResult && postBatchResult[0] && postBatchResult[0].error){
+        console.log("Error during update mission:", postBatchResult[0].error.value);
+        throw new Error(`Error during update mission: ${postBatchResult[0].error.value}`);
+      }
+
       //--Call S4 Odata
       if (postBatchResponse) {
         //Approve
@@ -5799,10 +5808,6 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
       }
       //--Call S4 Odata
 
-      //Extract and handle each individual response from the batch
-      const postBatchResult =
-        (await _parseMultipartResponse(postBatchResponse)) || [];
-      //--TODO: Error handling
       return postBatchResult;
     } else {
       throw new Error("Sector or mission data could not be read!");

@@ -1244,8 +1244,8 @@ sap.ui.define(
         let bBudgetAvailable = false;
         const oMissionInfoModel = this.getModel("missionInfoModel");
         const missionInfoModelData = oMissionInfoModel.getProperty("/info");
-        let missionBudgetAvailable = null;
-        let missionParkedAmount = null;
+        let missionBudgetAvailable = 0;
+        let missionParkedAmount = 0;
 
         if (
           !missionInfoModelData.totalExpense ||
@@ -1855,8 +1855,8 @@ sap.ui.define(
 
           let missionRequest = {
             info: {
-              budgetAvailable: missionBudgetAvailable,
-              budgetParked: missionParkedAmount,
+              budgetAvailable: missionBudgetAvailable.toString(),
+              budgetParked: missionParkedAmount.toString(),
               missionDetails: "",
               createdBy: "",
               decreeType: "",
