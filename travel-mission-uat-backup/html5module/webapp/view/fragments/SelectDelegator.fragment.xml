@@ -1,0 +1,57 @@
+<core:FragmentDefinition
+    xmlns:internal="sap.landvisz.internal"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:cd="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
+>
+    <ResponsivePopover
+        id="DelegateOfDialog"
+        contentWidth="500px"
+        placement="Bottom"
+        titleAlignment="Center"
+        showHeader="false"
+    >
+        <content>
+            <List
+                items="{path:'appModel>/delegateOf', templateShareable: false}"
+                headerText="{i18n>selectUserFromDelegators}"
+                growing="false"
+                itemPress=".onDelegatorSelected"
+            >
+                <StandardListItem
+                    title="{appModel>empName_en}"
+                    description="({appModel>empPosition_en})"
+                    iconDensityAware="false"
+                    iconInset="false"
+                    highlight="{= ${appModel>empId} === ${appModel>/user/id} ? 'Success' : 'None' }"
+                    info="{= ${appModel>empId} === ${appModel>/user/id} ?  ${i18n>selectedDelegate} : '' }"
+				    infoState="{= ${appModel>empId} === ${appModel>/user/id} ? 'Success' : 'None' }"
+                    type="Active"
+                    cd:empId="{appModel>empId}"
+                    cd:empEmail="{appModel>empEmail}"
+                >
+                    <avatar>
+                        <Avatar
+                            fallbackIcon="sap-icon://picture"
+                            src="{appModel>photo}"
+                        />
+                    </avatar>
+                </StandardListItem>
+            </List>
+        </content>
+        <footer>
+            <Toolbar>
+                <ToolbarSpacer />
+                <Button
+                    icon="sap-icon://reset"
+                    type="Reject"
+                    tooltip="{i18n>resetDelegation}"
+                    text="{i18n>resetDelegation}"
+                    press=".onResetDelegator"
+                    visible="{= ${appModel>/user/proxy} === true }"
+                />
+                <ToolbarSpacer />
+            </Toolbar>
+        </footer>
+    </ResponsivePopover>
+</core:FragmentDefinition>

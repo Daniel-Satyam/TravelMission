@@ -1,0 +1,12 @@
+{
+	"name": "travelmissionuatdeployments",
+	"description": "read the README",
+	"dependencies": {
+		"mbt": "^1.2.34"
+	},
+	"scripts": {
+		"build": "mbt build -p=cf -s=./_build -t=../mta_archives",
+		"deploy": "cf deploy ./mta_archives/travel-mission-uat_1.0.0.mtar -f",
+		"undeploy": "cf undeploy travel-mission-uat --delete-services --delete-service-keys -f"
+	}
+}

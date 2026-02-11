@@ -1,0 +1,57 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+>
+    <Dialog
+        id="errorPaneDialog"
+        contentWidth="600px"
+        showHeader="true"
+        afterClose=".onAfterCloseErrorPane"
+        title="{i18n>errorsFound}"
+        state="Error"
+        titleAlignment="Center"
+    >
+        <content>
+            <Table
+                mode="None"
+                items="{
+					path: 'errorModel>/missionErrors',
+					sorter: {
+						path: 'category'
+					}
+				}"
+            >
+                <columns>
+                    <Column width="10rem">
+                        <Text text="{i18n>errorCategory}" />
+                    </Column>
+                    <Column >
+                        <Text text="{i18n>errorMessage}" />
+                    </Column>
+                </columns>
+                <items>
+                    <ColumnListItem
+                        vAlign="Middle"
+                        type="Inactive"
+                    >
+                        <cells>
+                            <Text
+                                text="{errorModel>category}"
+                            />
+                            <Text
+                               text="{errorModel>message}"
+                                wrapping="true"
+                            />
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+        </content>
+        <beginButton>
+            <Button
+                text="{i18n>close}"
+                press=".onCloseErrorPane"
+            />
+        </beginButton>
+    </Dialog>
+</core:FragmentDefinition>

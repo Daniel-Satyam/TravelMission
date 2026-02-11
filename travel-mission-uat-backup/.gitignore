@@ -1,0 +1,7 @@
+node_modules
+approuter/default-env.json
+# auto generated wildcard
+approuter/.env
+html5module/dist
+html5module/node_modules
+approuter/node_modules
