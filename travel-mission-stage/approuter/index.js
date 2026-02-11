@@ -6114,7 +6114,7 @@ const _getAdminMissionReport = async function (body, cookies) {
     const selectQuery =
       "externalCode,externalName,cust_Pending_With_Group,cust_Pending_With_user,effectiveStartDate,transactionSequence,cust_Mission_Start_Date,cust_Mission_End_Date,cust_No_Of_Days," +
       "cust_ReplicationFlag,cust_Hospitality_Type,cust_Flight_type,cust_Destination,cust_TotalPerdiemMission,cust_TicketAverage,cust_Sector," +
-      "cust_Total_Expense,cust_Budget_Available,cust_Budget_Parked,cust_Decree_Type,cust_ExternalEntity,cust_ExternalEntity2,cust_ExternalEntity3,cust_ExternalEntity4,cust_ExternalEntity5" +
+      "cust_Total_Expense,cust_Budget_Available,cust_Budget_Parked,cust_Decree_Type,cust_ExternalEntity,cust_ExternalEntity2,cust_ExternalEntity3,cust_ExternalEntity4,cust_ExternalEntity5," +
       "cust_Status,createdDateTime,createdBy," +
       "cust_Members/cust_Mission_effectiveStartDate,cust_Members/cust_Mission_externalCode,cust_Members/cust_Mission_transactionSequence," +
       "cust_Members/cust_Employee_ID,cust_Members/cust_EmployeeID,cust_Members/cust_First_Name,cust_Members/cust_Last_Name,cust_Members/cust_Title_Of_Employee," +
