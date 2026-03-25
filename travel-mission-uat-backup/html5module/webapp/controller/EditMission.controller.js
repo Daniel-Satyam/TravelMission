@@ -4322,6 +4322,10 @@ sap.ui.define(
               validationError = true;
             }
 
+            //--Cost center
+            missionMemberRequest.costCenter = missionMembersData[j].costCenter;
+            //--Cost center
+
             missionMemberRequest.department = missionMembersData[j].department;
             missionMemberRequest.employeeTotalExpense =
               missionMembersData[j].employeeTotalExpense;

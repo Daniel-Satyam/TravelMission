@@ -2039,6 +2039,7 @@ sap.ui.define(
               userID: "",
               employeeID: "",
               employeeName: "",
+              costCenter: "",
               employeeTotalExpense: 0,
               employeeTotalPerdiem: 0,
               employeeTotalTicket: 0,
@@ -2104,6 +2105,10 @@ sap.ui.define(
             } else {
               validationError = true;
             }
+
+            //--Cost center
+            missionMemberRequest.costCenter = missionMembersData[j].costCenter;
+            //--Cost center
 
             missionMemberRequest.department = missionMembersData[j].department;
             missionMemberRequest.employeeTotalExpense =

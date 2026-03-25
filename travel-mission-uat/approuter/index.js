@@ -7130,6 +7130,7 @@ const _getMastersBatch = async function (body, cookies) {
     dynamicGroups: [],
     statuses: [],
     multicities: [],
+    travelDirection: [],
     headOfMission: [],
     externalEntity: [],
   };
@@ -7230,6 +7231,17 @@ const _getMastersBatch = async function (body, cookies) {
       `GET ${externalEntityFetchUrl} HTTP/1.1\r\n` +
       `Accept: application/json\r\n\r\n`;
 
+
+    const travelDirectionFetchUrl =
+      "Picklist?$expand=picklistOptions,picklistOptions/picklistLabels&$select=picklistOptions/externalCode,picklistOptions/localeLabel,picklistOptions/picklistLabels/locale,picklistOptions/picklistLabels/label,picklistOptions/status&$filter=picklistId eq 'Mission_Travel_direction' and picklistOptions/status eq 'ACTIVE'&$format=json";
+
+    getBatchBody +=
+      `--${boundary}\r\n` +
+      `Content-Type: application/http\r\n` +
+      `Content-Transfer-Encoding: binary\r\n\r\n` +
+      `GET ${travelDirectionFetchUrl} HTTP/1.1\r\n` +
+      `Accept: application/json\r\n\r\n`;
+
     const multicityFetchUrl =
       "Picklist?$expand=picklistOptions,picklistOptions/picklistLabels&$select=picklistOptions/externalCode,picklistOptions/localeLabel,picklistOptions/picklistLabels/locale,picklistOptions/picklistLabels/label,picklistOptions/status&$filter=picklistId eq 'yesNo' and picklistOptions/status eq 'ACTIVE'&$format=json";
 
@@ -7268,7 +7280,9 @@ const _getMastersBatch = async function (body, cookies) {
     i++;
     aResultMap.push({ target: "statuses", index: i });
     i++;
-    aResultMap.push({ target: "externalEntity", index: i }); // same with head of mission so no need to increase index
+    aResultMap.push({ target: "externalEntity", index: i }); 
+    i++;
+    aResultMap.push({ target: "travelDirection", index: i });
     i++;
     aResultMap.push({ target: "multicities", index: i }); // same with head of mission so no need to increase index
     aResultMap.push({ target: "headOfMission", index: i }); // same with multicities so no need to increase index

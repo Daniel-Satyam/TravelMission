@@ -139,6 +139,8 @@ sap.ui.define(
             externalEntity5: "",
             externalEntities: [],
             flightType: "",
+            travelDirection: "",
+            returnFlightType: "",
             budgetParked: 0,
             missionID: "",
             members: [],
@@ -216,6 +218,8 @@ sap.ui.define(
                   ticketAverage: 0,
                   ticketActualCost: 0,
                   reflectBudgetInfo: false,
+                  inboundFlightType:"",
+                  outboundFlightType:"",
                 },
               ],
               attachments: [],
@@ -1867,6 +1871,8 @@ sap.ui.define(
               externalEntity5: "",
               destination: "",
               flightType: "",
+              travelDirection: "",
+              returnFlightType: "",
               hospitality_Type: "",
               missionDescription: "",
               missionEndDate: "",
@@ -1936,6 +1942,29 @@ sap.ui.define(
           } else {
             validationError = true;
           }
+
+          if (
+            missionInfoModelData.travelDirection != "" &&
+            missionInfoModelData.travelDirection != null
+          ) {
+            missionRequest.info.travelDirection = missionInfoModelData.travelDirection;
+          } else {
+            validationError = true;
+          }
+
+          if (
+            missionInfoModelData.travelDirection === "1" &&
+            missionInfoModelData.returnFlightType != "" &&
+            missionInfoModelData.returnFlightType != null
+          ) {
+            missionRequest.info.returnFlightType = missionInfoModelData.returnFlightType;
+          } else {
+            //--One way is selected, so the return flight should be selected
+            if(missionInfoModelData.travelDirection === "1"){
+              validationError = true;
+            }
+          }
+
 
           if (
             missionInfoModelData.hospitality_Type != "" &&
@@ -3435,6 +3464,8 @@ sap.ui.define(
           payGrade: "",
           ticketType: "",
           flightType: "",
+          travelDirection: "",
+          returnFlightType: "",
         };
         const oMissionInfoModel = this.getModel("missionInfoModel");
         let aInfo = oMissionInfoModel.getProperty("/info");
@@ -3449,6 +3480,8 @@ sap.ui.define(
             obj.payGrade = mModelData[i].grade;
             obj.sector = aInfo.sector;
             obj.flightType = aInfo.flightType;
+            obj.travelDirection = aInfo.travelDirection;
+            obj.returnFlightType = aInfo.returnFlightType;
             var itineraryData = mModelData[i].itinerary;
             for (var j = 0; j < itineraryData.length; j++) {
               if (id == itineraryData[j].id) {
