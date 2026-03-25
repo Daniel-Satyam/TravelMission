@@ -1125,7 +1125,11 @@ const _createMission = async function (body, userInfo, cookies) {
   try {
     //--Step 1: Create S4 Document
     const referenceGuid = crypto.randomUUID();
-    const createS4DocumentResult = await _createS4Documentv3(body, referenceGuid, cookies);
+    const createS4DocumentResult = await _createS4Documentv3(
+      body,
+      referenceGuid,
+      cookies,
+    );
     //--Step 1: Create S4 Document
 
     //--Step 2: Create Mission in CPI
@@ -1159,18 +1163,21 @@ const _createMission = async function (body, userInfo, cookies) {
     const response = await axios.request(config);
     //--Step 2: Create Mission in CPI
 
-    if( !(response.data && response.data.missionId)){
+    if (!(response.data && response.data.missionId)) {
       throw new CustomHttpError(500, "Mission could not be created in CPI");
     }
 
     //--Step 3: Update S4 document with mission id
     const updatePayload = _.cloneDeep(oCpiPayload);
     updatePayload.info.missionID = response.data.missionId;
-    const updateS4DocumentResult = await _createS4Documentv3(updatePayload, referenceGuid, cookies);
+    const updateS4DocumentResult = await _createS4Documentv3(
+      updatePayload,
+      referenceGuid,
+      cookies,
+    );
     //--Step 3: Update S4 document with mission id
 
     return response.data;
-
   } catch (error) {
     if (
       error &&
@@ -5488,11 +5495,14 @@ const _convertFloat = (f) => {
 
 const _updateMissionBatch = async function (body, userInfo, cookies) {
   try {
-
     //New logic
 
     //--1. Update S4 document
-    const updateS4DocumentResult = await _createS4Documentv3(body, null, cookies);
+    const updateS4DocumentResult = await _createS4Documentv3(
+      body,
+      null,
+      cookies,
+    );
     //--Step 1: Create S4 Document
 
     //--Step 2: Create Mission in CPI
@@ -5508,8 +5518,6 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
     //--1. Update S4 document
 
     //--2. Update SF
-
-
 
     const auth = "Basic " + cookies.SF.basicAuth;
     const budgetTracking = body.budgetTracking || [];
@@ -5912,7 +5920,6 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
     //--2. Update SF
 
     //New logic
-
   } catch (e) {
     console.log("Update mission error", e);
     if (
@@ -7056,9 +7063,10 @@ const _constructS4DocumentDetailsFromMissionId = async function (
       "cust_Total_Expense,cust_Budget_Available,cust_Budget_Parked,cust_Decree_Type,cust_Status,cust_S4_Document_Number," +
       "cust_Members/cust_Mission_externalCode,cust_Members/cust_Employee_ID,cust_Members/cust_EmployeeID,cust_Members/cust_First_Name,cust_Members/cust_Last_Name,cust_Members/cust_Title_Of_Employee," +
       "cust_Members/cust_Employee_Total_Ticket,cust_Members/cust_Employee_Total_Perdiem,cust_Members/cust_Employee_Total_Expense," +
-      "cust_Members/cust_Multiple_Cities";
+      "cust_Members/cust_Multiple_Cities,cust_Members/cust_Employee_IDNav/empInfo/jobInfoNav/costCenter";
 
-    const missionExpandQuery = "cust_Members";
+    const missionExpandQuery =
+      "cust_Members,cust_Members/cust_Employee_IDNav/empInfo/jobInfoNav";
     let missionFetchUrl = `${cookies.SF.URL}cust_Mission?$format=json&$filter=${missionFilterQuery}&$select=${missionSelectQuery}&$expand=${missionExpandQuery}`;
 
     const config = {
@@ -7153,6 +7161,7 @@ const _constructS4DocumentFromPayload = async function (
 ) {
   try {
     let s4DocumentNumber = null;
+    let oMissionRequest = _.clone(missionRequest);
 
     if (missionRequest.info.missionId && referenceGuid === null) {
       const auth = "Basic " + cookies.SF.basicAuth;
@@ -7174,6 +7183,32 @@ const _constructS4DocumentFromPayload = async function (
         missionFetchResponse.data.d &&
         missionFetchResponse.data.d.results[0];
       s4DocumentNumber = oMissionResponse.cust_S4_Document_Number;
+      let employeeFilterQuery = "";
+      oMissionRequest.members.forEach((m) => {
+        employeeFilterQuery =
+          employeeFilterQuery === ""
+            ? `userId in '${m.userID}'`
+            : `${employeeFilterQuery},'${m.userID}'`;
+      });
+
+      let employeeFetchUrl = `${cookies.SF.URL}EmpJob?$format=json&$filter=${employeeFilterQuery}&$select=userId,costCenter`;
+
+      const employeeFetchResponse = await axios.get(employeeFetchUrl, config);
+
+      if (
+        employeeFetchResponse &&
+        employeeFetchResponse.data &&
+        employeeFetchResponse.data.d &&
+        employeeFetchResponse.data.d.results
+      ) {
+        const aEmployee = employeeFetchResponse.data.d.results;
+        oMissionRequest.members.forEach((m, i) => {
+          const oEmp = _.find(aEmployee, ["userId", m.userID]);
+          if (oEmp) {
+            oMissionRequest.members[i].costCenter = oEmp.costCenter;
+          }
+        });
+      }
     }
 
     const oPayload = {
@@ -7185,7 +7220,7 @@ const _constructS4DocumentFromPayload = async function (
       members: [],
     };
 
-    missionRequest.members.forEach((m, i) => {
+    oMissionRequest.members.forEach((m, i) => {
       oPayload.members.push({
         sequenceNo: (i + 1) * 10,
         userId: m.userID,
@@ -7197,13 +7232,13 @@ const _constructS4DocumentFromPayload = async function (
 
     return oPayload;
   } catch (error) {
-     const message =
+    const message =
       error?.response && error?.response?.data && error?.response?.data?.error
         ? error.response.data.error.message
         : error.message;
     throw new CustomHttpError(
       500,
-      "Mission payload could not be constructed:" + message
+      "Mission payload could not be constructed:" + message,
     );
   }
 };
@@ -7414,7 +7449,11 @@ async function _fetchCsrfTokenv2(destinationName, servicePath) {
  */
 async function _createS4Documentv3(body, referenceGuid, appCookies) {
   try {
-    const oPayload = await _constructS4DocumentFromPayload(body, referenceGuid, appCookies);
+    const oPayload = await _constructS4DocumentFromPayload(
+      body,
+      referenceGuid,
+      appCookies,
+    );
 
     if (!oPayload) {
       throw new Error("Payload could not be constructed");
@@ -7460,12 +7499,12 @@ async function _createS4Documentv3(body, referenceGuid, appCookies) {
     );
 
     const result = response.data.d || null;
-    if(result.BELNR === ''){
-       console.error(result.RET_MSG);
-       throw new CustomHttpError(
-          500,
-          "Error creating document in S/4HANA:" + result.RET_MSG
-        );
+    if (result.BELNR === "") {
+      console.error(result.RET_MSG);
+      throw new CustomHttpError(
+        500,
+        "Error creating document in S/4HANA:" + result.RET_MSG,
+      );
     }
     return result;
   } catch (error) {
