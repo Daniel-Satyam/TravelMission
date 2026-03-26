@@ -1169,7 +1169,7 @@ const _createMission = async function (body, userInfo, cookies) {
 
     //--Step 3: Update S4 document with mission id
     const updatePayload = _.cloneDeep(oCpiPayload);
-    updatePayload.info.missionID = response.data.missionId;
+    updatePayload.info.missionId = response.data.missionId;
     const updateS4DocumentResult = await _createS4Documentv3(
       updatePayload,
       referenceGuid,
