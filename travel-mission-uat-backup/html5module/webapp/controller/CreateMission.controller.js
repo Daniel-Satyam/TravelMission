@@ -1241,37 +1241,126 @@ sap.ui.define(
       },
       checkBudgetAvailability: async function (bShowLoading = false) {
         let aBudgetTracking = [];
+        let aMemberBudgetChecks = [];
         let bBudgetAvailable = false;
         const oMissionInfoModel = this.getModel("missionInfoModel");
-        const missionInfoModelData = oMissionInfoModel.getProperty("/info");
+        const oMissionInfo = oMissionInfoModel.getProperty("/info");
         let missionBudgetAvailable = 0;
         let missionParkedAmount = 0;
 
         if (
-          !missionInfoModelData.totalExpense ||
-          parseFloat(missionInfoModelData.totalExpense) <= 0
+          !oMissionInfo.totalExpense ||
+          parseFloat(oMissionInfo.totalExpense) <= 0
         ) {
           this.toastMessage(
             "E",
             "errorOperation",
             "totalMissionExpenseZero",
             [],
-            null
+            null,
           );
           return {
             isBudgetAvailable: bBudgetAvailable,
             budgetTracking: aBudgetTracking,
+            memberBudgetChecks: aMemberBudgetChecks,
             missionBudgetAvailable,
             missionParkedAmount,
           };
         }
 
-        return{
-          isBudgetAvailable: true,
+        //--Budget check for members
+        const oMembersModel = this.getModel("membersModel");
+        const aMembers = oMembersModel.getProperty("/members");
+        const aBudgetCheck = [];
+        const aCostCenters = [];
+
+        //--Collect the selected cost centers and fetch budget
+        if (bShowLoading) {
+          this.openBusyFragment("checkingBudget", []);
+        }
+        aMembers.forEach((oMember) => {
+          if (!aCostCenters.includes(oMember.costCenter)) {
+            aCostCenters.push(oMember.costCenter);
+          }
+        });
+
+        for (const c of aCostCenters) {
+          try {
+            if (c) {
+              const oBudget = await this.getFCBudgetS4(
+                c,
+                oMissionInfo.missionStartDate.getFullYear(),
+              );
+              aBudgetCheck.push({
+                CostCenter: c,
+                AvailableBudget: oBudget.hasOwnProperty("GetFCBudget")
+                  ? parseFloat(oBudget.GetFCBudget.AvailableBudget)
+                  : 0,
+                TotalPerDiem: 0,
+                IsBudgetAvailable: false,
+              });
+            }
+          } catch (e) {
+            aBudgetCheck.push({
+              CostCenter: c,
+              AvailableBudget: 0,
+              TotalPerDiem: 0,
+              IsBudgetAvailable: false,
+            });
+          }
+        }
+        //--Collect the selected cost centers and fetch bsudget
+
+        //--Loop through the members and check the available budget
+        aMembers.forEach((oMember) => {
+          const oBudgetCheck = _.find(aBudgetCheck, [
+            "CostCenter",
+            oMember.costCenter,
+          ]);
+          oBudgetCheck.TotalPerDiem =
+            oBudgetCheck.TotalPerDiem +
+            parseFloat(oMember.employeeTotalPerdiem);
+        });
+        //--Loop through the members and check the available budget
+
+        //--Check budget availability and give errors
+        aBudgetCheck.forEach((oBudgetCheck) => {
+          if (oBudgetCheck.AvailableBudget >= oBudgetCheck.TotalPerDiem) {
+            oBudgetCheck.IsBudgetAvailable = true;
+          }
+        });
+        bBudgetAvailable = true;
+        aMembers.forEach((oMember) => {
+          const oBudgetCheck = _.find(aBudgetCheck, [
+            "CostCenter",
+            oMember.costCenter,
+          ]);
+          if (!oBudgetCheck.IsBudgetAvailable) {
+            bBudgetAvailable = false;
+            aMemberBudgetChecks.push({
+              EmployeeId: oMember.employeeID,
+              EmployeeName: oMember.employeeName,
+              CostCenter: oMember.costCenter,
+              AvailableBudget: oBudgetCheck.AvailableBudget,
+              TotalPerDiem: oBudgetCheck.TotalPerDiem,
+              EmployeePerDiem: oMember.employeeTotalPerdiem,
+            });
+          }
+        });
+        //--Check budget availability and give errors
+
+        if (bShowLoading) {
+          this.closeBusyFragment();
+        }
+        //--Budget check for members
+
+        return {
+          isBudgetAvailable: bBudgetAvailable,
           budgetTracking: aBudgetTracking,
+          memberBudgetChecks: aMemberBudgetChecks,
           missionBudgetAvailable,
           missionParkedAmount,
-        }
+        };
 
         // if (bShowLoading) {
         //   this.openBusyFragment("checkingBudget", []);
@@ -1544,7 +1633,7 @@ sap.ui.define(
         //   missionParkedAmount,
         // };
       },
-        // checkBudgetAvailability: async function (bShowLoading = false) {
+      // checkBudgetAvailability: async function (bShowLoading = false) {
       //   let aBudgetTracking = [];
       //   let bBudgetAvailable = false;
       //   const oMissionInfoModel = this.getModel("missionInfoModel");
@@ -1830,18 +1919,119 @@ sap.ui.define(
         const {
           isBudgetAvailable,
           budgetTracking,
+          memberBudgetChecks,
           missionBudgetAvailable,
           missionParkedAmount,
         } = await this.checkBudgetAvailability(true);
 
         if (isBudgetAvailable === false) {
-          that.alertMessage(
-            "E",
-            "errorOperation",
-            "sectorBudgetLowError",
-            [],
-            null,
-          );
+          if (memberBudgetChecks.length > 0) {
+            const fmtNum = (n) => {
+              return Number(n).toLocaleString("en-AE", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              });
+            };
+
+            var sThStyle =
+              "padding:7px 8px; font-weight:600; color:#333; border-bottom:2px solid #ddd; white-space:nowrap; font-size:11px;";
+            var sTdStyle =
+              "padding:6px 8px; border-bottom:1px solid #eee; font-size:12px;";
+
+            var sTable =
+              '<table style="width:100%; border-collapse:collapse; text-align:left;">' +
+              "<thead>" +
+              '<tr style="background:#f7f7f7;">' +
+              '<th style="' +
+              sThStyle +
+              '">Employee</th>' +
+              '<th style="' +
+              sThStyle +
+              '">Cost Center</th>' +
+              '<th style="' +
+              sThStyle +
+              ' text-align:right;">Available</th>' +
+              '<th style="' +
+              sThStyle +
+              ' text-align:right;">Total Per Diem</th>' +
+              '<th style="' +
+              sThStyle +
+              ' text-align:right;">Emp. Per Diem</th>' +
+              "</tr>" +
+              "</thead>" +
+              "<tbody>";
+
+            memberBudgetChecks.forEach(function (oItem, iIndex) {
+              var sRowBg = iIndex % 2 === 0 ? "#ffffff" : "#fafafa";
+              sTable +=
+                '<tr style="background:' +
+                sRowBg +
+                ';">' +
+                '<td style="' +
+                sTdStyle +
+                '">' +
+                '<div style="font-weight:600; color:#333; font-size:12px;">' +
+                oItem.EmployeeName +
+                "</div>" +
+                '<div style="font-family:monospace; color:#1565c0; font-size:10px;">' +
+                oItem.EmployeeId +
+                "</div>" +
+                "</td>" +
+                '<td style="' +
+                sTdStyle +
+                ' font-family:monospace; color:#6a6a6a;">' +
+                oItem.CostCenter +
+                "</td>" +
+                '<td style="' +
+                sTdStyle +
+                ' font-family:monospace; text-align:right; color:#c62828;">' +
+                fmtNum(oItem.AvailableBudget) +
+                "</td>" +
+                '<td style="' +
+                sTdStyle +
+                ' font-family:monospace; text-align:right; color:#444;">' +
+                fmtNum(oItem.TotalPerDiem) +
+                "</td>" +
+                '<td style="' +
+                sTdStyle +
+                ' font-family:monospace; text-align:right; color:#e65100;">' +
+                fmtNum(oItem.EmployeePerDiem) +
+                "</td>" +
+                "</tr>";
+            });
+
+            sTable += "</tbody></table>";
+
+            var sHtmlMessage =
+              '<div style="text-align:center; margin-bottom:8px;">' +
+              `<span style="font-size:14px;">${this.getText("memberBudgetLowError", [])}</span>` +
+              "</div>" +
+              '<div style="max-height:300px; overflow-y:auto; border:1px solid #e0e0e0; border-radius:6px;">' +
+              sTable +
+              "</div>";
+
+            // Show the alert
+            this.showMessage({
+              html: sHtmlMessage,
+              title: this.getText("memberBudgetLowTitle", []),
+              icon: "error",
+              showConfirmButton: true,
+              timer: undefined,
+              toast: false,
+              position: "center",
+              width: 600
+            });
+          } else {
+            this.alertMessage(
+              "E",
+              "errorOperation",
+              "sectorBudgetLowError",
+              [],
+              null,
+            );
+          }
+          // Build the HTML table from memberBudgetChecks
+
           return;
           // MessageBox.error("The available budget of sector is low", {
           //   actions: [MessageBox.Action.CLOSE],
@@ -2803,7 +2993,7 @@ sap.ui.define(
         }
 
         // Get avaliable budget from S4
-        this.openBusyFragment("costCenterBudgetIsBeingRead", [])
+        this.openBusyFragment("costCenterBudgetIsBeingRead", []);
         const oBudget = await this.getFCBudgetS4(
           oEmployee.jobInfoNav.results[0].costCenter,
           oMissionInfo.missionStartDate.getFullYear(),
@@ -2814,10 +3004,9 @@ sap.ui.define(
             oBudget.GetFCBudget.ErrorCode === 0 &&
             parseFloat(oBudget.GetFCBudget.AvailableBudget) > 0
           ) {
-
             //--Set available budget
             mModelData[j].employeeAvailableBudget =
-            oBudget.GetFCBudget.AvailableBudget;
+              oBudget.GetFCBudget.AvailableBudget;
             //--Set available budget
           } else {
             if (oBudget.GetFCBudget.Message !== "") {

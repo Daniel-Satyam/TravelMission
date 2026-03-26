@@ -260,6 +260,8 @@ sap.ui.define(
           timer: 5000,
           timerProgressBar: false,
           backdrop: false,
+          width: "32em",
+          padding: "0 0 1.25em"
         };
 
         for (var k in options) {
