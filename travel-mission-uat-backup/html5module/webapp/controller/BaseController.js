@@ -37,7 +37,7 @@ sap.ui.define(
         if (sPreviousHash !== undefined) {
           window.history.go(-1);
         } else {
-          this.getRouter().navTo("home", {}, true /*no history*/);
+          this.getRouter().navTo("home", {}, null, true /*no history*/);
         }
       },
       /**
@@ -49,6 +49,14 @@ sap.ui.define(
         return this.getOwnerComponent().getModel("i18n").getResourceBundle();
       },
 
+
+      /**
+       * Call busy fragment
+       * @public
+       * @param {string} [sTextCode] - Text code for the busy indicator
+       * @param {Array} [aParam] - Message parameters
+       * @returns {string}
+       */
       getText: function (sText, aParam = []) {
         return this.getModel("i18n").getResourceBundle().getText(sText, aParam);
       },
@@ -59,7 +67,128 @@ sap.ui.define(
       setModel: function (oModel, sModelName) {
         return this.getView().setModel(oModel, sModelName ? sModelName : "");
       },
+      
+       /**
+       * Alert message - Budget Low
+       * @public
+       * @param {Array} [memberBudgetChecks] - Text code for the busy indicator
+       * @returns {void}
+       */
+      alertBudgetLow: function(memberBudgetChecks){
+         if (memberBudgetChecks.length > 0) {
+            const fmtNum = (n) => {
+              return Number(n).toLocaleString("en-AE", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              });
+            };
 
+            var sThStyle =
+              "padding:7px 8px; font-weight:600; color:#333; border-bottom:2px solid #ddd; white-space:nowrap; font-size:11px;";
+            var sTdStyle =
+              "padding:6px 8px; border-bottom:1px solid #eee; font-size:12px;";
+
+            var sTable =
+              '<table style="width:100%; border-collapse:collapse; text-align:left;">' +
+              "<thead>" +
+              '<tr style="background:#f7f7f7;">' +
+              '<th style="' +
+              sThStyle +
+              '">Employee</th>' +
+              '<th style="' +
+              sThStyle +
+              '">Cost Center</th>' +
+              '<th style="' +
+              sThStyle +
+              ' text-align:right;">Available</th>' +
+              '<th style="' +
+              sThStyle +
+              ' text-align:right;">Total Per Diem</th>' +
+              '<th style="' +
+              sThStyle +
+              ' text-align:right;">Emp. Per Diem</th>' +
+              "</tr>" +
+              "</thead>" +
+              "<tbody>";
+
+            memberBudgetChecks.forEach(function (oItem, iIndex) {
+              var sRowBg = iIndex % 2 === 0 ? "#ffffff" : "#fafafa";
+              sTable +=
+                '<tr style="background:' +
+                sRowBg +
+                ';">' +
+                '<td style="' +
+                sTdStyle +
+                '">' +
+                '<div style="font-weight:600; color:#333; font-size:12px;">' +
+                oItem.EmployeeName +
+                "</div>" +
+                '<div style="font-family:monospace; color:#1565c0; font-size:10px;">' +
+                oItem.EmployeeId +
+                "</div>" +
+                "</td>" +
+                '<td style="' +
+                sTdStyle +
+                ' font-family:monospace; color:#6a6a6a;">' +
+                oItem.CostCenter +
+                "</td>" +
+                '<td style="' +
+                sTdStyle +
+                ' font-family:monospace; text-align:right; color:#c62828;">' +
+                fmtNum(oItem.AvailableBudget) +
+                "</td>" +
+                '<td style="' +
+                sTdStyle +
+                ' font-family:monospace; text-align:right; color:#444;">' +
+                fmtNum(oItem.TotalPerDiem) +
+                "</td>" +
+                '<td style="' +
+                sTdStyle +
+                ' font-family:monospace; text-align:right; color:#e65100;">' +
+                fmtNum(oItem.EmployeePerDiem) +
+                "</td>" +
+                "</tr>";
+            });
+
+            sTable += "</tbody></table>";
+
+            var sHtmlMessage =
+              '<div style="text-align:center; margin-bottom:8px;">' +
+              `<span style="font-size:14px;">${this.getText("memberBudgetLowError", [])}</span>` +
+              "</div>" +
+              '<div style="max-height:300px; overflow-y:auto; border:1px solid #e0e0e0; border-radius:6px;">' +
+              sTable +
+              "</div>";
+
+            // Show the alert
+            this.showMessage({
+              html: sHtmlMessage,
+              title: this.getText("memberBudgetLowTitle", []),
+              icon: "error",
+              showConfirmButton: true,
+              timer: undefined,
+              toast: false,
+              position: "center",
+              width: 600,
+            });
+          } else {
+            this.alertMessage(
+              "E",
+              "errorOperation",
+              "sectorBudgetLowError",
+              [],
+              null,
+            );
+          }
+      },
+
+      /**
+       * Call busy fragment
+       * @public
+       * @param {string} [sTextCode] - Text code for the busy indicator
+       * @param {Array} [aMessageParameters] - Message parameters
+       * @returns {Promise<void>}
+       */
       openBusyFragment: async function (sTextCode, aMessageParameters) {
         const oDialog = await this.getBusyFragment();
         if (oDialog) {

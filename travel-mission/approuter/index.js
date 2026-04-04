@@ -115,7 +115,7 @@ const _fetchCFAuthToken = async function () {
           Authorization:
             "Basic " + Buffer.from(sUaaCredentials).toString("base64"),
         },
-      }
+      },
     );
     return response.data.access_token;
   } catch (error) {
@@ -152,7 +152,7 @@ const _fetchCPIAuthToken = async function (CFAuthToken) {
     const destinationName = sCPIAuthDestinationName;
     const fetchCPIAuthDestinationInfo = await _fetchDestinationInfo(
       destinationName,
-      CFAuthToken
+      CFAuthToken,
     );
 
     const config = {
@@ -415,17 +415,17 @@ const _fetchMemberDetails = async function (decryptedData, cookies) {
       employeeFetchUrl +=
         "&$filter=personIdExternal like '" +
         filter.value +
-        "%' and jobInfoNav/emplStatusNav/externalCode ne 'T'";
+        "%' and jobInfoNav/emplStatusNav/externalCode ne 'T' and userNav/isPrimaryAssignment eq true";
     } else if (filter.type == "displayName") {
       employeeFetchUrl +=
         "&$filter=personNav/personalInfoNav/displayName like '%" +
         filter.value +
-        "%' and jobInfoNav/emplStatusNav/externalCode ne 'T'";
+        "%' and jobInfoNav/emplStatusNav/externalCode ne 'T' and userNav/isPrimaryAssignment eq true";
     } else if (filter.type == "nofilter") {
       employeeFetchUrl +=
         "&$filter=personIdExternal eq '" +
         filter.value +
-        "' and jobInfoNav/emplStatusNav/externalCode ne 'T'";
+        "' and jobInfoNav/emplStatusNav/externalCode ne 'T' and userNav/isPrimaryAssignment eq true";
     }
 
     const auth = "Basic " + cookies.SF.basicAuth;
@@ -469,7 +469,7 @@ const _fetchMemberDetails = async function (decryptedData, cookies) {
 
       const memberCheckResponse = await axios.get(
         encodeURI(memberCheckUrl),
-        config
+        config,
       );
 
       if (
@@ -559,7 +559,10 @@ const _fetchTicketAndPerDiem = async function (decryptedData, cookies) {
 
     const response = await axios.request(config);
     //--Make ticket costs zero for private and military
-    if(decryptedData.hasOwnProperty("flightType") && (decryptedData.flightType === "2" || decryptedData.flightType === "3")) {
+    if (
+      decryptedData.hasOwnProperty("flightType") &&
+      (decryptedData.flightType === "2" || decryptedData.flightType === "3")
+    ) {
       response.data["ticketAverage"] = 0;
     }
     //--Make ticket costs zero  for private and military
@@ -687,10 +690,10 @@ const _updateItineraryBatch = async function (body, cookies) {
                   cust_ticket_average: oItineraryFound.ticketAverage,
                 };
                 memberUpdateRequest.cust_itinerary_details_child.results.push(
-                  itineraryUpdateRequest
+                  itineraryUpdateRequest,
                 );
               }
-            }
+            },
           );
 
           missionUpdateRequest.cust_Members.results.push(memberUpdateRequest);
@@ -787,7 +790,7 @@ const _updateItinerary = async function (decryptedData, cookies) {
     };
     const memberFetchResponse = await axios.get(
       memberFetchUrl,
-      memberFetchConfig
+      memberFetchConfig,
     );
     if (memberFetchResponse && memberFetchResponse.data) {
       const memberUpdateRequest = memberFetchResponse.data.d.results[0];
@@ -808,7 +811,7 @@ const _updateItinerary = async function (decryptedData, cookies) {
       };
       const itineraryFetchResponse = await axios.get(
         itineraryFetchUrl,
-        itineraryFetchConfig
+        itineraryFetchConfig,
       );
       if (itineraryFetchResponse && itineraryFetchResponse.data) {
         const itineraryUpdateRequest = itineraryFetchResponse.data.d.results[0];
@@ -839,7 +842,7 @@ const _updateItinerary = async function (decryptedData, cookies) {
           data: JSON.stringify(itineraryUpdateRequest),
         };
         const itineraryUpdateResponse = await axios.request(
-          itineraryUpdateConfig
+          itineraryUpdateConfig,
         );
         if (itineraryUpdateResponse) {
           memberUpdateRequest.__metadata.uri = cookies.SF.URL + "cust_Members";
@@ -876,7 +879,7 @@ const _updateItinerary = async function (decryptedData, cookies) {
             };
             const missionFetchResponse = await axios.get(
               missionFetchUrl,
-              missionFetchConfig
+              missionFetchConfig,
             );
 
             if (missionFetchResponse && missionFetchResponse.data) {
@@ -905,9 +908,8 @@ const _updateItinerary = async function (decryptedData, cookies) {
                 },
                 data: JSON.stringify(missionUpdateRequest),
               };
-              const missionUpdateResponse = await axios.request(
-                missionUpdateConfig
-              );
+              const missionUpdateResponse =
+                await axios.request(missionUpdateConfig);
               if (missionUpdateResponse && missionUpdateResponse.data) {
                 const sectorFetchUrl =
                   cookies.SF.URL +
@@ -921,7 +923,7 @@ const _updateItinerary = async function (decryptedData, cookies) {
                 };
                 const sectorFetchResponse = await axios.get(
                   sectorFetchUrl,
-                  sectorFetchConfig
+                  sectorFetchConfig,
                 );
 
                 if (sectorFetchResponse && sectorFetchResponse.data) {
@@ -946,9 +948,8 @@ const _updateItinerary = async function (decryptedData, cookies) {
                     },
                     data: JSON.stringify(sectorUpdateRequest),
                   };
-                  const sectorUpdateResponse = await axios.request(
-                    sectorUpdateConfig
-                  );
+                  const sectorUpdateResponse =
+                    await axios.request(sectorUpdateConfig);
                   if (sectorUpdateResponse && sectorUpdateResponse.data) {
                     var auditLogUrl =
                       cookies.SF.URL + "cust_Audit_Log?$format=json";
@@ -1158,7 +1159,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
     };
 
     const postClaimAttachmentResponse = await axios.request(
-      postClaimAttachmentConfig
+      postClaimAttachmentConfig,
     );
 
     if (
@@ -1180,7 +1181,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
 
       const getApproveGroupResponse = await axios.get(
         getApproveGroupUrl,
-        getApproveGroupConfig
+        getApproveGroupConfig,
       );
 
       if (
@@ -1207,7 +1208,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
 
         const checkClaimResponse = await axios.get(
           checkClaimUrl,
-          checkClaimConfig
+          checkClaimConfig,
         );
 
         const postClaimUrl = cookies.SF.URL + "upsert?$format=json";
@@ -1315,7 +1316,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
           };
           const memberFetchResponse = await axios.get(
             memberFetchUrl,
-            memberFetchConfig
+            memberFetchConfig,
           );
           if (memberFetchResponse && memberFetchResponse.data) {
             const memberUpdateRequest = memberFetchResponse.data.d.results[0];
@@ -1338,7 +1339,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
 
               var itineraryFetchResponse = await axios.get(
                 itineraryFetchUrl,
-                itineraryFetchConfig
+                itineraryFetchConfig,
               );
               if (itineraryFetchResponse && itineraryFetchResponse.data) {
                 var itineraryUpdateRequest =
@@ -1407,7 +1408,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
           };
           const missionFetchResponse = await axios.get(
             missionFetchUrl,
-            missionFetchConfig
+            missionFetchConfig,
           );
 
           if (missionFetchResponse && missionFetchResponse.data) {
@@ -1434,9 +1435,8 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
               data: JSON.stringify(missionUpdateRequest),
             };
 
-            const missionUpdateResponse = await axios.request(
-              missionUpdateConfig
-            );
+            const missionUpdateResponse =
+              await axios.request(missionUpdateConfig);
             if (missionUpdateResponse && missionUpdateResponse.data) {
               const sectorFetchUrl =
                 cookies.SF.URL +
@@ -1450,7 +1450,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
               };
               const sectorFetchResponse = await axios.get(
                 sectorFetchUrl,
-                sectorFetchConfig
+                sectorFetchConfig,
               );
 
               if (sectorFetchResponse && sectorFetchResponse.data) {
@@ -1473,9 +1473,8 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
                   },
                   data: JSON.stringify(sectorUpdateRequest),
                 };
-                const sectorUpdateResponse = await axios.request(
-                  sectorUpdateConfig
-                );
+                const sectorUpdateResponse =
+                  await axios.request(sectorUpdateConfig);
                 if (sectorUpdateResponse && sectorUpdateResponse.data) {
                   try {
                     const auditLogUrl =
@@ -1526,7 +1525,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
 
                     const getApproverGroupMembersResponse = await axios.get(
                       getApproverGroupMembersUrl,
-                      getApproverGroupMembersConfig
+                      getApproverGroupMembersConfig,
                     );
                     if (
                       getApproverGroupMembersResponse &&
@@ -1541,7 +1540,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
                         m++
                       ) {
                         groupMembers.push(
-                          getApproverGroupMembersResponse.data.d[m].userId
+                          getApproverGroupMembersResponse.data.d[m].userId,
                         );
                       }
                       if (groupMembers.length > 0) {
@@ -1563,7 +1562,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
                         const getApproverGroupMembersInfoResponse =
                           await axios.get(
                             getApproverGroupMembersInfoUrl,
-                            getApproverGroupMembersInfoConfig
+                            getApproverGroupMembersInfoConfig,
                           );
 
                         if (
@@ -1584,7 +1583,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
                             recipientsEmail.push(
                               getApproverGroupMembersInfoResponse.data.d
                                 .results[r].personNav.emailNav.results[0]
-                                .emailAddress
+                                .emailAddress,
                             );
                           }
 
@@ -1631,7 +1630,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
                           await _sendNotification(
                             notificationPayload,
                             cookies,
-                            "sendClaimNotification"
+                            "sendClaimNotification",
                           );
                           return true;
                         }
@@ -1657,7 +1656,9 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
 const _claimMission = async function (decryptedData, cookies) {
   try {
     const auth = "Basic " + cookies.SF.basicAuth;
-    const SFAuth = Buffer.from(cookies.SF.basicAuth, "base64").toString("utf-8");
+    const SFAuth = Buffer.from(cookies.SF.basicAuth, "base64").toString(
+      "utf-8",
+    );
     const SFAuthUsername = SFAuth.split(":")[0].split("@")[0];
 
     const postClaimAttachmentUrl = cookies.SF.URL + "upsert?$format=json";
@@ -1685,7 +1686,7 @@ const _claimMission = async function (decryptedData, cookies) {
     };
 
     const postClaimAttachmentResponse = await axios.request(
-      postClaimAttachmentConfig
+      postClaimAttachmentConfig,
     );
 
     if (
@@ -1797,9 +1798,10 @@ const _claimMission = async function (decryptedData, cookies) {
       } else {
         claimUpdateHeader["__metadata"] = {
           uri: cookies.SF.URL + "cust_BenefitTravelClaim",
-          type: "SFOData.cust_BenefitTravelClaim"
+          type: "SFOData.cust_BenefitTravelClaim",
         };
-        claimUpdateHeader["externalName"] = "The claim creation in mission " + decryptedData.missionId;
+        claimUpdateHeader["externalName"] =
+          "The claim creation in mission " + decryptedData.missionId;
         claimUpdateHeader["mdfSystemEffectiveStartDate"] = decryptedData.date;
       }
       let claimUpdateRequest = {
@@ -1816,10 +1818,10 @@ const _claimMission = async function (decryptedData, cookies) {
         cust_Pending_with: approveGroup,
         cust_Claim_Parked: decryptedData.claimParked,
         cust_Description:
-        "The claim creation for " +
-        decryptedData.employeeId +
-        " on mission " +
-        decryptedData.missionId,
+          "The claim creation for " +
+          decryptedData.employeeId +
+          " on mission " +
+          decryptedData.missionId,
         cust_attachmentNav: {
           __metadata: {
             uri: cookies.SF.URL + "Attachment(" + attachmentId + ")",
@@ -1860,7 +1862,7 @@ const _claimMission = async function (decryptedData, cookies) {
           for (var i = 0; i < decryptedData.itinerary.length; i++) {
             const oItineraryFound = _.find(
               oMember.cust_itinerary_details_child.results,
-              ["cust_city", decryptedData.itinerary[i].itineraryCity]
+              ["cust_city", decryptedData.itinerary[i].itineraryCity],
             );
 
             if (oItineraryFound) {
@@ -1875,7 +1877,7 @@ const _claimMission = async function (decryptedData, cookies) {
                 decryptedData.itinerary[i].itinerayPerDiem;
 
               memberUpdateRequest.cust_itinerary_details_child.results.push(
-                itineraryUpdateRequest
+                itineraryUpdateRequest,
               );
             }
           }
@@ -1889,7 +1891,7 @@ const _claimMission = async function (decryptedData, cookies) {
       if (sectorUpdateRequest) {
         sectorUpdateRequest["__metadata"] = {
           uri: cookies.SF.URL + "cust_SectorBudget",
-          type: "SFOData.cust_SectorBudget"
+          type: "SFOData.cust_SectorBudget",
         };
         sectorUpdateRequest["cust_Available_budget"] =
           decryptedData.sectorAvailableBudget;
@@ -1906,7 +1908,7 @@ const _claimMission = async function (decryptedData, cookies) {
       const auditLogUpdateRequest = {
         __metadata: {
           uri: cookies.SF.URL + "cust_Audit_Log",
-          type: "SFOData.cust_Audit_Log"
+          type: "SFOData.cust_Audit_Log",
         },
         externalCode: "1234",
         cust_Timestamp: decryptedData.date,
@@ -1983,8 +1985,12 @@ const _claimMission = async function (decryptedData, cookies) {
           postBatchResult[0].hasOwnProperty("error"))
       ) {
         if (postBatchResult[0] && postBatchResult[0].hasOwnProperty("error")) {
-          console.log("Post batch error:" + postBatchResult[0].error.message.value);
-          throw Error("Post batch error:" + postBatchResult[0].error.message.value);
+          console.log(
+            "Post batch error:" + postBatchResult[0].error.message.value,
+          );
+          throw Error(
+            "Post batch error:" + postBatchResult[0].error.message.value,
+          );
         }
         throw Error("Error during batch post");
       }
@@ -2006,7 +2012,7 @@ const _claimMission = async function (decryptedData, cookies) {
 
         const getApproverGroupMembersResponse = await axios.get(
           getApproverGroupMembersUrl,
-          getApproverGroupMembersConfig
+          getApproverGroupMembersConfig,
         );
         if (
           getApproverGroupMembersResponse &&
@@ -2039,7 +2045,7 @@ const _claimMission = async function (decryptedData, cookies) {
 
             const getApproverGroupMembersInfoResponse = await axios.get(
               getApproverGroupMembersInfoUrl,
-              getApproverGroupMembersInfoConfig
+              getApproverGroupMembersInfoConfig,
             );
 
             if (
@@ -2056,7 +2062,7 @@ const _claimMission = async function (decryptedData, cookies) {
               ) {
                 recipientsEmail.push(
                   getApproverGroupMembersInfoResponse.data.d.results[r]
-                    .personNav.emailNav.results[0].emailAddress
+                    .personNav.emailNav.results[0].emailAddress,
                 );
               }
 
@@ -2099,7 +2105,7 @@ const _claimMission = async function (decryptedData, cookies) {
               await _sendNotification(
                 notificationPayload,
                 cookies,
-                "sendClaimNotification"
+                "sendClaimNotification",
               );
               return true;
             }
@@ -2133,7 +2139,7 @@ const _fetchSectorInfo = async function (decryptedData, cookies) {
     };
     const sectorFetchResponse = await axios.get(
       sectorFetchUrl,
-      sectorFetchConfig
+      sectorFetchConfig,
     );
     return sectorFetchResponse.data;
   } catch (error) {
@@ -2175,7 +2181,7 @@ const _fetchClaim = async function (decryptedData, cookies) {
     };
     const recoveryFetchResponse = await axios.get(
       recoveryFetchUrl,
-      recoveryFetchConfig
+      recoveryFetchConfig,
     );
 
     return {
@@ -2437,7 +2443,7 @@ const _approveRejectClaim = async function (decryptedData, cookies) {
           };
           const memberFetchResponse = await axios.get(
             memberFetchUrl,
-            memberFetchConfig
+            memberFetchConfig,
           );
           if (memberFetchResponse && memberFetchResponse.data) {
             const memberUpdateRequest = memberFetchResponse.data.d.results[0];
@@ -2473,7 +2479,7 @@ const _approveRejectClaim = async function (decryptedData, cookies) {
         };
         const sectorFetchResponse = await axios.get(
           sectorFetchUrl,
-          sectorFetchConfig
+          sectorFetchConfig,
         );
         if (sectorFetchResponse && sectorFetchResponse.data) {
           const sectorUpdateRequest = sectorFetchResponse.data.d.results[0];
@@ -2560,7 +2566,7 @@ const _approveRejectClaim = async function (decryptedData, cookies) {
 
                 const getApproverGroupMembersInfoResponse = await axios.get(
                   getApproverGroupMembersInfoUrl,
-                  getApproverGroupMembersInfoConfig
+                  getApproverGroupMembersInfoConfig,
                 );
 
                 if (
@@ -2659,7 +2665,7 @@ const _approveRejectClaim = async function (decryptedData, cookies) {
                   await _sendNotification(
                     notificationPayload,
                     cookies,
-                    "sendClaimNotification"
+                    "sendClaimNotification",
                   );
                   return true;
                 }
@@ -2726,7 +2732,7 @@ const _advanceMission = async function (decryptedData, cookies) {
 
     const getApproveGroupResponse = await axios.get(
       getApproveGroupUrl,
-      getApproveGroupConfig
+      getApproveGroupConfig,
     );
 
     if (
@@ -2752,7 +2758,7 @@ const _advanceMission = async function (decryptedData, cookies) {
 
       const checkAdvanceResponse = await axios.get(
         checkAdvanceUrl,
-        checkAdvanceConfig
+        checkAdvanceConfig,
       );
 
       const postAdvanceUrl = cookies.SF.URL + "upsert?$format=json";
@@ -2843,7 +2849,7 @@ const _advanceMission = async function (decryptedData, cookies) {
         };
         const memberFetchResponse = await axios.get(
           memberFetchUrl,
-          memberFetchConfig
+          memberFetchConfig,
         );
         if (memberFetchResponse && memberFetchResponse.data) {
           const memberUpdateRequest = memberFetchResponse.data.d.results[0];
@@ -2915,7 +2921,7 @@ const _advanceMission = async function (decryptedData, cookies) {
 
       const getApproverGroupMembersResponse = await axios.get(
         getApproverGroupMembersUrl,
-        getApproverGroupMembersConfig
+        getApproverGroupMembersConfig,
       );
       if (
         getApproverGroupMembersResponse &&
@@ -2948,7 +2954,7 @@ const _advanceMission = async function (decryptedData, cookies) {
 
           const getApproverGroupMembersInfoResponse = await axios.get(
             getApproverGroupMembersInfoUrl,
-            getApproverGroupMembersInfoConfig
+            getApproverGroupMembersInfoConfig,
           );
 
           if (
@@ -2965,7 +2971,7 @@ const _advanceMission = async function (decryptedData, cookies) {
             ) {
               recipientsEmail.push(
                 getApproverGroupMembersInfoResponse.data.d.results[r].personNav
-                  .emailNav.results[0].emailAddress
+                  .emailNav.results[0].emailAddress,
               );
             }
 
@@ -3008,7 +3014,7 @@ const _advanceMission = async function (decryptedData, cookies) {
             await _sendNotification(
               notificationPayload,
               cookies,
-              "sendAdvanceNotification"
+              "sendAdvanceNotification",
             );
           }
         }
@@ -3043,7 +3049,7 @@ const _fetchAdvance = async function (decryptedData, cookies) {
 
     const checkAdvanceResponse = await axios.get(
       checkAdvanceUrl,
-      checkAdvanceConfig
+      checkAdvanceConfig,
     );
 
     return checkAdvanceResponse.data;
@@ -3088,7 +3094,7 @@ const _fetchAdvances = async function (decryptedData, cookies) {
 
       const getAdvanceResponse = await axios.get(
         getAdvanceUrl,
-        getAdvanceConfig
+        getAdvanceConfig,
       );
 
       return getAdvanceResponse.data;
@@ -3248,7 +3254,7 @@ const _approveRejectAdvance = async function (decryptedData, cookies) {
           };
           const memberFetchResponse = await axios.get(
             memberFetchUrl,
-            memberFetchConfig
+            memberFetchConfig,
           );
           if (memberFetchResponse && memberFetchResponse.data) {
             const memberUpdateRequest = memberFetchResponse.data.d.results[0];
@@ -3332,7 +3338,7 @@ const _approveRejectAdvance = async function (decryptedData, cookies) {
 
             const getApproverGroupMembersInfoResponse = await axios.get(
               getApproverGroupMembersInfoUrl,
-              getApproverGroupMembersInfoConfig
+              getApproverGroupMembersInfoConfig,
             );
 
             if (
@@ -3426,7 +3432,7 @@ const _approveRejectAdvance = async function (decryptedData, cookies) {
               await _sendNotification(
                 notificationPayload,
                 cookies,
-                "sendAdvanceNotification"
+                "sendAdvanceNotification",
               );
               return true;
             }
@@ -3752,7 +3758,7 @@ const _cancelMission = async function (decryptedData, cookies) {
       try {
         const deleteS4Document = await _deleteS4Document(
           { missionId: decryptedData.missionId },
-          cookies
+          cookies,
         );
       } catch (e) {
         console.log(e);
@@ -3783,7 +3789,7 @@ const _cancelMission_v1 = async function (decryptedData, cookies) {
     };
     const missionFetchResponse = await axios.get(
       missionFetchUrl,
-      missionFetchConfig
+      missionFetchConfig,
     );
 
     if (missionFetchResponse && missionFetchResponse.data) {
@@ -3801,7 +3807,7 @@ const _cancelMission_v1 = async function (decryptedData, cookies) {
       };
       const sectorFetchResponse = await axios.get(
         sectorFetchUrl,
-        sectorFetchConfig
+        sectorFetchConfig,
       );
 
       if (
@@ -3923,7 +3929,7 @@ const _approveRejectCancel = async function (decryptedData, cookies) {
     };
     const missionFetchResponse = await axios.get(
       missionFetchUrl,
-      missionFetchConfig
+      missionFetchConfig,
     );
 
     if (missionFetchResponse && missionFetchResponse.data) {
@@ -3941,7 +3947,7 @@ const _approveRejectCancel = async function (decryptedData, cookies) {
       };
       const sectorFetchResponse = await axios.get(
         sectorFetchUrl,
-        sectorFetchConfig
+        sectorFetchConfig,
       );
 
       if (
@@ -3963,7 +3969,7 @@ const _approveRejectCancel = async function (decryptedData, cookies) {
 
         const getApproveGroupResponse = await axios.get(
           getApproveGroupUrl,
-          getApproveGroupConfig
+          getApproveGroupConfig,
         );
 
         var approveGroup = null;
@@ -4278,10 +4284,10 @@ const _updateMissionPayrollBatch = async function (body, cookies) {
                   cust_city: oItineraryFound.city,
                 };
                 memberUpdateRequest.cust_itinerary_details_child.results.push(
-                  itineraryUpdateRequest
+                  itineraryUpdateRequest,
                 );
               }
-            }
+            },
           );
 
           missionUpdateRequest.cust_Members.results.push(memberUpdateRequest);
@@ -4375,7 +4381,7 @@ const _updateMissionPayroll = async function (body, cookies) {
     };
     const sectorFetchResponse = await axios.get(
       sectorFetchUrl,
-      sectorFetchConfig
+      sectorFetchConfig,
     );
 
     if (sectorFetchResponse && sectorFetchResponse.data) {
@@ -4425,7 +4431,7 @@ const _updateMissionPayroll = async function (body, cookies) {
     };
     const missionFetchResponse = await axios.get(
       missionFetchUrl,
-      missionFetchConfig
+      missionFetchConfig,
     );
 
     if (missionFetchResponse && missionFetchResponse.data) {
@@ -4484,10 +4490,10 @@ const _updateMissionPayroll = async function (body, cookies) {
                   cust_city: oItineraryFound.city,
                 };
                 memberUpdateRequest.cust_itinerary_details_child.results.push(
-                  itineraryUpdateRequest
+                  itineraryUpdateRequest,
                 );
               }
-            }
+            },
           );
 
           missionUpdateRequest.cust_Members.results.push(memberUpdateRequest);
@@ -4514,7 +4520,7 @@ const _updateMissionPayroll = async function (body, cookies) {
 
     throw new CustomHttpError(
       500,
-      "Update failed. Mission data could not be fetched. Please try again later."
+      "Update failed. Mission data could not be fetched. Please try again later.",
     );
   } catch (e) {
     console.log("Update mission by Payroll Error:" + e);
@@ -4685,7 +4691,7 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
               Authorization: auth,
               "Content-Type": `multipart/mixed; boundary=${uploadBoundary}`,
             },
-          }
+          },
         );
 
         //Extract and handle each individual response from the batch
@@ -4719,7 +4725,7 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
           (oItinerary, i) => {
             let sItineraryUrl = oItinerary.__metadata.uri;
             let sItineraryIndex = sItineraryUrl.indexOf(
-              "/cust_itinerary_details_child("
+              "/cust_itinerary_details_child(",
             );
             if (sItineraryIndex !== -1) {
               let sItineraryKey = sItineraryUrl.substring(sItineraryIndex + 1);
@@ -4730,7 +4736,7 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
                 `Content-Transfer-Encoding: binary\r\n\r\n` +
                 `DELETE ${sItineraryKey} HTTP/1.1\r\n\r\n`;
             }
-          }
+          },
         );
 
         if (oMember.cust_AttachmentNav) {
@@ -4767,13 +4773,13 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
             uri: cookies.SF.URL + "cust_Members",
           },
           cust_Employee_Total_Expense: _convertFloat(
-            oMember.employeeTotalExpense
+            oMember.employeeTotalExpense,
           ),
           cust_Employee_Total_Perdiem: _convertFloat(
-            oMember.employeeTotalPerdiem
+            oMember.employeeTotalPerdiem,
           ),
           cust_Employee_Total_Ticket: _convertFloat(
-            oMember.employeeTotalTicket
+            oMember.employeeTotalTicket,
           ),
           cust_Department: oMember.department,
           cust_Employee_ID: oMember.userID,
@@ -4831,7 +4837,7 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
             cust_city: oItinerary.city,
           };
           memberUpdateRequest.cust_itinerary_details_child.results.push(
-            itineraryUpdateRequest
+            itineraryUpdateRequest,
           );
         });
 
@@ -4915,7 +4921,7 @@ const _updateMission = async function (body, userInfo, cookies) {
     };
     const sectorFetchResponse = await axios.get(
       sectorFetchUrl,
-      sectorFetchConfig
+      sectorFetchConfig,
     );
 
     if (sectorFetchResponse && sectorFetchResponse.data) {
@@ -4951,7 +4957,7 @@ const _updateMission = async function (body, userInfo, cookies) {
     };
     const missionFetchResponse = await axios.get(
       missionFetchUrl,
-      missionFetchConfig
+      missionFetchConfig,
     );
 
     if (missionFetchResponse && missionFetchResponse.data) {
@@ -5008,7 +5014,7 @@ const _updateMission = async function (body, userInfo, cookies) {
         };
         const memberFetchResponse = await axios.get(
           memberFetchUrl,
-          memberFetchConfig
+          memberFetchConfig,
         );
         if (
           memberFetchResponse &&
@@ -5060,7 +5066,7 @@ const _updateMission = async function (body, userInfo, cookies) {
               };
 
               var postMemberAttachmentResponse = await axios.request(
-                postMemberAttachmentConfig
+                postMemberAttachmentConfig,
               );
 
               if (
@@ -5166,7 +5172,7 @@ const _updateMission = async function (body, userInfo, cookies) {
               };
               var memberUpdateFetchResponse = await axios.get(
                 memberUpdateFetchUrl,
-                memberUpdateFetchConfig
+                memberUpdateFetchConfig,
               );
 
               if (
@@ -5246,7 +5252,7 @@ const _rejectMission = async function (decryptedData, cookies) {
     };
     const missionFetchResponse = await axios.get(
       missionFetchUrl,
-      missionFetchConfig
+      missionFetchConfig,
     );
 
     if (missionFetchResponse && missionFetchResponse.data) {
@@ -5264,7 +5270,7 @@ const _rejectMission = async function (decryptedData, cookies) {
       };
       const sectorFetchResponse = await axios.get(
         sectorFetchUrl,
-        sectorFetchConfig
+        sectorFetchConfig,
       );
 
       if (
@@ -5370,7 +5376,7 @@ const _getManagerOfHeadOfSector = async function (body, cookies) {
     };
     const managerFetchResponse = await axios.get(
       managerFetchUrl,
-      managerFetchConfig
+      managerFetchConfig,
     );
 
     if (managerFetchResponse && managerFetchResponse.data) {
@@ -5383,7 +5389,7 @@ const _getManagerOfHeadOfSector = async function (body, cookies) {
       };
       const sectorFetchResponse = await axios.get(
         sectorFetchUrl,
-        sectorFetchConfig
+        sectorFetchConfig,
       );
 
       if (
@@ -5408,7 +5414,7 @@ const _getManagerOfHeadOfSector = async function (body, cookies) {
     }
     throw new CustomHttpError(
       500,
-      "Manager could not be found. Please contact your system administrator."
+      "Manager could not be found. Please contact your system administrator.",
     );
   } catch (error) {
     throw new CustomHttpError(500, "Something went wrong. Please try again");
@@ -5432,7 +5438,7 @@ const _getRecoveryAmount = async function (body, cookies) {
     };
     const recoveryFetchResponse = await axios.get(
       recoveryFetchUrl,
-      recoveryFetchConfig
+      recoveryFetchConfig,
     );
 
     if (recoveryFetchResponse && recoveryFetchResponse.data) {
@@ -5586,7 +5592,7 @@ const _fetchS4Metadata = async function (body, cookies) {
           Accept:
             "application/json,text/html,application/xhtml+xml,application/xml",
         },
-      }
+      },
     );
 
     console.log("S/4HANA Response:", JSON.stringify(response.data, null, 2));
@@ -5604,7 +5610,7 @@ const _fetchS4Metadata_v1 = async function (body, cookies) {
     const connJWTToken = await _fetchJwtToken(
       conn_service.token_service_url,
       conn_service.clientid,
-      conn_service.clientsecret
+      conn_service.clientsecret,
     );
 
     const response = await axios({
@@ -5669,7 +5675,7 @@ const _checkIsAdmin = async function (body, cookies) {
 
     const getAdminGroupResponse = await axios.get(
       getAdminGroupUrl,
-      getAdminGroupConfig
+      getAdminGroupConfig,
     );
 
     if (getAdminGroupResponse && getAdminGroupResponse.data) {
@@ -5922,11 +5928,11 @@ const _getMastersBatch = async function (body, cookies) {
           pickList.d.results[0]["__metadata"]["type"] === "SFOData.Picklist"
         ) {
           const oPickListOptions = _.clone(
-            pickList.d.results[0].picklistOptions
+            pickList.d.results[0].picklistOptions,
           );
           oPickListOptions.results.forEach((o) => {
             if (o.status !== "ACTIVE") return;
-            
+
             let oLabelEn = _.find(o.picklistLabels.results, [
               "locale",
               "en_US",
@@ -6267,10 +6273,22 @@ const _getAdminMissionReport = async function (body, cookies) {
           sectorCode: m0.cust_Sector,
           decreeType: _readValue("decreeType", m0.cust_Decree_Type),
           externalEntity: _readValue("externalEntity", m0.cust_ExternalEntity),
-          externalEntity2: _readValue("externalEntity", m0.cust_ExternalEntity2),
-          externalEntity3: _readValue("externalEntity", m0.cust_ExternalEntity3),
-          externalEntity4: _readValue("externalEntity", m0.cust_ExternalEntity4),
-          externalEntity5: _readValue("externalEntity", m0.cust_ExternalEntity5),
+          externalEntity2: _readValue(
+            "externalEntity",
+            m0.cust_ExternalEntity2,
+          ),
+          externalEntity3: _readValue(
+            "externalEntity",
+            m0.cust_ExternalEntity3,
+          ),
+          externalEntity4: _readValue(
+            "externalEntity",
+            m0.cust_ExternalEntity4,
+          ),
+          externalEntity5: _readValue(
+            "externalEntity",
+            m0.cust_ExternalEntity5,
+          ),
           hospitality: _readValue("hospitality", m0.cust_Hospitality_Type),
           flightType: _readValue("flightType", m0.cust_Flight_type),
           budgetAvailable: _formatCurrency(m0.cust_Budget_Available),
@@ -6294,17 +6312,17 @@ const _getAdminMissionReport = async function (body, cookies) {
             resultRow[`employeeName`] = m1.cust_First_Name;
             resultRow[`employeeTitle`] = m1.cust_Title_Of_Employee;
             resultRow[`employeeTotalExpense`] = _formatCurrency(
-              m1.cust_Employee_Total_Expense
+              m1.cust_Employee_Total_Expense,
             );
             resultRow[`employeeTotalPerdiem`] = _formatCurrency(
-              m1.cust_Employee_Total_Perdiem
+              m1.cust_Employee_Total_Perdiem,
             );
             resultRow[`employeeTotalTicket`] = _formatCurrency(
-              m1.cust_Employee_Total_Ticket
+              m1.cust_Employee_Total_Ticket,
             );
             resultRow[`employeeMultipleCity`] = _readValue(
               "multicity",
-              m1.cust_Multiple_Cities
+              m1.cust_Multiple_Cities,
             );
             let iCity = 0;
             if (
@@ -6314,25 +6332,25 @@ const _getAdminMissionReport = async function (body, cookies) {
               m1.cust_itinerary_details_child.results.forEach((i0, j) => {
                 resultRow[`city_${j}`] = _readValue("city", i0.cust_city);
                 resultRow[`cityStartDate_${j}`] = _formatDate(
-                  i0.cust_start_date
+                  i0.cust_start_date,
                 );
                 resultRow[`cityEndDate_${j}`] = _formatDate(i0.cust_end_date);
                 resultRow[`cityHospitality_${j}`] = _readValue(
                   "hospitality",
-                  i0.cust_hospitality_default
+                  i0.cust_hospitality_default,
                 );
                 resultRow[`cityActualCost_${j}`] = _formatCurrency(
-                  i0.cust_Ticket_Actual_Cost
+                  i0.cust_Ticket_Actual_Cost,
                 );
                 resultRow[`cityTicketAverage_${j}`] = _formatCurrency(
-                  i0.cust_ticket_average
+                  i0.cust_ticket_average,
                 );
                 resultRow[`cityPerdiem_${j}`] = _formatCurrency(
-                  i0.cust_perdiem_per_city
+                  i0.cust_perdiem_per_city,
                 );
                 resultRow[`cityHeadOfMission_${j}`] = _readValue(
                   "headOfMission",
-                  i0.cust_head_of_mission
+                  i0.cust_head_of_mission,
                 );
                 iCity++;
               });
@@ -6647,13 +6665,13 @@ ar.beforeRequestHandler.use("/getEnvironmentInfo", async (req, res, next) => {
     const cfDestination = sDestinationName;
     const fetchSFDestinationInfo = await _fetchDestinationInfo(
       cfDestination,
-      fetchCFAuthToken
+      fetchCFAuthToken,
     );
 
     const cpiDestination = sCPIDestinationName;
     const fetchCPIDestinationInfo = await _fetchDestinationInfo(
       cpiDestination,
-      fetchCFAuthToken
+      fetchCFAuthToken,
     );
 
     // const s4Destination = sS4DestinationName;
@@ -6663,7 +6681,7 @@ ar.beforeRequestHandler.use("/getEnvironmentInfo", async (req, res, next) => {
     // );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(response))
+      Buffer.from(JSON.stringify(response)),
     );
 
     const encryptedURLs = await _fetchEncryptedData(
@@ -6675,14 +6693,14 @@ ar.beforeRequestHandler.use("/getEnvironmentInfo", async (req, res, next) => {
           // S4LocationId:
           //   fetchS4DestinationInfo.destinationConfiguration
           //     .CloudConnectorLocationId || "",
-        })
-      )
+        }),
+      ),
     );
 
     const SFBasic = Buffer.from(
       fetchSFDestinationInfo.destinationConfiguration.User +
         ":" +
-        fetchSFDestinationInfo.destinationConfiguration.Password
+        fetchSFDestinationInfo.destinationConfiguration.Password,
     ).toString("base64");
 
     // const S4Basic = Buffer.from(
@@ -6723,7 +6741,7 @@ ar.beforeRequestHandler.use("/getEnvironmentInfo", async (req, res, next) => {
       "Travel mission (/getEnvironmentInfo) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -6737,11 +6755,11 @@ ar.beforeRequestHandler.use("/getLoggedinInfo", async (req, res, next) => {
     const decryptedData = await _fetchDecryptedData(req.body.data);
     const fetchLoggedinInfo = await _fetchLoggedinInfo(
       JSON.parse(decryptedData),
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(fetchLoggedinInfo))
+      Buffer.from(JSON.stringify(fetchLoggedinInfo)),
     );
 
     res.end(encrypted);
@@ -6759,18 +6777,18 @@ ar.beforeRequestHandler.use("/getLoggedinInfo", async (req, res, next) => {
 
           res.setHeader(
             "Set-Cookie",
-            "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly"
+            "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly",
           );
 
           const reqCookies = await _fetchCookies(req);
           const decryptedData = await _fetchDecryptedData(req.body.data);
           const fetchLoggedinInfo = await _fetchLoggedinInfo(
             JSON.parse(decryptedData),
-            reqCookies
+            reqCookies,
           );
 
           const encrypted = await _fetchEncryptedData(
-            Buffer.from(JSON.stringify(fetchLoggedinInfo))
+            Buffer.from(JSON.stringify(fetchLoggedinInfo)),
           );
 
           res.end(encrypted);
@@ -6796,7 +6814,7 @@ ar.beforeRequestHandler.use("/getLoggedinInfo", async (req, res, next) => {
             "Travel mission (/getLoggedinInfo) -> status / " +
               errorObj.status +
               " & message / " +
-              errorObj.message
+              errorObj.message,
           );
 
           res.statusCode = errorObj.status;
@@ -6820,7 +6838,7 @@ ar.beforeRequestHandler.use("/getLoggedinInfo", async (req, res, next) => {
       "Travel mission (/getLoggedinInfo) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -6860,7 +6878,7 @@ ar.beforeRequestHandler.use("/getMasters", async (req, res, next) => {
     };
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(mastersObj))
+      Buffer.from(JSON.stringify(mastersObj)),
     );
 
     res.end(encrypted);
@@ -6886,7 +6904,7 @@ ar.beforeRequestHandler.use("/getMasters", async (req, res, next) => {
       "Travel mission (/getMasters) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -6901,7 +6919,7 @@ ar.beforeRequestHandler.use(
       const reqCookies = await _fetchCookies(req);
       const missionBudgetInfo = await _fetchMissionBudgetInfo(reqCookies);
       const encrypted = await _fetchEncryptedData(
-        Buffer.from(JSON.stringify(missionBudgetInfo))
+        Buffer.from(JSON.stringify(missionBudgetInfo)),
       );
 
       res.end(encrypted);
@@ -6927,13 +6945,13 @@ ar.beforeRequestHandler.use(
         "Travel mission (/findMissionBudgetInfo) -> status / " +
           errorObj.status +
           " & message / " +
-          errorObj.message
+          errorObj.message,
       );
 
       res.statusCode = errorObj.status;
       res.end(Buffer.from(JSON.stringify(errorObj)));
     }
-  }
+  },
 );
 
 ar.beforeRequestHandler.use("/findMemberDetails", async (req, res, next) => {
@@ -6941,7 +6959,7 @@ ar.beforeRequestHandler.use("/findMemberDetails", async (req, res, next) => {
     const reqCookies = await _fetchCookies(req);
     const memberDetails = await _fetchMemberDetails(req.body.data, reqCookies);
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(memberDetails))
+      Buffer.from(JSON.stringify(memberDetails)),
     );
 
     res.end(encrypted);
@@ -6967,7 +6985,7 @@ ar.beforeRequestHandler.use("/findMemberDetails", async (req, res, next) => {
       "Travel mission (/findMemberDetails) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -6983,11 +7001,11 @@ ar.beforeRequestHandler.use("/getPhoto", async (req, res, next) => {
 
     const photoDetails = await _fetchPhoto(
       JSON.parse(decryptedData).users,
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(photoDetails))
+      Buffer.from(JSON.stringify(photoDetails)),
     );
 
     res.end(encrypted);
@@ -7013,7 +7031,7 @@ ar.beforeRequestHandler.use("/getPhoto", async (req, res, next) => {
       "Travel mission (/getPhoto) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -7029,11 +7047,11 @@ ar.beforeRequestHandler.use("/getPhotoForMember", async (req, res, next) => {
 
     const photoDetails = await _fetchPhotoForMember(
       JSON.parse(decryptedData).users,
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(photoDetails))
+      Buffer.from(JSON.stringify(photoDetails)),
     );
 
     res.end(encrypted);
@@ -7059,7 +7077,7 @@ ar.beforeRequestHandler.use("/getPhotoForMember", async (req, res, next) => {
       "Travel mission (/getPhotoForMember) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -7077,11 +7095,11 @@ ar.beforeRequestHandler.use(
 
       const ticketAndPerDiemDetails = await _fetchTicketAndPerDiem(
         JSON.parse(decryptedData).params,
-        reqCookies
+        reqCookies,
       );
 
       const encrypted = await _fetchEncryptedData(
-        Buffer.from(JSON.stringify(ticketAndPerDiemDetails))
+        Buffer.from(JSON.stringify(ticketAndPerDiemDetails)),
       );
 
       res.end(encrypted);
@@ -7095,13 +7113,12 @@ ar.beforeRequestHandler.use(
           try {
             const fetchCFAuthToken = await _fetchCFAuthToken();
 
-            const fetchCPIAuthToken = await _fetchCPIAuthToken(
-              fetchCFAuthToken
-            );
+            const fetchCPIAuthToken =
+              await _fetchCPIAuthToken(fetchCFAuthToken);
 
             res.setHeader(
               "Set-Cookie",
-              "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly"
+              "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly",
             );
 
             const reqCookies = await _fetchCookies(req);
@@ -7110,11 +7127,11 @@ ar.beforeRequestHandler.use(
 
             const ticketAndPerDiemDetails = await _fetchTicketAndPerDiem(
               JSON.parse(decryptedData).params,
-              reqCookies
+              reqCookies,
             );
 
             const encrypted = await _fetchEncryptedData(
-              Buffer.from(JSON.stringify(ticketAndPerDiemDetails))
+              Buffer.from(JSON.stringify(ticketAndPerDiemDetails)),
             );
 
             res.end(encrypted);
@@ -7140,7 +7157,7 @@ ar.beforeRequestHandler.use(
               "Travel mission (/findTicketAndPerDiemPerCity) -> status / " +
                 errorObj.status +
                 " & message / " +
-                errorObj.message
+                errorObj.message,
             );
 
             res.statusCode = errorObj.status;
@@ -7164,13 +7181,13 @@ ar.beforeRequestHandler.use(
         "Travel mission (/findTicketAndPerDiemPerCity) -> status / " +
           errorObj.status +
           " & message / " +
-          errorObj.message
+          errorObj.message,
       );
 
       res.statusCode = errorObj.status;
       res.end(Buffer.from(JSON.stringify(errorObj)));
     }
-  }
+  },
 );
 
 ar.beforeRequestHandler.use("/findMissions", async (req, res, next) => {
@@ -7179,7 +7196,7 @@ ar.beforeRequestHandler.use("/findMissions", async (req, res, next) => {
     const decryptedData = await _fetchDecryptedData(req.body.data);
     const findMissions = await _fetchMissions(
       JSON.parse(decryptedData),
-      reqCookies
+      reqCookies,
     );
 
     res.end(Buffer.from(JSON.stringify(findMissions)));
@@ -7197,14 +7214,14 @@ ar.beforeRequestHandler.use("/findMissions", async (req, res, next) => {
 
           res.setHeader(
             "Set-Cookie",
-            "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly"
+            "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly",
           );
 
           const reqCookies = await _fetchCookies(req);
           const decryptedData = await _fetchDecryptedData(req.body.data);
           const findMissions = await _fetchMissions(
             JSON.parse(decryptedData),
-            reqCookies
+            reqCookies,
           );
 
           res.end(Buffer.from(JSON.stringify(findMissions)));
@@ -7230,7 +7247,7 @@ ar.beforeRequestHandler.use("/findMissions", async (req, res, next) => {
             "Travel mission (/findMissions) -> status / " +
               errorObj.status +
               " & message / " +
-              errorObj.message
+              errorObj.message,
           );
 
           res.statusCode = errorObj.status;
@@ -7254,7 +7271,7 @@ ar.beforeRequestHandler.use("/findMissions", async (req, res, next) => {
       "Travel mission (/findMissions) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -7268,10 +7285,10 @@ ar.beforeRequestHandler.use("/createMission", async (req, res, next) => {
     const createMission = await _createMission(
       req.body.data.params,
       req.body.data.userInfo,
-      reqCookies
+      reqCookies,
     );
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(createMission))
+      Buffer.from(JSON.stringify(createMission)),
     );
 
     res.end(encrypted);
@@ -7289,17 +7306,17 @@ ar.beforeRequestHandler.use("/createMission", async (req, res, next) => {
 
           res.setHeader(
             "Set-Cookie",
-            "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly"
+            "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly",
           );
 
           const reqCookies = await _fetchCookies(req);
           const createMission = await _createMission(
             req.body.data.params,
             req.body.data.userInfo,
-            reqCookies
+            reqCookies,
           );
           const encrypted = await _fetchEncryptedData(
-            Buffer.from(JSON.stringify(createMission))
+            Buffer.from(JSON.stringify(createMission)),
           );
 
           res.end(encrypted);
@@ -7325,7 +7342,7 @@ ar.beforeRequestHandler.use("/createMission", async (req, res, next) => {
             "Travel mission (/createMission) -> status / " +
               errorObj.status +
               " & message / " +
-              errorObj.message
+              errorObj.message,
           );
 
           res.statusCode = errorObj.status;
@@ -7349,7 +7366,7 @@ ar.beforeRequestHandler.use("/createMission", async (req, res, next) => {
       "Travel mission (/createMission) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -7366,7 +7383,7 @@ ar.beforeRequestHandler.use("/getMissionById", async (req, res, next) => {
     const missionInfo = await _getMissionInfo(
       JSON.parse(decryptedData).mission,
       JSON.parse(decryptedData).user,
-      reqCookies
+      reqCookies,
     );
 
     res.end(Buffer.from(JSON.stringify(missionInfo)));
@@ -7384,7 +7401,7 @@ ar.beforeRequestHandler.use("/getMissionById", async (req, res, next) => {
 
           res.setHeader(
             "Set-Cookie",
-            "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly"
+            "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly",
           );
 
           const reqCookies = await _fetchCookies(req);
@@ -7394,7 +7411,7 @@ ar.beforeRequestHandler.use("/getMissionById", async (req, res, next) => {
           const missionInfo = await _getMissionInfo(
             JSON.parse(decryptedData).mission,
             JSON.parse(decryptedData).user,
-            reqCookies
+            reqCookies,
           );
 
           res.end(Buffer.from(JSON.stringify(missionInfo)));
@@ -7420,7 +7437,7 @@ ar.beforeRequestHandler.use("/getMissionById", async (req, res, next) => {
             "Travel mission (/getMissionById) -> status / " +
               errorObj.status +
               " & message / " +
-              errorObj.message
+              errorObj.message,
           );
 
           res.statusCode = errorObj.status;
@@ -7444,7 +7461,7 @@ ar.beforeRequestHandler.use("/getMissionById", async (req, res, next) => {
       "Travel mission (/getMissionById) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -7473,14 +7490,14 @@ ar.beforeRequestHandler.use("/approveRejectMission", async (req, res, next) => {
 
           res.setHeader(
             "Set-Cookie",
-            "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly"
+            "CPIOAuth=" + fetchCPIAuthToken + "; HttpOnly",
           );
 
           const reqCookies = await _fetchCookies(req);
 
           const missionInfo = await _approveRejectMission(
             req.body.data,
-            reqCookies
+            reqCookies,
           );
 
           res.end(Buffer.from(JSON.stringify(missionInfo)));
@@ -7506,7 +7523,7 @@ ar.beforeRequestHandler.use("/approveRejectMission", async (req, res, next) => {
             "Travel mission (/approveMission) -> status / " +
               errorObj.status +
               " & message / " +
-              errorObj.message
+              errorObj.message,
           );
 
           res.statusCode = errorObj.status;
@@ -7530,7 +7547,7 @@ ar.beforeRequestHandler.use("/approveRejectMission", async (req, res, next) => {
       "Travel mission (/approveMission) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -7549,11 +7566,11 @@ ar.beforeRequestHandler.use(
       // const updateItinerary = await _updateItinerary(
       const updateItinerary = await _updateItineraryBatch(
         JSON.parse(decryptedData).params,
-        reqCookies
+        reqCookies,
       );
 
       const encrypted = await _fetchEncryptedData(
-        Buffer.from(JSON.stringify(updateItinerary))
+        Buffer.from(JSON.stringify(updateItinerary)),
       );
 
       res.end(encrypted);
@@ -7579,13 +7596,13 @@ ar.beforeRequestHandler.use(
         "Travel mission (/updateTicketItinerary) -> status / " +
           errorObj.status +
           " & message / " +
-          errorObj.message
+          errorObj.message,
       );
 
       res.statusCode = errorObj.status;
       res.end(Buffer.from(JSON.stringify(errorObj)));
     }
-  }
+  },
 );
 
 ar.beforeRequestHandler.use("/claimMission", async (req, res, next) => {
@@ -7597,7 +7614,7 @@ ar.beforeRequestHandler.use("/claimMission", async (req, res, next) => {
     const claimMission = await _claimMission(req.body.data.params, reqCookies);
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(claimMission))
+      Buffer.from(JSON.stringify(claimMission)),
     );
 
     res.end(encrypted);
@@ -7623,7 +7640,7 @@ ar.beforeRequestHandler.use("/claimMission", async (req, res, next) => {
       "Travel mission (/claimMission) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -7639,11 +7656,11 @@ ar.beforeRequestHandler.use("/fetchSectorInfo", async (req, res, next) => {
 
     const sectorInfo = await _fetchSectorInfo(
       JSON.parse(decryptedData).params,
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(sectorInfo))
+      Buffer.from(JSON.stringify(sectorInfo)),
     );
 
     res.end(encrypted);
@@ -7669,7 +7686,7 @@ ar.beforeRequestHandler.use("/fetchSectorInfo", async (req, res, next) => {
       "Travel mission (/fetchSectorInfo) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -7685,11 +7702,11 @@ ar.beforeRequestHandler.use("/fetchClaim", async (req, res, next) => {
 
     const claimInfo = await _fetchClaim(
       JSON.parse(decryptedData).params,
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(claimInfo))
+      Buffer.from(JSON.stringify(claimInfo)),
     );
 
     res.end(encrypted);
@@ -7715,7 +7732,7 @@ ar.beforeRequestHandler.use("/fetchClaim", async (req, res, next) => {
       "Travel mission (/fetchClaim) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -7733,7 +7750,7 @@ ar.beforeRequestHandler.use("/fetchClaimsAdvances", async (req, res, next) => {
 
     const advanceInfo = await _fetchAdvances(
       JSON.parse(decryptedData),
-      reqCookies
+      reqCookies,
     );
 
     res.end(
@@ -7741,8 +7758,8 @@ ar.beforeRequestHandler.use("/fetchClaimsAdvances", async (req, res, next) => {
         JSON.stringify({
           claims: claimInfo,
           advances: advanceInfo,
-        })
-      )
+        }),
+      ),
     );
   } catch (error) {
     const errorObj = {
@@ -7766,7 +7783,7 @@ ar.beforeRequestHandler.use("/fetchClaimsAdvances", async (req, res, next) => {
       "Travel mission (/fetchClaimsAdvances) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -7784,12 +7801,12 @@ ar.beforeRequestHandler.use(
 
       const claimInfo = await _fetchPendingClaims(
         JSON.parse(decryptedData),
-        reqCookies
+        reqCookies,
       );
 
       const advanceInfo = await _fetchPendingadvances(
         JSON.parse(decryptedData),
-        reqCookies
+        reqCookies,
       );
 
       res.end(
@@ -7797,8 +7814,8 @@ ar.beforeRequestHandler.use(
           JSON.stringify({
             claims: claimInfo,
             advances: advanceInfo,
-          })
-        )
+          }),
+        ),
       );
     } catch (error) {
       const errorObj = {
@@ -7822,13 +7839,13 @@ ar.beforeRequestHandler.use(
         "Travel mission (/fetchPendingClaimsAdvances) -> status / " +
           errorObj.status +
           " & message / " +
-          errorObj.message
+          errorObj.message,
       );
 
       res.statusCode = errorObj.status;
       res.end(Buffer.from(JSON.stringify(errorObj)));
     }
-  }
+  },
 );
 
 ar.beforeRequestHandler.use("/claimMasters", async (req, res, next) => {
@@ -7845,7 +7862,7 @@ ar.beforeRequestHandler.use("/claimMasters", async (req, res, next) => {
     };
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(mastersObj))
+      Buffer.from(JSON.stringify(mastersObj)),
     );
 
     res.end(encrypted);
@@ -7871,7 +7888,7 @@ ar.beforeRequestHandler.use("/claimMasters", async (req, res, next) => {
       "Travel mission (/claimMasters) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -7884,7 +7901,7 @@ ar.beforeRequestHandler.use("/findMemberInfo", async (req, res, next) => {
     const reqCookies = await _fetchCookies(req);
     const memberDetails = await _fetchMemberInfo(
       req.body.data.filter,
-      reqCookies
+      reqCookies,
     );
 
     res.end(Buffer.from(JSON.stringify(memberDetails)));
@@ -7910,7 +7927,7 @@ ar.beforeRequestHandler.use("/findMemberInfo", async (req, res, next) => {
       "Travel mission (/findMemberInfo) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -7926,11 +7943,11 @@ ar.beforeRequestHandler.use("/fetchClaimInfo", async (req, res, next) => {
 
     const claimInfo = await _fetchClaimInfo(
       JSON.parse(decryptedData).claim,
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(claimInfo))
+      Buffer.from(JSON.stringify(claimInfo)),
     );
 
     res.end(encrypted);
@@ -7956,7 +7973,7 @@ ar.beforeRequestHandler.use("/fetchClaimInfo", async (req, res, next) => {
       "Travel mission (/fetchClaimInfo) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -7973,7 +7990,7 @@ ar.beforeRequestHandler.use("/approveRejectClaim", async (req, res, next) => {
     const claimInfo = await _approveRejectClaim(req.body.data, reqCookies);
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(claimInfo))
+      Buffer.from(JSON.stringify(claimInfo)),
     );
 
     res.end(encrypted);
@@ -7999,7 +8016,7 @@ ar.beforeRequestHandler.use("/approveRejectClaim", async (req, res, next) => {
       "Travel mission (/approveRejectClaim) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8015,11 +8032,11 @@ ar.beforeRequestHandler.use("/advanceMission", async (req, res, next) => {
 
     const advanceMission = await _advanceMission(
       JSON.parse(decryptedData).params,
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(advanceMission))
+      Buffer.from(JSON.stringify(advanceMission)),
     );
 
     res.end(encrypted);
@@ -8045,7 +8062,7 @@ ar.beforeRequestHandler.use("/advanceMission", async (req, res, next) => {
       "Travel mission (/advanceMission) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8061,11 +8078,11 @@ ar.beforeRequestHandler.use("/fetchAdvance", async (req, res, next) => {
 
     const advanceInfo = await _fetchAdvance(
       JSON.parse(decryptedData).params,
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(advanceInfo))
+      Buffer.from(JSON.stringify(advanceInfo)),
     );
 
     res.end(encrypted);
@@ -8091,7 +8108,7 @@ ar.beforeRequestHandler.use("/fetchAdvance", async (req, res, next) => {
       "Travel mission (/fetchAdvance) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8107,11 +8124,11 @@ ar.beforeRequestHandler.use("/fetchAdvanceInfo", async (req, res, next) => {
 
     const advanceInfo = await _fetchAdvanceInfo(
       JSON.parse(decryptedData).advance,
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(advanceInfo))
+      Buffer.from(JSON.stringify(advanceInfo)),
     );
 
     res.end(encrypted);
@@ -8137,7 +8154,7 @@ ar.beforeRequestHandler.use("/fetchAdvanceInfo", async (req, res, next) => {
       "Travel mission (/fetchAdvanceInfo) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8153,11 +8170,11 @@ ar.beforeRequestHandler.use("/approveRejectAdvance", async (req, res, next) => {
 
     const advanceInfo = await _approveRejectAdvance(
       JSON.parse(decryptedData),
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(advanceInfo))
+      Buffer.from(JSON.stringify(advanceInfo)),
     );
 
     res.end(encrypted);
@@ -8183,7 +8200,7 @@ ar.beforeRequestHandler.use("/approveRejectAdvance", async (req, res, next) => {
       "Travel mission (/approveRejectAdvance) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8199,11 +8216,11 @@ ar.beforeRequestHandler.use("/cancelMission", async (req, res, next) => {
 
     const missionInfo = await _cancelMission(
       JSON.parse(decryptedData),
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(missionInfo))
+      Buffer.from(JSON.stringify(missionInfo)),
     );
 
     res.end(encrypted);
@@ -8229,7 +8246,7 @@ ar.beforeRequestHandler.use("/cancelMission", async (req, res, next) => {
       "Travel mission (/cancelMission) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8245,11 +8262,11 @@ ar.beforeRequestHandler.use("/approveRejectCancel", async (req, res, next) => {
 
     const missionInfo = await _approveRejectCancel(
       JSON.parse(decryptedData),
-      reqCookies
+      reqCookies,
     );
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(missionInfo))
+      Buffer.from(JSON.stringify(missionInfo)),
     );
 
     res.end(encrypted);
@@ -8275,7 +8292,7 @@ ar.beforeRequestHandler.use("/approveRejectCancel", async (req, res, next) => {
       "Travel mission (/approveRejectCancel) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8294,10 +8311,10 @@ ar.beforeRequestHandler.use("/updateMission", async (req, res, next) => {
     const updateMission = await _updateMissionBatch(
       req.body.data.params,
       req.body.data.userInfo,
-      reqCookies
+      reqCookies,
     );
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(updateMission))
+      Buffer.from(JSON.stringify(updateMission)),
     );
 
     res.end(encrypted);
@@ -8323,7 +8340,7 @@ ar.beforeRequestHandler.use("/updateMission", async (req, res, next) => {
       "Travel mission (/updateMission) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8337,10 +8354,10 @@ ar.beforeRequestHandler.use("/updateMissionPayroll", async (req, res, next) => {
     // const updateMissionPayroll = await _updateMissionPayroll(
     const updateMissionPayroll = await _updateMissionPayrollBatch(
       req.body.data.params,
-      reqCookies
+      reqCookies,
     );
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(updateMissionPayroll))
+      Buffer.from(JSON.stringify(updateMissionPayroll)),
     );
 
     res.end(encrypted);
@@ -8366,7 +8383,7 @@ ar.beforeRequestHandler.use("/updateMissionPayroll", async (req, res, next) => {
       "Travel mission (/updateMissionPayroll) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8381,7 +8398,7 @@ ar.beforeRequestHandler.use("/rejectMission", async (req, res, next) => {
     const missionInfo = await _rejectMission(req.body.data, reqCookies);
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(missionInfo))
+      Buffer.from(JSON.stringify(missionInfo)),
     );
 
     res.end(encrypted);
@@ -8407,7 +8424,7 @@ ar.beforeRequestHandler.use("/rejectMission", async (req, res, next) => {
       "Travel mission (/rejectMission) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8422,10 +8439,10 @@ ar.beforeRequestHandler.use(
       const reqCookies = await _fetchCookies(req);
       const managerInfo = await _getManagerOfHeadOfSector(
         req.body.data.params,
-        reqCookies
+        reqCookies,
       );
       const encrypted = await _fetchEncryptedData(
-        Buffer.from(JSON.stringify(managerInfo))
+        Buffer.from(JSON.stringify(managerInfo)),
       );
 
       res.end(encrypted);
@@ -8451,13 +8468,13 @@ ar.beforeRequestHandler.use(
         "Travel mission (/getManagerOfHeadOfSector) -> status / " +
           errorObj.status +
           " & message / " +
-          errorObj.message
+          errorObj.message,
       );
 
       res.statusCode = errorObj.status;
       res.end(Buffer.from(JSON.stringify(errorObj)));
     }
-  }
+  },
 );
 
 ar.beforeRequestHandler.use("/getRecoveryAmount", async (req, res, next) => {
@@ -8465,10 +8482,10 @@ ar.beforeRequestHandler.use("/getRecoveryAmount", async (req, res, next) => {
     const reqCookies = await _fetchCookies(req);
     const recoveryAmount = await _getRecoveryAmount(
       req.body.data.params,
-      reqCookies
+      reqCookies,
     );
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(recoveryAmount))
+      Buffer.from(JSON.stringify(recoveryAmount)),
     );
 
     res.end(encrypted);
@@ -8494,7 +8511,7 @@ ar.beforeRequestHandler.use("/getRecoveryAmount", async (req, res, next) => {
       "Travel mission (/getRecoveryAmount) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8508,7 +8525,7 @@ ar.beforeRequestHandler.use("/checkMission", async (req, res, next) => {
 
     const checkMissionResult = await _checkMissionBatch(req.body, reqCookies);
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(checkMissionResult))
+      Buffer.from(JSON.stringify(checkMissionResult)),
     );
 
     res.end(encrypted);
@@ -8534,7 +8551,7 @@ ar.beforeRequestHandler.use("/checkMission", async (req, res, next) => {
       "Travel mission (/checkMission) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8571,7 +8588,7 @@ ar.beforeRequestHandler.use("/fetchS4Metadata", async (req, res, next) => {
       "Travel mission (/fetchS4Metadata) -> status / " +
         errorObj.status +
         " & message / " +
-        errorObj.message
+        errorObj.message,
     );
 
     res.statusCode = errorObj.status;
@@ -8599,7 +8616,7 @@ ar.beforeRequestHandler.use("/getValueListsBatch", async (req, res, next) => {
     const masterResult = await _getMastersBatch(req.body, reqCookies);
 
     const encrypted = await _fetchEncryptedData(
-      Buffer.from(JSON.stringify(masterResult))
+      Buffer.from(JSON.stringify(masterResult)),
     );
     res.end(encrypted);
   } catch (error) {
@@ -8617,18 +8634,18 @@ ar.beforeRequestHandler.use(
 
       const adminMissionReport = await _getAdminMissionReport(
         req.body,
-        reqCookies
+        reqCookies,
       );
 
       const encrypted = await _fetchEncryptedData(
-        Buffer.from(JSON.stringify(adminMissionReport))
+        Buffer.from(JSON.stringify(adminMissionReport)),
       );
       res.end(encrypted);
     } catch (error) {
       res.statusCode = 500;
       res.end(Buffer.from(JSON.stringify({})));
     }
-  }
+  },
 );
 
 ar.beforeRequestHandler.use(
@@ -8639,7 +8656,7 @@ ar.beforeRequestHandler.use(
 
       const adminMissionReport = await _getAdminMissionReport(
         req.body,
-        reqCookies
+        reqCookies,
       );
 
       const wb = XLSX.utils.book_new();
@@ -8679,18 +8696,18 @@ ar.beforeRequestHandler.use(
 
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename="Mission Report - ${reportDateTime}.xlsx"`
+        `attachment; filename="Mission Report - ${reportDateTime}.xlsx"`,
       );
       res.setHeader(
         "Content-Type",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       );
       res.end(fileResult);
     } catch (error) {
       res.statusCode = 500;
       res.end(error.message);
     }
-  }
+  },
 );
 
 ar.start();

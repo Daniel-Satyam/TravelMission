@@ -415,17 +415,17 @@ const _fetchMemberDetails = async function (decryptedData, cookies) {
       employeeFetchUrl +=
         "&$filter=personIdExternal like '" +
         filter.value +
-        "%' and jobInfoNav/emplStatusNav/externalCode ne 'T'";
+        "%' and jobInfoNav/emplStatusNav/externalCode ne 'T' and userNav/isPrimaryAssignment eq true";
     } else if (filter.type == "displayName") {
       employeeFetchUrl +=
         "&$filter=personNav/personalInfoNav/displayName like '%" +
         filter.value +
-        "%' and jobInfoNav/emplStatusNav/externalCode ne 'T'";
+        "%' and jobInfoNav/emplStatusNav/externalCode ne 'T' and userNav/isPrimaryAssignment eq true";
     } else if (filter.type == "nofilter") {
       employeeFetchUrl +=
         "&$filter=personIdExternal eq '" +
         filter.value +
-        "' and jobInfoNav/emplStatusNav/externalCode ne 'T'";
+        "' and jobInfoNav/emplStatusNav/externalCode ne 'T' and userNav/isPrimaryAssignment eq true";
     }
 
     const auth = "Basic " + cookies.SF.basicAuth;

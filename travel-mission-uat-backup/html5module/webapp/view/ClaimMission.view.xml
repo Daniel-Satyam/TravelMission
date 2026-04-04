@@ -528,6 +528,16 @@
 												<FlexItemData growFactor="1" shrinkFactor="0" />
 											</layoutData>
 
+											<Label text="{i18n>reservedBudget}" />
+											<Input value="{path: 'membersModel>reservedBudget', formatter: 'Formatter.formatAmount'}" enabled="false" />
+										</VBox>
+									</f:GridListItem>
+									<f:GridListItem>
+										<VBox class="sapUiSmallMargin">
+											<layoutData>
+												<FlexItemData growFactor="1" shrinkFactor="0" />
+											</layoutData>
+
 											<Label text="{i18n>employeeRecoveryAmount}" />
 											<Input value="{path: 'claimInfoModel>/info/recoveryAmount', formatter: 'Formatter.formatAmount'}" enabled="false" />
 										</VBox>

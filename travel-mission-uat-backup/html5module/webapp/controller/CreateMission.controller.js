@@ -188,11 +188,12 @@ sap.ui.define(
               title: "",
               multipleCities: "",
               noOfCities: "",
-              costCenter: "",
               employeeAvailableBudget: 0,
               employeeTotalExpense: 0,
               employeeTotalTicket: 0,
               employeeTotalPerdiem: 0,
+              reservedBudget: 0, //--reserved budget
+              costCenter: "",
               jobLevel: "",
               itinerary: [
                 {
@@ -216,6 +217,7 @@ sap.ui.define(
                   ticketAverage: 0,
                   ticketActualCost: 0,
                   reflectBudgetInfo: false,
+                  reservedBudget: 0, //--reserved budget
                 },
               ],
               attachments: [],
@@ -929,11 +931,12 @@ sap.ui.define(
           title: "",
           multipleCities: "",
           noOfCities: "",
-          costCenter: "",
           employeeAvailableBudget: 0,
           employeeTotalExpense: 0,
           employeeTotalTicket: 0,
           employeeTotalPerdiem: 0,
+          reservedBudget: 0, //--reserved budget
+          costCenter: "",
           jobLevel: "",
           itinerary: [],
           // itinerary: [
@@ -1134,6 +1137,7 @@ sap.ui.define(
 
         var memberTicketAverage = 0;
         var memberPerDiemPerCity = 0;
+        var memberReservedBudget = 0; //--reserved budget
         var missionTicketAverage = 0;
         var missionPerDiemPerCity = 0;
         var missionTotalExpense = 0;
@@ -1141,6 +1145,7 @@ sap.ui.define(
         for (var i = 0; i < mModelData.length; i++) {
           memberTicketAverage = 0;
           memberPerDiemPerCity = 0;
+          memberReservedBudget = 0;
           if (guid == mModelData[i].guid) {
             var itineraryData = mModelData[i].itinerary;
             for (var j = 0; j < itineraryData.length; j++) {
@@ -1148,9 +1153,14 @@ sap.ui.define(
                 memberPerDiemPerCity + itineraryData[j].perDiemPerCity;
               memberTicketAverage =
                 memberTicketAverage + itineraryData[j].ticketAverage;
+
+              memberReservedBudget =
+                memberReservedBudget + itineraryData[j].reservedBudget; //--reserved budget
             }
             mModelData[i].employeeTotalPerdiem = memberPerDiemPerCity;
             mModelData[i].employeeTotalTicket = memberTicketAverage;
+            mModelData[i].reservedBudget = memberReservedBudget; //--reserved budget
+
             mModelData[i].employeeTotalExpense =
               memberPerDiemPerCity + memberTicketAverage;
             missionTicketAverage = missionTicketAverage + memberTicketAverage;
@@ -1361,434 +1371,7 @@ sap.ui.define(
           missionBudgetAvailable,
           missionParkedAmount,
         };
-
-        // if (bShowLoading) {
-        //   this.openBusyFragment("checkingBudget", []);
-        // }
-        // try {
-        //   const i = await this.refreshSectors();
-
-        //   if (bShowLoading) {
-        //     this.closeBusyFragment();
-        //   }
-        // } catch (e) {
-        //   this.closeBusyFragment();
-        //   //--Could not refresh somehow
-        // }
-
-        // const oSectorsModel = this.getModel("sectorsModel");
-        // const sectorsModelData = oSectorsModel.getProperty("/sectors");
-
-        // const oSubSector = _.find(sectorsModelData, [
-        //   "externalCode",
-        //   missionInfoModelData.sector,
-        // ]);
-
-        // const oMainSector = oSubSector
-        //   ? _.find(sectorsModelData, {
-        //       cust_S4_Sector: oSubSector.cust_S4_Sector,
-        //       cust_S4_SubSector: oSubSector.cust_S4_Sector,
-        //     })
-        //   : null;
-
-        // let sectorAvailableBudget = 0;
-        // let sectorParkedBudget = 0;
-
-        // if (oSubSector.cust_Available_budget != null) {
-        //   sectorAvailableBudget = parseFloat(oSubSector.cust_Available_budget);
-        // }
-
-        // if (oSubSector.cust_Parked_Amount != null) {
-        //   sectorParkedBudget = parseFloat(oSubSector.cust_Parked_Amount);
-        // }
-
-        // let missionTotalExpenseDifference;
-
-        // if (
-        //   this.missionFormerSector &&
-        //   this.missionFormerSector === missionInfoModelData.sector
-        // ) {
-        //   missionTotalExpenseDifference =
-        //     parseFloat(this.missionTotalExpense) -
-        //     parseFloat(missionInfoModelData.totalExpense);
-
-        //   if (missionTotalExpenseDifference > 0) {
-        //     missionParkedAmount = sectorParkedBudget;
-        //     missionBudgetAvailable = sectorAvailableBudget;
-
-        //     let oSubBudgetTracking = {
-        //       cust_MissionID: missionInfoModelData.missionID,
-        //       cust_SFSector: oSubSector.externalCode,
-        //       cust_S4Sector: oSubSector.cust_S4_SubSector,
-        //       cust_Consumption: 0,
-        //       cust_Remaining_Budget:
-        //         parseFloat(oSubSector.cust_Available_budget) +
-        //         missionTotalExpenseDifference,
-        //       cust_Parked_Amount:
-        //         parseFloat(oSubSector.cust_Parked_Amount) -
-        //         missionTotalExpenseDifference,
-        //       cust_Comments: "Approve/reject claim",
-        //       real_Consumption: 0,
-        //     };
-        //     aBudgetTracking.push(oSubBudgetTracking);
-
-        //     let oMainBudgetTracking = {
-        //       cust_MissionID: missionInfoModelData.missionID,
-        //       cust_SFSector: oMainSector.externalCode,
-        //       cust_S4Sector: oMainSector.cust_S4_SubSector,
-        //       cust_Consumption: 0,
-        //       cust_Remaining_Budget:
-        //         parseFloat(oMainSector.cust_Available_budget) +
-        //         missionTotalExpenseDifference,
-        //       cust_Parked_Amount:
-        //         parseFloat(oMainSector.cust_Parked_Amount) -
-        //         missionTotalExpenseDifference,
-        //       cust_Comments: "Approve/reject claim",
-        //       real_Consumption: 0,
-        //     };
-        //     aBudgetTracking.push(oMainBudgetTracking);
-
-        //     bBudgetAvailable = true;
-
-        //     if (missionTotalExpenseDifference === 0) {
-        //       //--No need to update budget
-        //       aBudgetTracking = [];
-        //     }
-
-        //     missionBudgetAvailable =
-        //       parseFloat(oSubSector.cust_Available_budget) +
-        //       missionTotalExpenseDifference;
-        //     missionParkedAmount =
-        //       parseFloat(oSubSector.cust_Parked_Amount) -
-        //       missionTotalExpenseDifference;
-
-        //     return {
-        //       isBudgetAvailable: bBudgetAvailable,
-        //       budgetTracking: aBudgetTracking,
-        //       missionBudgetAvailable,
-        //       missionParkedAmount,
-        //     };
-        //   }
-        // } else {
-        //   //--Sector changed treat it as a new consumption
-        //   missionTotalExpenseDifference = parseFloat(
-        //     missionInfoModelData.totalExpense
-        //   );
-
-        //   if (this.missionFormerSector) {
-        //     const oFormerSubSector = _.find(sectorsModelData, [
-        //       "externalCode",
-        //       missionInfoModelData.sector,
-        //     ]);
-
-        //     const oFormerMainSector = oFormerSubSector
-        //       ? _.find(sectorsModelData, {
-        //           cust_S4_Sector: oFormerSubSector.cust_S4_Sector,
-        //           cust_S4_SubSector: oFormerSubSector.cust_S4_Sector,
-        //         })
-        //       : null;
-
-        //     let oSubBudgetTracking = {
-        //       cust_MissionID: missionInfoModelData.missionID,
-        //       cust_SFSector: oFormerSubSector.externalCode,
-        //       cust_S4Sector: oFormerSubSector.cust_S4_SubSector,
-        //       cust_Consumption: 0,
-        //       cust_Remaining_Budget:
-        //         parseFloat(oFormerSubSector.cust_Available_budget) +
-        //         missionTotalExpenseDifference,
-        //       cust_Parked_Amount:
-        //         parseFloat(oFormerSubSector.cust_Parked_Amount) -
-        //         missionTotalExpenseDifference,
-        //       cust_Comments:
-        //         "Approve/reject claim (Sector change - Budget revised)",
-        //       real_Consumption: 0,
-        //     };
-        //     aBudgetTracking.push(oSubBudgetTracking);
-
-        //     let oMainBudgetTracking = {
-        //       cust_MissionID: missionInfoModelData.missionID,
-        //       cust_SFSector: oFormerMainSector.externalCode,
-        //       cust_S4Sector: oFormerMainSector.cust_S4_SubSector,
-        //       cust_Consumption: 0,
-        //       cust_Remaining_Budget:
-        //         parseFloat(oFormerMainSector.cust_Available_budget) +
-        //         missionTotalExpenseDifference,
-        //       cust_Parked_Amount:
-        //         parseFloat(oFormerMainSector.cust_Parked_Amount) -
-        //         missionTotalExpenseDifference,
-        //       cust_Comments:
-        //         "Approve/reject claim (Sector change - Budget revised)",
-        //       real_Consumption: 0,
-        //     };
-        //     aBudgetTracking.push(oMainBudgetTracking);
-        //   }
-        // }
-
-        // //--Expense increased so get budget for increased part
-        // missionTotalExpenseDifference = Math.abs(missionTotalExpenseDifference);
-
-        // let remainingConsumption;
-
-        // if (parseFloat(oSubSector.cust_Available_budget) > 0) {
-        //   remainingConsumption =
-        //     parseFloat(oSubSector.cust_Available_budget) -
-        //     parseFloat(missionTotalExpenseDifference);
-        //   let oBudgetTracking = {
-        //     cust_MissionID: missionInfoModelData.missionID,
-        //     cust_SFSector: oSubSector.externalCode,
-        //     cust_S4Sector: oSubSector.cust_S4_SubSector,
-        //     cust_Consumption: parseFloat(missionTotalExpenseDifference),
-        //     cust_Remaining_Budget:
-        //       parseFloat(oSubSector.cust_Available_budget) -
-        //       parseFloat(missionTotalExpenseDifference),
-        //     cust_Parked_Amount:
-        //       parseFloat(oSubSector.cust_Parked_Amount) +
-        //       parseFloat(missionTotalExpenseDifference),
-        //     cust_Comments: "Approve/reject claim",
-        //     real_Consumption:
-        //       remainingConsumption >= 0
-        //         ? parseFloat(missionTotalExpenseDifference)
-        //         : parseFloat(oSubSector.cust_Available_budget),
-        //   };
-        //   aBudgetTracking.push(oBudgetTracking);
-
-        //   if (remainingConsumption >= 0) {
-        //     bBudgetAvailable = true;
-        //     remainingConsumption = 0;
-        //   }
-        // } else {
-        //   let oBudgetTracking = {
-        //     cust_MissionID: missionInfoModelData.missionID,
-        //     cust_SFSector: oSubSector.externalCode,
-        //     cust_S4Sector: oSubSector.cust_S4_SubSector,
-        //     cust_Consumption: parseFloat(missionTotalExpenseDifference),
-        //     cust_Remaining_Budget:
-        //       parseFloat(oSubSector.cust_Available_budget) -
-        //       parseFloat(missionTotalExpenseDifference),
-        //     cust_Parked_Amount:
-        //       parseFloat(oSubSector.cust_Parked_Amount) +
-        //       parseFloat(missionTotalExpenseDifference),
-        //     cust_Comments: "Approve/reject claim",
-        //     real_Consumption: 0,
-        //   };
-        //   aBudgetTracking.push(oBudgetTracking);
-        //   remainingConsumption = parseFloat(missionTotalExpenseDifference) * -1;
-        // }
-
-        // let remainingSectorBudget;
-        // if (oMainSector && parseFloat(oMainSector.cust_Available_budget) > 0) {
-        //   //--Subsector budget may not be enough use main sector budget
-        //   remainingSectorBudget =
-        //     parseFloat(oMainSector.cust_Available_budget) -
-        //     parseFloat(missionTotalExpenseDifference);
-
-        //   let oBudgetTracking = {
-        //     cust_MissionID: missionInfoModelData.missionID,
-        //     cust_SFSector: oMainSector.externalCode,
-        //     cust_S4Sector: oMainSector.cust_S4_SubSector,
-        //     cust_Consumption: parseFloat(missionTotalExpenseDifference),
-        //     cust_Remaining_Budget: remainingSectorBudget,
-        //     cust_Parked_Amount:
-        //       parseFloat(oMainSector.cust_Parked_Amount) +
-        //       parseFloat(missionTotalExpenseDifference),
-        //     cust_Comments: "Approve/reject claim",
-        //     real_Consumption:
-        //       remainingSectorBudget >= 0
-        //         ? parseFloat(missionTotalExpenseDifference)
-        //         : 0,
-        //   };
-        //   aBudgetTracking.push(oBudgetTracking);
-
-        //   if (remainingSectorBudget >= 0) {
-        //     bBudgetAvailable = true;
-        //   } else {
-        //     bBudgetAvailable = false;
-        //   }
-        // }
-
-        // //--Return as is, becuase we will update using budget tracking (New S4-SF Scenario)
-        // missionBudgetAvailable =
-        //   parseFloat(oSubSector.cust_Available_budget) -
-        //   parseFloat(missionTotalExpenseDifference);
-        // missionParkedAmount =
-        //   parseFloat(oSubSector.cust_Parked_Amount) +
-        //   parseFloat(missionTotalExpenseDifference);
-
-        // //   missionBudgetAvailable =
-        // //   parseFloat(oSubSector.cust_Available_budget) -
-        // //   parseFloat(missionTotalExpenseDifference);
-        // // missionParkedAmount =
-        // //   parseFloat(oSubSector.cust_Parked_Amount) +
-        // //   parseFloat(missionTotalExpenseDifference);
-
-        // if (!bBudgetAvailable) {
-        //   //--Budget low
-        //   aBudgetTracking = [];
-        // }
-
-        // return {
-        //   isBudgetAvailable: bBudgetAvailable,
-        //   budgetTracking: aBudgetTracking,
-        //   missionBudgetAvailable,
-        //   missionParkedAmount,
-        // };
       },
-      // checkBudgetAvailability: async function (bShowLoading = false) {
-      //   let aBudgetTracking = [];
-      //   let bBudgetAvailable = false;
-      //   const oMissionInfoModel = this.getModel("missionInfoModel");
-      //   const missionInfoModelData = oMissionInfoModel.getProperty("/info");
-
-      //   let missionBudgetAvailable = null;
-      //   let missionParkedAmount = null;
-
-      //   if (
-      //     !missionInfoModelData.totalExpense ||
-      //     parseFloat(missionInfoModelData.totalExpense) <= 0
-      //   ) {
-      //     this.toastMessage(
-      //       "E",
-      //       "errorOperation",
-      //       "totalMissionExpenseZero",
-      //       [],
-      //       null,
-      //     );
-      //     return {
-      //       isBudgetAvailable: bBudgetAvailable,
-      //       budgetTracking: aBudgetTracking,
-      //       missionBudgetAvailable,
-      //       missionParkedAmount,
-      //     };
-      //   }
-
-      //   if (bShowLoading) {
-      //     this.openBusyFragment("checkingBudget", []);
-      //   }
-      //   try {
-      //     const i = await this.refreshSectors();
-
-      //     if (bShowLoading) {
-      //       this.closeBusyFragment();
-      //     }
-      //   } catch (e) {
-      //     this.closeBusyFragment();
-      //     //--Could not refresh somehow
-      //   }
-
-      //   const oSectorsModel = this.getModel("sectorsModel");
-      //   const sectorsModelData = oSectorsModel.getProperty("/sectors");
-
-      //   const oSubSector = _.find(sectorsModelData, [
-      //     "externalCode",
-      //     missionInfoModelData.sector,
-      //   ]);
-
-      //   const oMainSector = oSubSector
-      //     ? _.find(sectorsModelData, {
-      //         cust_S4_Sector: oSubSector.cust_S4_Sector,
-      //         cust_S4_SubSector: oSubSector.cust_S4_Sector,
-      //       })
-      //     : null;
-
-      //   let remainingConsumption;
-
-      //   if (parseFloat(oSubSector.cust_Available_budget) > 0) {
-      //     remainingConsumption =
-      //       parseFloat(oSubSector.cust_Available_budget) -
-      //       parseFloat(missionInfoModelData.totalExpense);
-      //     let oBudgetTracking = {
-      //       cust_MissionID: "",
-      //       cust_SFSector: oSubSector.externalCode,
-      //       cust_S4Sector: oSubSector.cust_S4_SubSector,
-      //       cust_Consumption: parseFloat(missionInfoModelData.totalExpense),
-      //       cust_Remaining_Budget:
-      //         parseFloat(oSubSector.cust_Available_budget) -
-      //         parseFloat(missionInfoModelData.totalExpense),
-      //       cust_Parked_Amount:
-      //         parseFloat(oSubSector.cust_Parked_Amount) +
-      //         parseFloat(missionInfoModelData.totalExpense),
-      //       cust_Comments: "Create Mission",
-      //       real_Consumption:
-      //         remainingConsumption >= 0
-      //           ? parseFloat(missionInfoModelData.totalExpense)
-      //           : parseFloat(oSubSector.cust_Available_budget),
-      //     };
-      //     aBudgetTracking.push(oBudgetTracking);
-
-      //     if (remainingConsumption >= 0) {
-      //       bBudgetAvailable = true;
-      //       remainingConsumption = 0;
-      //     }
-      //   } else {
-      //     let oBudgetTracking = {
-      //       cust_MissionID: missionInfoModelData.missionID,
-      //       cust_SFSector: oSubSector.externalCode,
-      //       cust_S4Sector: oSubSector.cust_S4_SubSector,
-      //       cust_Consumption: parseFloat(missionInfoModelData.totalExpense),
-      //       cust_Remaining_Budget:
-      //         parseFloat(oSubSector.cust_Available_budget) -
-      //         parseFloat(missionInfoModelData.totalExpense),
-      //       cust_Parked_Amount:
-      //         parseFloat(oSubSector.cust_Parked_Amount) +
-      //         parseFloat(missionInfoModelData.totalExpense),
-      //       cust_Comments: "Create Mission",
-      //       real_Consumption: 0,
-      //     };
-      //     aBudgetTracking.push(oBudgetTracking);
-      //     remainingConsumption =
-      //       parseFloat(missionInfoModelData.totalExpense) * -1;
-      //   }
-
-      //   let remainingSectorBudget;
-      //   if (oMainSector && parseFloat(oMainSector.cust_Available_budget) > 0) {
-      //     //--Subsector budget may not be enough use main sector budget
-      //     remainingSectorBudget =
-      //       parseFloat(oMainSector.cust_Available_budget) -
-      //       parseFloat(missionInfoModelData.totalExpense);
-      //     let oBudgetTracking = {
-      //       cust_MissionID: "",
-      //       cust_SFSector: oMainSector.externalCode,
-      //       cust_S4Sector: oMainSector.cust_S4_SubSector,
-      //       cust_Consumption: parseFloat(missionInfoModelData.totalExpense),
-      //       cust_Remaining_Budget: remainingSectorBudget,
-      //       cust_Parked_Amount:
-      //         parseFloat(oMainSector.cust_Parked_Amount) +
-      //         parseFloat(missionInfoModelData.totalExpense),
-      //       cust_Comments: "Create Mission",
-      //       real_Consumption:
-      //         remainingSectorBudget >= 0
-      //           ? parseFloat(missionInfoModelData.totalExpense)
-      //           : 0,
-      //     };
-      //     aBudgetTracking.push(oBudgetTracking);
-
-      //     if (remainingSectorBudget >= 0) {
-      //       bBudgetAvailable = true;
-      //     } else {
-      //       bBudgetAvailable = false;
-      //     }
-      //   }
-
-      //   //--Return as is, becuase we will update using budget tracking (New S4-SF Scenario)
-      //   missionBudgetAvailable =
-      //     parseFloat(oSubSector.cust_Available_budget) -
-      //     parseFloat(missionInfoModelData.totalExpense);
-      //   missionParkedAmount =
-      //     parseFloat(oSubSector.cust_Parked_Amount) +
-      //     parseFloat(missionInfoModelData.totalExpense);
-
-      //   if (!bBudgetAvailable) {
-      //     //--Budget low error - do not return any tracking
-      //     aBudgetTracking = [];
-      //   }
-
-      //   return {
-      //     isBudgetAvailable: bBudgetAvailable,
-      //     budgetTracking: aBudgetTracking,
-      //     missionBudgetAvailable,
-      //     missionParkedAmount,
-      //   };
-      // },
 
       saveMission: async function () {
         const that = this;
@@ -1925,627 +1508,545 @@ sap.ui.define(
         } = await this.checkBudgetAvailability(true);
 
         if (isBudgetAvailable === false) {
-          if (memberBudgetChecks.length > 0) {
-            const fmtNum = (n) => {
-              return Number(n).toLocaleString("en-AE", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              });
-            };
+          this.alertBudgetLow(memberBudgetChecks);
+          return null;
+        }
+        //--Set external entities
+        this.setExternalEntities(missionInfoModelData);
+        //--Set external entities
 
-            var sThStyle =
-              "padding:7px 8px; font-weight:600; color:#333; border-bottom:2px solid #ddd; white-space:nowrap; font-size:11px;";
-            var sTdStyle =
-              "padding:6px 8px; border-bottom:1px solid #eee; font-size:12px;";
+        let missionRequest = {
+          info: {
+            budgetAvailable: missionBudgetAvailable.toString(),
+            budgetParked: missionParkedAmount.toString(),
+            missionDetails: "",
+            createdBy: "",
+            decreeType: "",
+            externalEntity: "",
+            externalEntity2: "",
+            externalEntity3: "",
+            externalEntity4: "",
+            externalEntity5: "",
+            destination: "",
+            flightType: "",
+            hospitality_Type: "",
+            missionDescription: "",
+            missionEndDate: "",
+            missionID: "",
+            missionStartDate: "",
+            noOfDays: 0,
+            pendingWithGroup: oSector.cust_Delegate_Dynamic_group
+              ? oSector.cust_Delegate_Dynamic_group
+              : "",
+            pendingWithUser: oSector.cust_Head_of_Sector,
+            sector: "",
+            ticketAverage: "",
+            totalExpense: "",
+            totalPerdiemMission: "",
+          },
+          members: [],
+          attachments: [],
+          budgetTracking,
+        };
 
-            var sTable =
-              '<table style="width:100%; border-collapse:collapse; text-align:left;">' +
-              "<thead>" +
-              '<tr style="background:#f7f7f7;">' +
-              '<th style="' +
-              sThStyle +
-              '">Employee</th>' +
-              '<th style="' +
-              sThStyle +
-              '">Cost Center</th>' +
-              '<th style="' +
-              sThStyle +
-              ' text-align:right;">Available</th>' +
-              '<th style="' +
-              sThStyle +
-              ' text-align:right;">Total Per Diem</th>' +
-              '<th style="' +
-              sThStyle +
-              ' text-align:right;">Emp. Per Diem</th>' +
-              "</tr>" +
-              "</thead>" +
-              "<tbody>";
-
-            memberBudgetChecks.forEach(function (oItem, iIndex) {
-              var sRowBg = iIndex % 2 === 0 ? "#ffffff" : "#fafafa";
-              sTable +=
-                '<tr style="background:' +
-                sRowBg +
-                ';">' +
-                '<td style="' +
-                sTdStyle +
-                '">' +
-                '<div style="font-weight:600; color:#333; font-size:12px;">' +
-                oItem.EmployeeName +
-                "</div>" +
-                '<div style="font-family:monospace; color:#1565c0; font-size:10px;">' +
-                oItem.EmployeeId +
-                "</div>" +
-                "</td>" +
-                '<td style="' +
-                sTdStyle +
-                ' font-family:monospace; color:#6a6a6a;">' +
-                oItem.CostCenter +
-                "</td>" +
-                '<td style="' +
-                sTdStyle +
-                ' font-family:monospace; text-align:right; color:#c62828;">' +
-                fmtNum(oItem.AvailableBudget) +
-                "</td>" +
-                '<td style="' +
-                sTdStyle +
-                ' font-family:monospace; text-align:right; color:#444;">' +
-                fmtNum(oItem.TotalPerDiem) +
-                "</td>" +
-                '<td style="' +
-                sTdStyle +
-                ' font-family:monospace; text-align:right; color:#e65100;">' +
-                fmtNum(oItem.EmployeePerDiem) +
-                "</td>" +
-                "</tr>";
-            });
-
-            sTable += "</tbody></table>";
-
-            var sHtmlMessage =
-              '<div style="text-align:center; margin-bottom:8px;">' +
-              `<span style="font-size:14px;">${this.getText("memberBudgetLowError", [])}</span>` +
-              "</div>" +
-              '<div style="max-height:300px; overflow-y:auto; border:1px solid #e0e0e0; border-radius:6px;">' +
-              sTable +
-              "</div>";
-
-            // Show the alert
-            this.showMessage({
-              html: sHtmlMessage,
-              title: this.getText("memberBudgetLowTitle", []),
-              icon: "error",
-              showConfirmButton: true,
-              timer: undefined,
-              toast: false,
-              position: "center",
-              width: 600
-            });
-          } else {
-            this.alertMessage(
-              "E",
-              "errorOperation",
-              "sectorBudgetLowError",
-              [],
-              null,
-            );
-          }
-          // Build the HTML table from memberBudgetChecks
-
-          return;
-          // MessageBox.error("The available budget of sector is low", {
-          //   actions: [MessageBox.Action.CLOSE],
-          //   onClose: async function (sAction) {},
-          //   dependentOn: that.getView(),
-          // });
+        if (
+          missionInfoModelData.decreeType != "" &&
+          missionInfoModelData.decreeType != null
+        ) {
+          missionRequest.info.decreeType = missionInfoModelData.decreeType;
         } else {
-          //--Set external entities
-          this.setExternalEntities(missionInfoModelData);
-          //--Set external entities
+          validationError = true;
+        }
 
-          let missionRequest = {
-            info: {
-              budgetAvailable: missionBudgetAvailable.toString(),
-              budgetParked: missionParkedAmount.toString(),
-              missionDetails: "",
-              createdBy: "",
-              decreeType: "",
-              externalEntity: "",
-              externalEntity2: "",
-              externalEntity3: "",
-              externalEntity4: "",
-              externalEntity5: "",
-              destination: "",
-              flightType: "",
-              hospitality_Type: "",
-              missionDescription: "",
-              missionEndDate: "",
-              missionID: "",
-              missionStartDate: "",
-              noOfDays: 0,
-              pendingWithGroup: oSector.cust_Delegate_Dynamic_group
-                ? oSector.cust_Delegate_Dynamic_group
-                : "",
-              pendingWithUser: oSector.cust_Head_of_Sector,
-              sector: "",
-              ticketAverage: "",
-              totalExpense: "",
-              totalPerdiemMission: "",
-            },
-            members: [],
+        if (
+          missionInfoModelData.decreeType === "09" ||
+          missionInfoModelData.decreeType === "10"
+        ) {
+          if (
+            missionInfoModelData.externalEntity !== null &&
+            missionInfoModelData.externalEntity !== ""
+          ) {
+            missionRequest.info.externalEntity =
+              missionInfoModelData.externalEntity;
+            missionRequest.info.externalEntity2 =
+              missionInfoModelData.externalEntity2;
+            missionRequest.info.externalEntity3 =
+              missionInfoModelData.externalEntity3;
+            missionRequest.info.externalEntity4 =
+              missionInfoModelData.externalEntity4;
+            missionRequest.info.externalEntity5 =
+              missionInfoModelData.externalEntity5;
+          } else {
+            validationError = true;
+          }
+        }
+
+        if (
+          missionInfoModelData.destination != "" &&
+          missionInfoModelData.destination != null
+        ) {
+          missionRequest.info.destination = missionInfoModelData.destination;
+        } else {
+          validationError = true;
+        }
+
+        if (
+          missionInfoModelData.flightType != "" &&
+          missionInfoModelData.flightType != null
+        ) {
+          missionRequest.info.flightType = missionInfoModelData.flightType;
+        } else {
+          validationError = true;
+        }
+
+        if (
+          missionInfoModelData.hospitality_Type != "" &&
+          missionInfoModelData.hospitality_Type != null
+        ) {
+          missionRequest.info.hospitality_Type =
+            missionInfoModelData.hospitality_Type;
+        } else {
+          validationError = true;
+        }
+
+        if (
+          missionInfoModelData.missionDescription != "" &&
+          missionInfoModelData.missionDescription != null
+        ) {
+          missionRequest.info.missionDescription =
+            missionInfoModelData.missionDescription;
+        } else {
+          validationError = true;
+        }
+
+        if (
+          missionInfoModelData.missionEndDate != "" &&
+          missionInfoModelData.missionEndDate != null
+        ) {
+          var hoursToAdd = 12 * 60 * 60 * 1000;
+          var missionEndDate = new Date(missionInfoModelData.missionEndDate);
+          missionEndDate.setTime(missionEndDate.getTime() + hoursToAdd);
+          missionRequest.info.missionEndDate =
+            "/Date(" + missionEndDate.getTime() + ")/";
+        } else {
+          validationError = true;
+        }
+
+        if (
+          missionInfoModelData.missionStartDate != "" &&
+          missionInfoModelData.missionStartDate != null
+        ) {
+          var hoursToAdd = 12 * 60 * 60 * 1000;
+          var missionStartDate = new Date(
+            missionInfoModelData.missionStartDate,
+          );
+          missionStartDate.setTime(missionStartDate.getTime() + hoursToAdd);
+          missionRequest.info.missionStartDate =
+            "/Date(" + missionStartDate.getTime() + ")/";
+        } else {
+          validationError = true;
+        }
+
+        if (missionInfoModelData.noOfDays > 0) {
+          missionRequest.info.noOfDays = missionInfoModelData.noOfDays;
+        } else {
+          validationError = true;
+        }
+
+        if (
+          missionInfoModelData.sector != "" &&
+          missionInfoModelData.sector != null
+        ) {
+          missionRequest.info.sector = missionInfoModelData.sector;
+        } else {
+          validationError = true;
+        }
+
+        if (
+          missionInfoModelData.missionDetails != "" &&
+          missionInfoModelData.missionDetails != null
+        ) {
+          missionRequest.info.missionDetails =
+            missionInfoModelData.missionDetails;
+        }
+
+        const decryptedDataParsed = await this.getTravelStorage();
+        missionRequest.info.createdBy = decryptedDataParsed.keyVault.user.id;
+        missionRequest.info.ticketAverage = missionInfoModelData.ticketAverage;
+        missionRequest.info.totalExpense = missionInfoModelData.totalExpense;
+        missionRequest.info.totalPerdiemMission =
+          missionInfoModelData.totalPerdiemMission;
+
+        for (var i = 0; i < missionAttachmentsData.length; i++) {
+          var missionAttachmentRequest = {
+            file: "",
+            fileName: "",
+            fileSize: 0,
+            mimetype: "",
+          };
+          missionAttachmentRequest.file = missionAttachmentsData[i].file;
+          missionAttachmentRequest.fileName =
+            missionAttachmentsData[i].fileName;
+          missionAttachmentRequest.fileSize =
+            missionAttachmentsData[i].fileSize;
+          missionAttachmentRequest.mimetype =
+            missionAttachmentsData[i].mimetype;
+          missionRequest.attachments.push(missionAttachmentRequest);
+        }
+
+        for (var j = 0; j < missionMembersData.length; j++) {
+          var missionMemberRequest = {
+            department: "",
+            userID: "",
+            employeeID: "",
+            employeeName: "",
+            employeeTotalExpense: 0,
+            employeeTotalPerdiem: 0,
+            employeeTotalTicket: 0,
+            reservedBudget: 0, //--reserved budget
+            costCenter: "",
+            grade: "",
+            multipleCities: "",
+            noOfCities: "",
+            salutation: "",
+            title: "",
+            itinerary: [],
             attachments: [],
-            budgetTracking,
           };
 
           if (
-            missionInfoModelData.decreeType != "" &&
-            missionInfoModelData.decreeType != null
+            missionMembersData[j].employeeID != "" &&
+            missionMembersData[j].employeeID != null
           ) {
-            missionRequest.info.decreeType = missionInfoModelData.decreeType;
+            missionMemberRequest.employeeID = missionMembersData[j].employeeID;
+            missionMemberRequest.userID = missionMembersData[j].userID;
+          } else {
+            validationError = true;
+          }
+          if (
+            missionMembersData[j].employeeName != "" &&
+            missionMembersData[j].employeeName != null
+          ) {
+            missionMemberRequest.employeeName =
+              missionMembersData[j].employeeName;
+          } else {
+            validationError = true;
+          }
+          if (
+            missionMembersData[j].grade != "" &&
+            missionMembersData[j].grade != null
+          ) {
+            missionMemberRequest.grade = missionMembersData[j].grade;
+          } else {
+            validationError = true;
+          }
+          if (
+            missionMembersData[j].multipleCities != "" &&
+            missionMembersData[j].multipleCities != null
+          ) {
+            missionMemberRequest.multipleCities =
+              missionMembersData[j].multipleCities;
+          } else {
+            validationError = true;
+          }
+          if (
+            missionMembersData[j].salutation != "" &&
+            missionMembersData[j].salutation != null
+          ) {
+            missionMemberRequest.salutation = missionMembersData[j].salutation;
+          } else {
+            validationError = true;
+          }
+          if (
+            missionMembersData[j].title != "" &&
+            missionMembersData[j].title != null
+          ) {
+            missionMemberRequest.title = missionMembersData[j].title;
           } else {
             validationError = true;
           }
 
-          if (
-            missionInfoModelData.decreeType === "09" ||
-            missionInfoModelData.decreeType === "10"
-          ) {
+          //--Cost center
+          missionMemberRequest.costCenter = missionMembersData[j].costCenter;
+          //--Cost center
+
+          missionMemberRequest.department = missionMembersData[j].department;
+          missionMemberRequest.employeeTotalExpense =
+            missionMembersData[j].employeeTotalExpense;
+          missionMemberRequest.employeeTotalPerdiem =
+            missionMembersData[j].employeeTotalPerdiem;
+          missionMemberRequest.reservedBudget =
+            missionMembersData[j].reservedBudget;
+          missionMemberRequest.employeeTotalTicket =
+            missionMembersData[j].employeeTotalTicket;
+          missionMemberRequest.noOfCities =
+            missionMembersData[j].itinerary.length;
+
+          for (var k = 0; k < missionMembersData[j].itinerary.length; k++) {
+            var missionItineraryRequest = {
+              city: "",
+              endDate: "",
+              headOfMission: "",
+              hospitalityDefault: "",
+              perDiemPerCity: "",
+              startDate: "",
+              ticketActualCost: 0,
+              ticketAverage: 0,
+              ticketType: "",
+            };
             if (
-              missionInfoModelData.externalEntity !== null &&
-              missionInfoModelData.externalEntity !== ""
+              missionMembersData[j].itinerary[k].city != "" &&
+              missionMembersData[j].itinerary[k].city != null
             ) {
-              missionRequest.info.externalEntity =
-                missionInfoModelData.externalEntity;
-              missionRequest.info.externalEntity2 =
-                missionInfoModelData.externalEntity2;
-              missionRequest.info.externalEntity3 =
-                missionInfoModelData.externalEntity3;
-              missionRequest.info.externalEntity4 =
-                missionInfoModelData.externalEntity4;
-              missionRequest.info.externalEntity5 =
-                missionInfoModelData.externalEntity5;
+              missionItineraryRequest.city =
+                missionMembersData[j].itinerary[k].city;
             } else {
               validationError = true;
             }
+            if (
+              missionMembersData[j].itinerary[k].endDate != "" &&
+              missionMembersData[j].itinerary[k].endDate != null
+            ) {
+              var hoursToAdd = 12 * 60 * 60 * 1000;
+              var itineraryEndDate = new Date(
+                missionMembersData[j].itinerary[k].endDate,
+              );
+              itineraryEndDate.setTime(itineraryEndDate.getTime() + hoursToAdd);
+              missionItineraryRequest.endDate =
+                "/Date(" + itineraryEndDate.getTime() + ")/";
+            } else {
+              validationError = true;
+            }
+            if (
+              missionMembersData[j].itinerary[k].startDate != "" &&
+              missionMembersData[j].itinerary[k].startDate != null
+            ) {
+              var hoursToAdd = 12 * 60 * 60 * 1000;
+              var itineraryStartDate = new Date(
+                missionMembersData[j].itinerary[k].startDate,
+              );
+              itineraryStartDate.setTime(
+                itineraryStartDate.getTime() + hoursToAdd,
+              );
+              missionItineraryRequest.startDate =
+                "/Date(" + itineraryStartDate.getTime() + ")/";
+            } else {
+              validationError = true;
+            }
+            if (
+              missionMembersData[j].itinerary[k].headOfMission != "" &&
+              missionMembersData[j].itinerary[k].headOfMission != null
+            ) {
+              missionItineraryRequest.headOfMission =
+                missionMembersData[j].itinerary[k].headOfMission;
+              if (missionMembersData[j].itinerary[k].headOfMission === "Y") {
+                headOfMission = missionMemberRequest.employeeID;
+              }
+            } else {
+              validationError = true;
+            }
+            if (
+              missionMembersData[j].itinerary[k].hospitalityDefault != "" &&
+              missionMembersData[j].itinerary[k].hospitalityDefault != null
+            ) {
+              missionItineraryRequest.hospitalityDefault =
+                missionMembersData[j].itinerary[k].hospitalityDefault;
+            } else {
+              validationError = true;
+            }
+            if (
+              missionMembersData[j].itinerary[k].ticketType != "" &&
+              missionMembersData[j].itinerary[k].ticketType != null
+            ) {
+              missionItineraryRequest.ticketType =
+                missionMembersData[j].itinerary[k].ticketType;
+            } else {
+              validationError = true;
+            }
+            missionItineraryRequest.perDiemPerCity =
+              missionMembersData[j].itinerary[k].perDiemPerCity;
+            missionItineraryRequest.ticketActualCost =
+              missionMembersData[j].itinerary[k].ticketActualCost;
+            missionItineraryRequest.ticketAverage =
+              missionMembersData[j].itinerary[k].ticketAverage;
+            missionMemberRequest.itinerary.push(missionItineraryRequest);
           }
 
-          if (
-            missionInfoModelData.destination != "" &&
-            missionInfoModelData.destination != null
-          ) {
-            missionRequest.info.destination = missionInfoModelData.destination;
-          } else {
-            validationError = true;
-          }
-
-          if (
-            missionInfoModelData.flightType != "" &&
-            missionInfoModelData.flightType != null
-          ) {
-            missionRequest.info.flightType = missionInfoModelData.flightType;
-          } else {
-            validationError = true;
-          }
-
-          if (
-            missionInfoModelData.hospitality_Type != "" &&
-            missionInfoModelData.hospitality_Type != null
-          ) {
-            missionRequest.info.hospitality_Type =
-              missionInfoModelData.hospitality_Type;
-          } else {
-            validationError = true;
-          }
-
-          if (
-            missionInfoModelData.missionDescription != "" &&
-            missionInfoModelData.missionDescription != null
-          ) {
-            missionRequest.info.missionDescription =
-              missionInfoModelData.missionDescription;
-          } else {
-            validationError = true;
-          }
-
-          if (
-            missionInfoModelData.missionEndDate != "" &&
-            missionInfoModelData.missionEndDate != null
-          ) {
-            var hoursToAdd = 12 * 60 * 60 * 1000;
-            var missionEndDate = new Date(missionInfoModelData.missionEndDate);
-            missionEndDate.setTime(missionEndDate.getTime() + hoursToAdd);
-            missionRequest.info.missionEndDate =
-              "/Date(" + missionEndDate.getTime() + ")/";
-          } else {
-            validationError = true;
-          }
-
-          if (
-            missionInfoModelData.missionStartDate != "" &&
-            missionInfoModelData.missionStartDate != null
-          ) {
-            var hoursToAdd = 12 * 60 * 60 * 1000;
-            var missionStartDate = new Date(
-              missionInfoModelData.missionStartDate,
-            );
-            missionStartDate.setTime(missionStartDate.getTime() + hoursToAdd);
-            missionRequest.info.missionStartDate =
-              "/Date(" + missionStartDate.getTime() + ")/";
-          } else {
-            validationError = true;
-          }
-
-          if (missionInfoModelData.noOfDays > 0) {
-            missionRequest.info.noOfDays = missionInfoModelData.noOfDays;
-          } else {
-            validationError = true;
-          }
-
-          if (
-            missionInfoModelData.sector != "" &&
-            missionInfoModelData.sector != null
-          ) {
-            missionRequest.info.sector = missionInfoModelData.sector;
-          } else {
-            validationError = true;
-          }
-
-          if (
-            missionInfoModelData.missionDetails != "" &&
-            missionInfoModelData.missionDetails != null
-          ) {
-            missionRequest.info.missionDetails =
-              missionInfoModelData.missionDetails;
-          }
-
-          const decryptedDataParsed = await this.getTravelStorage();
-          missionRequest.info.createdBy = decryptedDataParsed.keyVault.user.id;
-          missionRequest.info.ticketAverage =
-            missionInfoModelData.ticketAverage;
-          missionRequest.info.totalExpense = missionInfoModelData.totalExpense;
-          missionRequest.info.totalPerdiemMission =
-            missionInfoModelData.totalPerdiemMission;
-
-          for (var i = 0; i < missionAttachmentsData.length; i++) {
+          for (var l = 0; l < missionMembersData[j].attachments.length; l++) {
             var missionAttachmentRequest = {
               file: "",
               fileName: "",
               fileSize: 0,
               mimetype: "",
             };
-            missionAttachmentRequest.file = missionAttachmentsData[i].file;
+            missionAttachmentRequest.file =
+              missionMembersData[j].attachments[l].file;
             missionAttachmentRequest.fileName =
-              missionAttachmentsData[i].fileName;
+              missionMembersData[j].attachments[l].fileName;
             missionAttachmentRequest.fileSize =
-              missionAttachmentsData[i].fileSize;
+              missionMembersData[j].attachments[l].fileSize;
             missionAttachmentRequest.mimetype =
-              missionAttachmentsData[i].mimetype;
-            missionRequest.attachments.push(missionAttachmentRequest);
+              missionMembersData[j].attachments[l].mimetype;
+            missionMemberRequest.attachments.push(missionAttachmentRequest);
           }
 
-          for (var j = 0; j < missionMembersData.length; j++) {
-            var missionMemberRequest = {
-              department: "",
-              userID: "",
-              employeeID: "",
-              employeeName: "",
-              costCenter: "",
-              employeeTotalExpense: 0,
-              employeeTotalPerdiem: 0,
-              employeeTotalTicket: 0,
-              grade: "",
-              multipleCities: "",
-              noOfCities: "",
-              salutation: "",
-              title: "",
-              itinerary: [],
-              attachments: [],
-            };
+          missionRequest.members.push(missionMemberRequest);
+        }
 
+        var screenModelData = this.getView()
+          .getModel("screenModel")
+          .getData().info;
+        screenModelData.validationError = validationError;
+        var screenModel = new JSONModel({
+          info: screenModelData,
+        });
+        this.setModel(screenModel, "screenModel");
+
+        if (validationError == false) {
+          if (parseFloat(missionInfoModelData.totalExpense) <= 0) {
+            this.alertMessage(
+              "E",
+              "errorOperation",
+              "totalMissionExpenseZero",
+              [],
+              null,
+            );
+            return;
+            // MessageBox.error(
+            //   "The total mission expense should be greater than zero",
+            //   {
+            //     actions: [MessageBox.Action.CLOSE],
+            //     onClose: async function (sAction) {},
+            //     dependentOn: that.getView(),
+            //   }
+            // );
+          } else {
+            //--Head of Mission vs Head of Sector Checks
+            //--If head of mission is also the head of sector - get the manager of the head of sector
             if (
-              missionMembersData[j].employeeID != "" &&
-              missionMembersData[j].employeeID != null
+              headOfMission &&
+              headOfMission === oSector.cust_Head_of_Sector &&
+              aManagerCheckSectors.includes(missionInfoModelData.sector)
             ) {
-              missionMemberRequest.employeeID =
-                missionMembersData[j].employeeID;
-              missionMemberRequest.userID = missionMembersData[j].userID;
-            } else {
-              validationError = true;
-            }
-            if (
-              missionMembersData[j].employeeName != "" &&
-              missionMembersData[j].employeeName != null
-            ) {
-              missionMemberRequest.employeeName =
-                missionMembersData[j].employeeName;
-            } else {
-              validationError = true;
-            }
-            if (
-              missionMembersData[j].grade != "" &&
-              missionMembersData[j].grade != null
-            ) {
-              missionMemberRequest.grade = missionMembersData[j].grade;
-            } else {
-              validationError = true;
-            }
-            if (
-              missionMembersData[j].multipleCities != "" &&
-              missionMembersData[j].multipleCities != null
-            ) {
-              missionMemberRequest.multipleCities =
-                missionMembersData[j].multipleCities;
-            } else {
-              validationError = true;
-            }
-            if (
-              missionMembersData[j].salutation != "" &&
-              missionMembersData[j].salutation != null
-            ) {
-              missionMemberRequest.salutation =
-                missionMembersData[j].salutation;
-            } else {
-              validationError = true;
-            }
-            if (
-              missionMembersData[j].title != "" &&
-              missionMembersData[j].title != null
-            ) {
-              missionMemberRequest.title = missionMembersData[j].title;
-            } else {
-              validationError = true;
-            }
-
-            //--Cost center
-            missionMemberRequest.costCenter = missionMembersData[j].costCenter;
-            //--Cost center
-
-            missionMemberRequest.department = missionMembersData[j].department;
-            missionMemberRequest.employeeTotalExpense =
-              missionMembersData[j].employeeTotalExpense;
-            missionMemberRequest.employeeTotalPerdiem =
-              missionMembersData[j].employeeTotalPerdiem;
-            missionMemberRequest.employeeTotalTicket =
-              missionMembersData[j].employeeTotalTicket;
-            missionMemberRequest.noOfCities =
-              missionMembersData[j].itinerary.length;
-
-            for (var k = 0; k < missionMembersData[j].itinerary.length; k++) {
-              var missionItineraryRequest = {
-                city: "",
-                endDate: "",
-                headOfMission: "",
-                hospitalityDefault: "",
-                perDiemPerCity: "",
-                startDate: "",
-                ticketActualCost: 0,
-                ticketAverage: 0,
-                ticketType: "",
-              };
-              if (
-                missionMembersData[j].itinerary[k].city != "" &&
-                missionMembersData[j].itinerary[k].city != null
-              ) {
-                missionItineraryRequest.city =
-                  missionMembersData[j].itinerary[k].city;
-              } else {
-                validationError = true;
-              }
-              if (
-                missionMembersData[j].itinerary[k].endDate != "" &&
-                missionMembersData[j].itinerary[k].endDate != null
-              ) {
-                var hoursToAdd = 12 * 60 * 60 * 1000;
-                var itineraryEndDate = new Date(
-                  missionMembersData[j].itinerary[k].endDate,
-                );
-                itineraryEndDate.setTime(
-                  itineraryEndDate.getTime() + hoursToAdd,
-                );
-                missionItineraryRequest.endDate =
-                  "/Date(" + itineraryEndDate.getTime() + ")/";
-              } else {
-                validationError = true;
-              }
-              if (
-                missionMembersData[j].itinerary[k].startDate != "" &&
-                missionMembersData[j].itinerary[k].startDate != null
-              ) {
-                var hoursToAdd = 12 * 60 * 60 * 1000;
-                var itineraryStartDate = new Date(
-                  missionMembersData[j].itinerary[k].startDate,
-                );
-                itineraryStartDate.setTime(
-                  itineraryStartDate.getTime() + hoursToAdd,
-                );
-                missionItineraryRequest.startDate =
-                  "/Date(" + itineraryStartDate.getTime() + ")/";
-              } else {
-                validationError = true;
-              }
-              if (
-                missionMembersData[j].itinerary[k].headOfMission != "" &&
-                missionMembersData[j].itinerary[k].headOfMission != null
-              ) {
-                missionItineraryRequest.headOfMission =
-                  missionMembersData[j].itinerary[k].headOfMission;
-                if (missionMembersData[j].itinerary[k].headOfMission === "Y") {
-                  headOfMission = missionMemberRequest.employeeID;
-                }
-              } else {
-                validationError = true;
-              }
-              if (
-                missionMembersData[j].itinerary[k].hospitalityDefault != "" &&
-                missionMembersData[j].itinerary[k].hospitalityDefault != null
-              ) {
-                missionItineraryRequest.hospitalityDefault =
-                  missionMembersData[j].itinerary[k].hospitalityDefault;
-              } else {
-                validationError = true;
-              }
-              if (
-                missionMembersData[j].itinerary[k].ticketType != "" &&
-                missionMembersData[j].itinerary[k].ticketType != null
-              ) {
-                missionItineraryRequest.ticketType =
-                  missionMembersData[j].itinerary[k].ticketType;
-              } else {
-                validationError = true;
-              }
-              missionItineraryRequest.perDiemPerCity =
-                missionMembersData[j].itinerary[k].perDiemPerCity;
-              missionItineraryRequest.ticketActualCost =
-                missionMembersData[j].itinerary[k].ticketActualCost;
-              missionItineraryRequest.ticketAverage =
-                missionMembersData[j].itinerary[k].ticketAverage;
-              missionMemberRequest.itinerary.push(missionItineraryRequest);
-            }
-
-            for (var l = 0; l < missionMembersData[j].attachments.length; l++) {
-              var missionAttachmentRequest = {
-                file: "",
-                fileName: "",
-                fileSize: 0,
-                mimetype: "",
-              };
-              missionAttachmentRequest.file =
-                missionMembersData[j].attachments[l].file;
-              missionAttachmentRequest.fileName =
-                missionMembersData[j].attachments[l].fileName;
-              missionAttachmentRequest.fileSize =
-                missionMembersData[j].attachments[l].fileSize;
-              missionAttachmentRequest.mimetype =
-                missionMembersData[j].attachments[l].mimetype;
-              missionMemberRequest.attachments.push(missionAttachmentRequest);
-            }
-
-            missionRequest.members.push(missionMemberRequest);
-          }
-
-          var screenModelData = this.getView()
-            .getModel("screenModel")
-            .getData().info;
-          screenModelData.validationError = validationError;
-          var screenModel = new JSONModel({
-            info: screenModelData,
-          });
-          this.setModel(screenModel, "screenModel");
-
-          if (validationError == false) {
-            if (parseFloat(missionInfoModelData.totalExpense) <= 0) {
-              this.alertMessage(
-                "E",
-                "errorOperation",
-                "totalMissionExpenseZero",
-                [],
-                null,
-              );
-              return;
-              // MessageBox.error(
-              //   "The total mission expense should be greater than zero",
-              //   {
-              //     actions: [MessageBox.Action.CLOSE],
-              //     onClose: async function (sAction) {},
-              //     dependentOn: that.getView(),
-              //   }
-              // );
-            } else {
-              //--Head of Mission vs Head of Sector Checks
-              //--If head of mission is also the head of sector - get the manager of the head of sector
-              if (
-                headOfMission &&
-                headOfMission === oSector.cust_Head_of_Sector &&
-                aManagerCheckSectors.includes(missionInfoModelData.sector)
-              ) {
-                this.openBusyFragment();
-                try {
-                  const managerInfo = await this.getManagerOfHeadOfSector(
-                    oSector.cust_Head_of_Sector,
-                  );
-                  this.closeBusyFragment();
-                  missionRequest.info.pendingWithGroup =
-                    managerInfo.delegateDynamicGroup
-                      ? managerInfo.delegateDynamicGroup
-                      : "";
-                  missionRequest.info.pendingWithUser = managerInfo.managerId;
-                } catch (e) {
-                  this.closeBusyFragment();
-                  this.alertMessage(
-                    "E",
-                    "errorOperation",
-                    "managerOfHeadOfSectorNotFound",
-                    [],
-                    null,
-                  );
-                  return;
-                }
-              }
-              //--If head of mission is also the head of sector - get the manager of the head of sector
-              //--Head of Mission vs Head of Sector Checks
-
-              //--Check mission
+              this.openBusyFragment();
               try {
-                await this.openBusyFragment("checkingMissionBeforeSave");
-                const checkMissionResponse =
-                  await this.checkMission(missionRequest);
-                await this.closeBusyFragment();
-                if (checkMissionResponse === false) {
-                  this.toastMessage(
-                    "E",
-                    "errorsFound",
-                    "missionCheckFailed",
-                    [],
-                    null,
-                  );
-                  this.onOpenErrorPane();
-                  return;
-                }
+                const managerInfo = await this.getManagerOfHeadOfSector(
+                  oSector.cust_Head_of_Sector,
+                );
+                this.closeBusyFragment();
+                missionRequest.info.pendingWithGroup =
+                  managerInfo.delegateDynamicGroup
+                    ? managerInfo.delegateDynamicGroup
+                    : "";
+                missionRequest.info.pendingWithUser = managerInfo.managerId;
               } catch (e) {
-                await this.closeBusyFragment();
+                this.closeBusyFragment();
+                this.alertMessage(
+                  "E",
+                  "errorOperation",
+                  "managerOfHeadOfSectorNotFound",
+                  [],
+                  null,
+                );
                 return;
               }
+            }
+            //--If head of mission is also the head of sector - get the manager of the head of sector
+            //--Head of Mission vs Head of Sector Checks
 
-              //--Check mission
+            //--Check mission
+            try {
+              await this.openBusyFragment("checkingMissionBeforeSave");
+              const checkMissionResponse =
+                await this.checkMission(missionRequest);
+              await this.closeBusyFragment();
+              if (checkMissionResponse === false) {
+                this.toastMessage(
+                  "E",
+                  "errorsFound",
+                  "missionCheckFailed",
+                  [],
+                  null,
+                );
+                this.onOpenErrorPane();
+                return;
+              }
+            } catch (e) {
+              await this.closeBusyFragment();
+              return;
+            }
 
-              const envInfo = await this.getEnvInfo();
+            //--Check mission
 
-              const requestBody = {
-                params: missionRequest,
-                userInfo: decryptedDataParsed.keyVault.user.id,
-              };
+            const envInfo = await this.getEnvInfo();
 
-              const url = "/createMission";
-              this.openBusyFragment("savingMission", []);
-              jQuery.ajax({
-                type: "POST",
-                url: url,
-                contentType: "application/json",
-                xhrFields: { withCredentials: true },
-                data: JSON.stringify({
-                  data: requestBody,
-                }),
-                beforeSend: function (xhr) {
-                  if (envInfo != null) {
-                    xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
-                    xhr.setRequestHeader(
-                      "x-approuter-authorization",
-                      "Bearer " + envInfo.CF.accessToken,
-                    );
-                  }
-                },
-                success: async function (data, textStatus, jqXHR) {
-                  var decryptedData = await that.getDecryptedData(data);
+            const requestBody = {
+              params: missionRequest,
+              userInfo: decryptedDataParsed.keyVault.user.id,
+            };
 
-                  var missionCreatedData = JSON.parse(decryptedData);
+            const url = "/createMission";
+            this.openBusyFragment("savingMission", []);
+            jQuery.ajax({
+              type: "POST",
+              url: url,
+              contentType: "application/json",
+              xhrFields: { withCredentials: true },
+              data: JSON.stringify({
+                data: requestBody,
+              }),
+              beforeSend: function (xhr) {
+                if (envInfo != null) {
+                  xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
+                  xhr.setRequestHeader(
+                    "x-approuter-authorization",
+                    "Bearer " + envInfo.CF.accessToken,
+                  );
+                }
+              },
+              success: async function (data, textStatus, jqXHR) {
+                var decryptedData = await that.getDecryptedData(data);
 
-                  that.closeBusyFragment();
+                var missionCreatedData = JSON.parse(decryptedData);
 
+                that.closeBusyFragment();
+
+                that.alertMessage(
+                  "S",
+                  "successfulOperation",
+                  "travelMissionCreated",
+                  [missionCreatedData.missionId],
+                  {
+                    showConfirmButton: true,
+                    confirmCallbackFn: () => {
+                      that.closeMission();
+                    },
+                  },
+                );
+
+                // MessageBox.success(
+                //   "The travel mission is created. Mission ID is " +
+                //     missionCreatedData.missionId,
+                //   {
+                //     actions: [MessageBox.Action.CLOSE],
+                //     onClose: async function (sAction) {
+                //       that.closeMission();
+                //     },
+                //     dependentOn: that.getView(),
+                //   }
+                // );
+              },
+              error: async function (jqXHR, textStatus, errorDesc) {
+                that.closeBusyFragment();
+                if (jqXHR.status == 401) {
+                  that.closeMission();
+                } else if (jqXHR.status == 400) {
+                  var errorMessage = JSON.parse(jqXHR.responseText);
                   that.alertMessage(
-                    "S",
-                    "successfulOperation",
-                    "travelMissionCreated",
-                    [missionCreatedData.missionId],
+                    "E",
+                    "errorOperation",
+                    "errorOccuredWithMessage",
+                    [jqXHR.responseText],
                     {
                       showConfirmButton: true,
                       confirmCallbackFn: () => {
@@ -2554,61 +2055,23 @@ sap.ui.define(
                     },
                   );
 
-                  // MessageBox.success(
-                  //   "The travel mission is created. Mission ID is " +
-                  //     missionCreatedData.missionId,
-                  //   {
-                  //     actions: [MessageBox.Action.CLOSE],
-                  //     onClose: async function (sAction) {
-                  //       that.closeMission();
-                  //     },
-                  //     dependentOn: that.getView(),
-                  //   }
-                  // );
-                },
-                error: async function (jqXHR, textStatus, errorDesc) {
-                  that.closeBusyFragment();
-                  if (jqXHR.status == 401) {
-                    that.closeMission();
-                  } else if (jqXHR.status == 400) {
-                    var errorMessage = JSON.parse(jqXHR.responseText);
-                    that.alertMessage(
-                      "E",
-                      "errorOperation",
-                      "errorOccuredWithMessage",
-                      [jqXHR.responseText],
-                      {
-                        showConfirmButton: true,
-                        confirmCallbackFn: () => {
-                          that.closeMission();
-                        },
-                      },
-                    );
-
-                    // MessageBox.error(errorMessage.message, {
-                    //   actions: [MessageBox.Action.CLOSE],
-                    //   onClose: async function (sAction) {
-                    //     that.closeMission();
-                    //   },
-                    //   dependentOn: that.getView(),
-                    // });
-                  } else {
-                    that.alertMessage(
-                      "E",
-                      "errorOperation",
-                      "serverError",
-                      [],
-                      {
-                        showConfirmButton: true,
-                        confirmCallbackFn: () => {
-                          that.closeMission();
-                        },
-                      },
-                    );
-                  }
-                },
-              });
-            }
+                  // MessageBox.error(errorMessage.message, {
+                  //   actions: [MessageBox.Action.CLOSE],
+                  //   onClose: async function (sAction) {
+                  //     that.closeMission();
+                  //   },
+                  //   dependentOn: that.getView(),
+                  // });
+                } else {
+                  that.alertMessage("E", "errorOperation", "serverError", [], {
+                    showConfirmButton: true,
+                    confirmCallbackFn: () => {
+                      that.closeMission();
+                    },
+                  });
+                }
+              },
+            });
           }
         }
       },
@@ -3765,6 +3228,17 @@ sap.ui.define(
 
                       itineraryData[j].ticketType =
                         ticketAndPerDiemData.ticketType;
+
+                      //--reserved budget
+                      if (
+                        !isNaN(parseInt(ticketAndPerDiemData.reservedBudget))
+                      ) {
+                        itineraryData[j].reservedBudget =
+                          ticketAndPerDiemData.reservedBudget;
+                      } else {
+                        itineraryData[j].reservedBudget = 0;
+                      }
+                      //--reserved budget
                     }
                   }
                 }
@@ -3772,6 +3246,7 @@ sap.ui.define(
 
               var memberTicketAverage = 0;
               var memberPerDiemPerCity = 0;
+              var memberReservedBudget = 0;
               var missionTicketAverage = 0;
               var missionPerDiemPerCity = 0;
               var missionTotalExpense = 0;
@@ -3779,6 +3254,8 @@ sap.ui.define(
               for (var i = 0; i < mModelData.length; i++) {
                 memberTicketAverage = 0;
                 memberPerDiemPerCity = 0;
+                memberReservedBudget = 0;
+
                 if (guid == mModelData[i].guid) {
                   var itineraryData = mModelData[i].itinerary;
                   for (var j = 0; j < itineraryData.length; j++) {
@@ -3786,9 +3263,13 @@ sap.ui.define(
                       memberPerDiemPerCity + itineraryData[j].perDiemPerCity;
                     memberTicketAverage =
                       memberTicketAverage + itineraryData[j].ticketAverage;
+
+                    memberReservedBudget =
+                      memberReservedBudget + itineraryData[j].reservedBudget; //--reserved budget
                   }
                   mModelData[i].employeeTotalPerdiem = memberPerDiemPerCity;
                   mModelData[i].employeeTotalTicket = memberTicketAverage;
+                  mModelData[i].reservedBudget = memberReservedBudget; //--reserved budget
                   mModelData[i].employeeTotalExpense =
                     memberPerDiemPerCity + memberTicketAverage;
                   missionTicketAverage =

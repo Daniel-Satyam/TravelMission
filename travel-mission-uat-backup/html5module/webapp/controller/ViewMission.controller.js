@@ -190,6 +190,8 @@ sap.ui.define(
               employeeTotalExpense: 0,
               employeeTotalTicket: 0,
               employeeTotalPerdiem: 0,
+              reservedBudget:0,//--reserved budget
+              costCenter:"",
               jobLevel: "",
               itinerary: [],
               attachments: [],
@@ -375,6 +377,8 @@ sap.ui.define(
                       employeeTotalExpense: memberInfo.totalExpense,
                       employeeTotalTicket: memberInfo.totalTicket,
                       employeeTotalPerdiem: memberInfo.totalPerDiem,
+                      costCenter: memberInfo.costCenter,
+                      reservedBudget: memberInfo.reservedBudget,
                       itinerary: [],
                       attachments: [],
                     };

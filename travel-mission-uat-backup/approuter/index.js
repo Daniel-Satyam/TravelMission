@@ -420,17 +420,17 @@ const _fetchMemberDetails = async function (decryptedData, cookies) {
       employeeFetchUrl +=
         "&$filter=personIdExternal like '" +
         filter.value +
-        "%' and jobInfoNav/emplStatusNav/externalCode ne 'T'";
+        "%' and jobInfoNav/emplStatusNav/externalCode ne 'T' and userNav/isPrimaryAssignment eq true";
     } else if (filter.type == "displayName") {
       employeeFetchUrl +=
         "&$filter=personNav/personalInfoNav/displayName like '%" +
         filter.value +
-        "%' and jobInfoNav/emplStatusNav/externalCode ne 'T'";
+        "%' and jobInfoNav/emplStatusNav/externalCode ne 'T' and userNav/isPrimaryAssignment eq true";
     } else if (filter.type == "nofilter") {
       employeeFetchUrl +=
         "&$filter=personIdExternal eq '" +
         filter.value +
-        "' and jobInfoNav/emplStatusNav/externalCode ne 'T'";
+        "' and jobInfoNav/emplStatusNav/externalCode ne 'T' and userNav/isPrimaryAssignment eq true";
     }
 
     const auth = "Basic " + cookies.SF.basicAuth;
@@ -593,6 +593,26 @@ const _updateItineraryBatch = async function (body, cookies) {
     const auth = "Basic " + cookies.SF.basicAuth;
     const budgetTracking = body.budgetTracking || [];
 
+    //--1. Update S4 document
+    const updateS4DocumentResult = await _createS4Documentv3(
+      body,
+      null,
+      cookies,
+    );
+    //--Step 1: Update S4 Document
+
+    //--Step 2: Create Mission in CPI
+    if (
+      !(
+        updateS4DocumentResult &&
+        updateS4DocumentResult.RET_MSG &&
+        updateS4DocumentResult.RET_MSG === "Success"
+      )
+    ) {
+      throw new CustomHttpError(500, "FI document could not be updated");
+    }
+    //--1. Update S4 document
+
     let sSectorList = "";
     budgetTracking.forEach((t) => {
       sSectorList =
@@ -615,7 +635,7 @@ const _updateItineraryBatch = async function (body, cookies) {
       "cust_ReplicationFlag,cust_Hospitality_Type,cust_Flight_type,cust_Destination,cust_TotalPerdiemMission,cust_TicketAverage," +
       "cust_Total_Expense,cust_Budget_Available,cust_Budget_Parked,cust_Members/cust_Mission_effectiveStartDate,cust_Members/cust_Mission_externalCode," +
       "cust_Members/cust_Mission_transactionSequence,cust_Members/cust_Employee_ID,cust_Members/cust_EmployeeID,cust_Members/cust_Employee_Total_Ticket," +
-      "cust_Members/cust_Employee_Total_Perdiem,cust_Members/cust_Employee_Total_Expense," +
+      "cust_Members/cust_Employee_Total_Perdiem,cust_Members/cust_Reserved_Budget,cust_Members/cust_Employee_Total_Expense," +
       "cust_Members/cust_itinerary_details_child/cust_Mission_effectiveStartDate," +
       "cust_Members/cust_itinerary_details_child/cust_Mission_externalCode,cust_Members/cust_itinerary_details_child/cust_Members_externalCode," +
       "cust_Members/cust_itinerary_details_child/cust_Mission_transactionSequence,cust_Members/cust_itinerary_details_child/externalCode," +
@@ -733,6 +753,7 @@ const _updateItineraryBatch = async function (body, cookies) {
             cust_Employee_Total_Expense: oMemberFound.employeeTotalExpense,
             cust_Employee_Total_Perdiem: oMemberFound.employeeTotalPerdiem,
             cust_Employee_Total_Ticket: oMemberFound.employeeTotalTicket,
+            cust_Reserved_Budget: oMemberFound.reservedBudget,
             cust_itinerary_details_child: {
               results: [],
             },
@@ -839,27 +860,36 @@ const _updateItineraryBatch = async function (body, cookies) {
       const postBatchResult =
         (await _parseMultipartResponse(postBatchResponse)) || [];
 
-      //--TODO: Error handling
-      if (postBatchResult) {
-        //--Call S4 Odata
-        try {
-          const updateS4Document = await _createS4Documentv2(
-            { missionId: body.info.missionId },
-            cookies,
-          );
-        } catch (e) {
-          console.log(e);
-        }
-        //--Call S4 Odata
-
-        return {
-          status: "OK",
-        };
-      } else {
-        return {
-          status: "NOT_OK",
-        };
+      if (postBatchResult && postBatchResult[0] && postBatchResult[0].error) {
+        console.log(
+          "Error during updating itinerary:",
+          postBatchResult[0].error.value,
+        );
+        throw new Error(
+          `Error during updating itinerary: ${postBatchResult[0].error.value}`,
+        );
       }
+
+      // if (postBatchResult) {
+      //   //--Call S4 Odata
+      //   try {
+      //     const updateS4Document = await _createS4Documentv2(
+      //       { missionId: body.info.missionId },
+      //       cookies,
+      //     );
+      //   } catch (e) {
+      //     console.log(e);
+      //   }
+      //   //--Call S4 Odata
+
+      //   return {
+      //     status: "OK",
+      //   };
+      // } else {
+      //   return {
+      //     status: "NOT_OK",
+      //   };
+      // }
     } else {
       throw new Error("Sector or mission data could not be read!");
     }
@@ -1483,6 +1513,18 @@ const _approveRejectMission = async function (data, cookies) {
     const url = cookies.CPI.URL + "approve";
     var auth = "Bearer " + cookies.CPI.oAuth;
 
+    //--1. Update S4 document
+    //Approve
+    try {
+      const createS4Document = await _createS4Documentv2(
+        { missionId: response.data.missionId },
+        cookies,
+      );
+    } catch (e) {
+      throw new CustomHttpError(500, "FI document could not be updated");
+    }
+    //--1. Update S4 document
+
     const config = {
       method: "post",
       url: url,
@@ -1497,19 +1539,19 @@ const _approveRejectMission = async function (data, cookies) {
 
     const response = await axios.request(config);
 
-    //--Call S4 Odata
-    if (response.data && data.payload.action === "1") {
-      //Approve
-      try {
-        const createS4Document = await _createS4Documentv2(
-          { missionId: data.mission },
-          cookies,
-        );
-      } catch (e) {
-        console.log(e);
-      }
-    }
-    //--Call S4 Odata
+    // //--Call S4 Odata
+    // if (response.data && data.payload.action === "1") {
+    //   //Approve
+    //   try {
+    //     const createS4Document = await _createS4Documentv2(
+    //       { missionId: data.mission },
+    //       cookies,
+    //     );
+    //   } catch (e) {
+    //     console.log(e);
+    //   }
+    // }
+    // //--Call S4 Odata
 
     return response.data;
   } catch (error) {
@@ -1532,6 +1574,27 @@ const _claimMission = async function (decryptedData, cookies) {
     const SFAuth = Buffer.from(cookies.SF.basicAuth, "base64").toString(
       "utf-8",
     );
+
+    //--S4 Document Update
+    //--Step 1: Update S4 document
+    const updateS4DocumentResult = await _createS4Documentv3(
+      decryptedData,
+      null,
+      cookies,
+    );
+    if (
+      !(
+        updateS4DocumentResult &&
+        updateS4DocumentResult.RET_MSG &&
+        updateS4DocumentResult.RET_MSG === "Success"
+      )
+    ) {
+      throw new CustomHttpError(500, "FI document could not be updated");
+    }
+    //--Step 1: Update S4 Document
+    //--S4 Document Update
+
+
     const SFAuthUsername = SFAuth.split(":")[0].split("@")[0];
 
     const postClaimAttachmentUrl = cookies.SF.URL + "upsert?$format=json";
@@ -1586,7 +1649,7 @@ const _claimMission = async function (decryptedData, cookies) {
         "cust_ReplicationFlag,cust_Hospitality_Type,cust_Flight_type,cust_Destination,cust_TotalPerdiemMission,cust_TicketAverage," +
         "cust_Total_Expense,cust_Budget_Available,cust_Budget_Parked,cust_Members/cust_Mission_effectiveStartDate,cust_Members/cust_Mission_externalCode," +
         "cust_Members/cust_Mission_transactionSequence,cust_Members/cust_Employee_ID,cust_Members/cust_Employee_Total_Ticket," +
-        "cust_Members/cust_Employee_Total_Perdiem,cust_Members/cust_Employee_Total_Expense,cust_Members/cust_Claimed," +
+        "cust_Members/cust_Employee_Total_Perdiem,cust_Members/cust_Reserved_Budget,cust_Members/cust_Employee_Total_Expense,cust_Members/cust_Claimed," +
         "cust_Members/cust_itinerary_details_child/cust_Mission_effectiveStartDate," +
         "cust_Members/cust_itinerary_details_child/cust_Mission_externalCode,cust_Members/cust_itinerary_details_child/cust_Members_externalCode," +
         "cust_Members/cust_itinerary_details_child/cust_Mission_transactionSequence,cust_Members/cust_itinerary_details_child/externalCode," +
@@ -1910,31 +1973,24 @@ const _claimMission = async function (decryptedData, cookies) {
       //--Rewritten with batch
 
       //--Post update
-      if (
-        !postBatchResult ||
-        (postBatchResult &&
-          postBatchResult[0] &&
-          postBatchResult[0].hasOwnProperty("error"))
-      ) {
-        if (postBatchResult[0] && postBatchResult[0].hasOwnProperty("error")) {
-          console.log(
-            "Post batch error:" + postBatchResult[0].error.message.value,
-          );
-          throw Error(
-            "Post batch error:" + postBatchResult[0].error.message.value,
-          );
-        }
-        throw Error("Error during batch post");
+      if (postBatchResult && postBatchResult[0] && postBatchResult[0].error) {
+        console.log(
+          "Error during claiming mission:",
+          postBatchResult[0].error.value,
+        );
+        throw new Error(
+          `Error during claiming mission: ${postBatchResult[0].error.value}`,
+        );
       }
 
-      try {
-        const updateS4Document = await _createS4Documentv2(
-          { missionId: decryptedData.missionId },
-          cookies,
-        );
-      } catch (e) {
-        console.log("Error during document post:", e);
-      }
+      // try {
+      //   const updateS4Document = await _createS4Documentv2(
+      //     { missionId: decryptedData.missionId },
+      //     cookies,
+      //   );
+      // } catch (e) {
+      //   console.log("Error during document post:", e);
+      // }
 
       try {
         const getApproverGroupMembersUrl =
@@ -2507,14 +2563,14 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
                 // );
                 if (postBatchResult) {
                   //--Call S4 Odata
-                  try {
-                    const updateS4Document = await _createS4Documentv2(
-                      { missionId: decryptedData.missionId },
-                      cookies,
-                    );
-                  } catch (e) {
-                    console.log(e);
-                  }
+                  // try {
+                  //   const updateS4Document = await _createS4Documentv2(
+                  //     { missionId: decryptedData.missionId },
+                  //     cookies,
+                  //   );
+                  // } catch (e) {
+                  //   console.log(e);
+                  // }
                   //--Call S4 Odata
 
                   try {
@@ -5185,6 +5241,7 @@ const _updateMissionPayrollBatch = async function (body, cookies) {
             cust_Employee_Total_Expense: oMemberFound.employeeTotalExpense,
             cust_Employee_Total_Perdiem: oMemberFound.employeeTotalPerdiem,
             cust_Employee_Total_Ticket: oMemberFound.employeeTotalTicket,
+            cust_Reserved_Budget: oMemberFound.reservedBudget,
             cust_itinerary_details_child: {
               results: [],
             },
@@ -5295,16 +5352,16 @@ const _updateMissionPayrollBatch = async function (body, cookies) {
         (await _parseMultipartResponse(postBatchResponse)) || [];
 
       if (postBatchResult) {
-        //--Call S4 Odata
-        try {
-          const updateS4Document = await _createS4Documentv2(
-            { missionId: body.info.missionId },
-            cookies,
-          );
-        } catch (e) {
-          console.log(e);
-        }
-        //--Call S4 Odata
+        // //--Call S4 Odata
+        // try {
+        //   const updateS4Document = await _createS4Documentv2(
+        //     { missionId: body.info.missionId },
+        //     cookies,
+        //   );
+        // } catch (e) {
+        //   console.log(e);
+        // }
+        // //--Call S4 Odata
 
         return {
           status: "OK",
@@ -5421,6 +5478,7 @@ const _updateMissionPayroll = async function (body, cookies) {
             cust_Employee_Total_Expense: oMemberFound.employeeTotalExpense,
             cust_Employee_Total_Perdiem: oMemberFound.employeeTotalPerdiem,
             cust_Employee_Total_Ticket: oMemberFound.employeeTotalTicket,
+            cust_Reserved_Budget: oMemberFound.reservedBudget,
             cust_itinerary_details_child: {
               results: [],
             },
@@ -5503,7 +5561,7 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
       null,
       cookies,
     );
-    //--Step 1: Create S4 Document
+    //--Step 1: Update S4 Document
 
     //--Step 2: Create Mission in CPI
     if (
@@ -5771,6 +5829,9 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
           cust_Employee_Total_Perdiem: _convertFloat(
             oMember.employeeTotalPerdiem,
           ),
+
+          cust_Reserved_Budget: _convertFloat(oMember.reservedBudget),
+
           cust_Employee_Total_Ticket: _convertFloat(
             oMember.employeeTotalTicket,
           ),
@@ -5944,465 +6005,468 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
   }
 };
 
-const _updateMissionBatchv1 = async function (body, userInfo, cookies) {
-  try {
-    const auth = "Basic " + cookies.SF.basicAuth;
+// const _updateMissionBatchv1 = async function (body, userInfo, cookies) {
+//   try {
+//     const auth = "Basic " + cookies.SF.basicAuth;
 
-    const budgetTracking = body.budgetTracking || [];
+//     const budgetTracking = body.budgetTracking || [];
 
-    let sSectorList = "";
-    budgetTracking.forEach((t) => {
-      sSectorList =
-        sSectorList === ""
-          ? `'${t.cust_SFSector}'`
-          : `${sSectorList},'${t.cust_SFSector}'`;
-    });
+//     let sSectorList = "";
+//     budgetTracking.forEach((t) => {
+//       sSectorList =
+//         sSectorList === ""
+//           ? `'${t.cust_SFSector}'`
+//           : `${sSectorList},'${t.cust_SFSector}'`;
+//     });
 
-    if (sSectorList === "") {
-      sSectorList = `'${body.info.sector}'`;
-    }
+//     if (sSectorList === "") {
+//       sSectorList = `'${body.info.sector}'`;
+//     }
 
-    //--Read sector budget MDF and do some updates
-    const sectorFetchUrl =
-      `cust_SectorBudget?$format=json&$filter=externalCode in ${sSectorList}` +
-      `&$select=externalCode,cust_Available_budget,cust_Budget,cust_Parked_Amount,cust_Utilized_Budget,effectiveStartDate,cust_S4_Sector,cust_S4_SubSector,cust_Visible`;
+//     //--Read sector budget MDF and do some updates
+//     const sectorFetchUrl =
+//       `cust_SectorBudget?$format=json&$filter=externalCode in ${sSectorList}` +
+//       `&$select=externalCode,cust_Available_budget,cust_Budget,cust_Parked_Amount,cust_Utilized_Budget,effectiveStartDate,cust_S4_Sector,cust_S4_SubSector,cust_Visible`;
 
-    const missionSelectQuery =
-      "externalCode,effectiveStartDate,transactionSequence,cust_Mission_Start_Date,cust_Mission_End_Date,cust_No_Of_Days," +
-      "cust_ReplicationFlag,cust_Hospitality_Type,cust_Flight_type,cust_Destination,cust_TotalPerdiemMission,cust_TicketAverage," +
-      "cust_Total_Expense,cust_Budget_Available,cust_Budget_Parked,cust_Members/cust_Mission_effectiveStartDate,cust_Members/cust_Mission_externalCode," +
-      "cust_Members/cust_Mission_transactionSequence,cust_Members/cust_Employee_ID,cust_Members/cust_EmployeeID,cust_Members/cust_Employee_Total_Ticket," +
-      "cust_Members/cust_Employee_Total_Perdiem,cust_Members/cust_Employee_Total_Expense," +
-      "cust_Members/cust_itinerary_details_child/cust_Mission_effectiveStartDate," +
-      "cust_Members/cust_itinerary_details_child/cust_Mission_externalCode,cust_Members/cust_itinerary_details_child/cust_Members_externalCode," +
-      "cust_Members/cust_itinerary_details_child/cust_Mission_transactionSequence,cust_Members/cust_itinerary_details_child/externalCode," +
-      "cust_Members/cust_itinerary_details_child/cust_start_date,cust_Members/cust_itinerary_details_child/cust_end_date," +
-      "cust_Members/cust_itinerary_details_child/cust_head_of_mission,cust_Members/cust_itinerary_details_child/cust_hospitality_default," +
-      "cust_Members/cust_itinerary_details_child/cust_city,cust_Members/cust_itinerary_details_child/cust_ticket_type," +
-      "cust_Members/cust_itinerary_details_child/cust_ticket_average,cust_Members/cust_itinerary_details_child/cust_perdiem_per_city," +
-      "cust_Members/cust_itinerary_details_child/cust_Ticket_Actual_Cost," +
-      "cust_Members/cust_AttachmentNav/attachmentId";
+//     const missionSelectQuery =
+//       "externalCode,effectiveStartDate,transactionSequence,cust_Mission_Start_Date,cust_Mission_End_Date,cust_No_Of_Days," +
+//       "cust_ReplicationFlag,cust_Hospitality_Type,cust_Flight_type,cust_Destination,cust_TotalPerdiemMission,cust_TicketAverage," +
+//       "cust_Total_Expense,cust_Budget_Available,cust_Budget_Parked,cust_Members/cust_Mission_effectiveStartDate,cust_Members/cust_Mission_externalCode," +
+//       "cust_Members/cust_Mission_transactionSequence,cust_Members/cust_Employee_ID,cust_Members/cust_EmployeeID,cust_Members/cust_Employee_Total_Ticket," +
+//       "cust_Members/cust_Employee_Total_Perdiem,cust_Members/cust_Employee_Total_Expense," +
+//       "cust_Members/cust_itinerary_details_child/cust_Mission_effectiveStartDate," +
+//       "cust_Members/cust_itinerary_details_child/cust_Mission_externalCode,cust_Members/cust_itinerary_details_child/cust_Members_externalCode," +
+//       "cust_Members/cust_itinerary_details_child/cust_Mission_transactionSequence,cust_Members/cust_itinerary_details_child/externalCode," +
+//       "cust_Members/cust_itinerary_details_child/cust_start_date,cust_Members/cust_itinerary_details_child/cust_end_date," +
+//       "cust_Members/cust_itinerary_details_child/cust_head_of_mission,cust_Members/cust_itinerary_details_child/cust_hospitality_default," +
+//       "cust_Members/cust_itinerary_details_child/cust_city,cust_Members/cust_itinerary_details_child/cust_ticket_type," +
+//       "cust_Members/cust_itinerary_details_child/cust_ticket_average,cust_Members/cust_itinerary_details_child/cust_perdiem_per_city," +
+//       "cust_Members/cust_itinerary_details_child/cust_Ticket_Actual_Cost," +
+//       "cust_Members/cust_AttachmentNav/attachmentId";
 
-    const missionExpandQuery =
-      "cust_Members,cust_Members/cust_itinerary_details,cust_Members/cust_itinerary_details_child,cust_Members/cust_AttachmentNav";
-    const missionFetchUrl = `cust_Mission?$format=json&$filter=externalCode eq '${body.info.missionId}'&$select=${missionSelectQuery}&$expand=${missionExpandQuery}`;
+//     const missionExpandQuery =
+//       "cust_Members,cust_Members/cust_itinerary_details,cust_Members/cust_itinerary_details_child,cust_Members/cust_AttachmentNav";
+//     const missionFetchUrl = `cust_Mission?$format=json&$filter=externalCode eq '${body.info.missionId}'&$select=${missionSelectQuery}&$expand=${missionExpandQuery}`;
 
-    let boundary = `batch_${crypto.randomUUID()}`; // batch id
+//     let boundary = `batch_${crypto.randomUUID()}`; // batch id
 
-    const batchURL = cookies.SF.URL + "$batch?$format=json";
+//     const batchURL = cookies.SF.URL + "$batch?$format=json";
 
-    const getBatchBody =
-      `--${boundary}\r\n` +
-      `Content-Type: application/http\r\n` +
-      `Content-Transfer-Encoding: binary\r\n\r\n` +
-      `GET ${sectorFetchUrl} HTTP/1.1\r\n` +
-      `Accept: application/json\r\n\r\n` +
-      `--${boundary}\r\n` +
-      `Content-Type: application/http\r\n` +
-      `Content-Transfer-Encoding: binary\r\n\r\n` +
-      `GET ${missionFetchUrl} HTTP/1.1\r\n` +
-      `Accept: application/json\r\n\r\n` +
-      `--${boundary}--`;
+//     const getBatchBody =
+//       `--${boundary}\r\n` +
+//       `Content-Type: application/http\r\n` +
+//       `Content-Transfer-Encoding: binary\r\n\r\n` +
+//       `GET ${sectorFetchUrl} HTTP/1.1\r\n` +
+//       `Accept: application/json\r\n\r\n` +
+//       `--${boundary}\r\n` +
+//       `Content-Type: application/http\r\n` +
+//       `Content-Transfer-Encoding: binary\r\n\r\n` +
+//       `GET ${missionFetchUrl} HTTP/1.1\r\n` +
+//       `Accept: application/json\r\n\r\n` +
+//       `--${boundary}--`;
 
-    const batchResponse = await axios.post(batchURL, getBatchBody, {
-      headers: {
-        Authorization: auth,
-        "Content-Type": `multipart/mixed; boundary=${boundary}`,
-      },
-    });
+//     const batchResponse = await axios.post(batchURL, getBatchBody, {
+//       headers: {
+//         Authorization: auth,
+//         "Content-Type": `multipart/mixed; boundary=${boundary}`,
+//       },
+//     });
 
-    //Extract and handle each individual response from the batch
-    const batchResult = (await _parseMultipartResponse(batchResponse)) || [];
+//     //Extract and handle each individual response from the batch
+//     const batchResult = (await _parseMultipartResponse(batchResponse)) || [];
 
-    if (batchResult[0] && batchResult[1]) {
-      const sectorFetchResponse = _.cloneDeep(batchResult[0]);
+//     if (batchResult[0] && batchResult[1]) {
+//       const sectorFetchResponse = _.cloneDeep(batchResult[0]);
 
-      let sectorUpdateRequest = [];
-      // if (sectorFetchResponse && sectorFetchResponse.d) {
-      //   sectorFetchResponse.d.results.forEach((s) => {
-      //     let budgetUpdate =
-      //       _.find(budgetTracking, ["cust_SFSector", s.externalCode]) || null;
-      //     if (budgetUpdate) {
-      //       sectorUpdateRequest.push({
-      //         __metadata: {
-      //           uri: cookies.SF.URL + "cust_SectorBudget",
-      //         },
-      //         externalCode: s.externalCode,
-      //         effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-      //         cust_Available_budget: budgetUpdate.cust_Remaining_Budget,
-      //         cust_Parked_Amount: budgetUpdate.cust_Parked_Amount,
-      //       });
-      //     }
-      //   });
-      // }
-      //--Read sector budget MDF and do some updates
+//       let sectorUpdateRequest = [];
+//       // if (sectorFetchResponse && sectorFetchResponse.d) {
+//       //   sectorFetchResponse.d.results.forEach((s) => {
+//       //     let budgetUpdate =
+//       //       _.find(budgetTracking, ["cust_SFSector", s.externalCode]) || null;
+//       //     if (budgetUpdate) {
+//       //       sectorUpdateRequest.push({
+//       //         __metadata: {
+//       //           uri: cookies.SF.URL + "cust_SectorBudget",
+//       //         },
+//       //         externalCode: s.externalCode,
+//       //         effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+//       //         cust_Available_budget: budgetUpdate.cust_Remaining_Budget,
+//       //         cust_Parked_Amount: budgetUpdate.cust_Parked_Amount,
+//       //       });
+//       //     }
+//       //   });
+//       // }
+//       //--Read sector budget MDF and do some updates
 
-      //--Add budget tracking logs
-      let budgetTrackingUpdateRequest = [];
-      // budgetTracking.forEach((t, i) => {
-      //   budgetTrackingUpdateRequest.push({
-      //     __metadata: {
-      //       uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
-      //     },
-      //     externalCode:
-      //       body.info.missionId +
-      //       "-" +
-      //       moment(new Date()).format("YYYYMMDD") +
-      //       "-" +
-      //       i,
-      //     effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
-      //     cust_MissionID: body.info.missionId,
-      //     cust_SFSector: t.cust_SFSector,
-      //     cust_S4Sector: t.cust_S4Sector,
-      //     cust_Consumption: t.cust_Consumption,
-      //     cust_Remaining_Budget: t.cust_Remaining_Budget,
-      //     cust_Comments: t.cust_Comments,
-      //   });
-      // });
-      //--Add budget tracking logs
+//       //--Add budget tracking logs
+//       let budgetTrackingUpdateRequest = [];
+//       // budgetTracking.forEach((t, i) => {
+//       //   budgetTrackingUpdateRequest.push({
+//       //     __metadata: {
+//       //       uri: cookies.SF.URL + "cust_Budget_Tracking_Missions",
+//       //     },
+//       //     externalCode:
+//       //       body.info.missionId +
+//       //       "-" +
+//       //       moment(new Date()).format("YYYYMMDD") +
+//       //       "-" +
+//       //       i,
+//       //     effectiveStartDate: "/Date(" + new Date().getTime() + ")/",
+//       //     cust_MissionID: body.info.missionId,
+//       //     cust_SFSector: t.cust_SFSector,
+//       //     cust_S4Sector: t.cust_S4Sector,
+//       //     cust_Consumption: t.cust_Consumption,
+//       //     cust_Remaining_Budget: t.cust_Remaining_Budget,
+//       //     cust_Comments: t.cust_Comments,
+//       //   });
+//       // });
+//       //--Add budget tracking logs
 
-      const missionData = _.cloneDeep(batchResult[1].d.results[0]);
+//       const missionData = _.cloneDeep(batchResult[1].d.results[0]);
 
-      let missionUpdateRequest = {
-        __metadata: missionData.__metadata,
-        //--Update related fields
-        cust_Mission_Start_Date: body.info.missionStartDate,
-        cust_Mission_End_Date: body.info.missionEndDate,
-        cust_No_Of_Days: body.info.noOfDays,
-        cust_TicketAverage: _convertFloat(body.info.ticketAverage),
-        cust_Total_Expense: _convertFloat(body.info.totalExpense),
-        cust_TotalPerdiemMission: _convertFloat(body.info.totalPerdiemMission),
-        cust_Budget_Available: _convertFloat(body.info.budgetAvailable),
-        cust_Budget_Parked: _convertFloat(body.info.budgetParked),
-        cust_Mission_Description: body.info.missionDescription,
-        cust_Destination: body.info.destination,
-        cust_Hospitality_Type: body.info.hospitality_Type,
-        cust_Sector: body.info.sector,
-        cust_Status: "2",
-        cust_Decree_Type: body.info.decreeType,
-        cust_ExternalEntity: body.info.externalEntity,
-        cust_ExternalEntity2: body.info.externalEntity2,
-        cust_ExternalEntity3: body.info.externalEntity3,
-        cust_ExternalEntity4: body.info.externalEntity4,
-        cust_ExternalEntity5: body.info.externalEntity5,
-        cust_Flight_type: body.info.flightType,
-        cust_ReplicationFlag: "01",
-        cust_Pending_With_user: body.info.pendingWithUser,
-        cust_Pending_With_Group: body.info.pendingWithGroup
-          ? body.info.pendingWithGroup
-          : null,
-        cust_Mission_Created_By: userInfo,
-        cust_MissionDetails: body.info.missionDetails,
-        externalName: body.info.missionDescription,
-        cust_Members: {
-          results: [],
-        },
-      };
+//       let missionUpdateRequest = {
+//         __metadata: missionData.__metadata,
+//         //--Update related fields
+//         cust_Mission_Start_Date: body.info.missionStartDate,
+//         cust_Mission_End_Date: body.info.missionEndDate,
+//         cust_No_Of_Days: body.info.noOfDays,
+//         cust_TicketAverage: _convertFloat(body.info.ticketAverage),
+//         cust_Total_Expense: _convertFloat(body.info.totalExpense),
+//         cust_TotalPerdiemMission: _convertFloat(body.info.totalPerdiemMission),
+//         cust_Budget_Available: _convertFloat(body.info.budgetAvailable),
+//         cust_Budget_Parked: _convertFloat(body.info.budgetParked),
+//         cust_Mission_Description: body.info.missionDescription,
+//         cust_Destination: body.info.destination,
+//         cust_Hospitality_Type: body.info.hospitality_Type,
+//         cust_Sector: body.info.sector,
+//         cust_Status: "2",
+//         cust_Decree_Type: body.info.decreeType,
+//         cust_ExternalEntity: body.info.externalEntity,
+//         cust_ExternalEntity2: body.info.externalEntity2,
+//         cust_ExternalEntity3: body.info.externalEntity3,
+//         cust_ExternalEntity4: body.info.externalEntity4,
+//         cust_ExternalEntity5: body.info.externalEntity5,
+//         cust_Flight_type: body.info.flightType,
+//         cust_ReplicationFlag: "01",
+//         cust_Pending_With_user: body.info.pendingWithUser,
+//         cust_Pending_With_Group: body.info.pendingWithGroup
+//           ? body.info.pendingWithGroup
+//           : null,
+//         cust_Mission_Created_By: userInfo,
+//         cust_MissionDetails: body.info.missionDetails,
+//         externalName: body.info.missionDescription,
+//         cust_Members: {
+//           results: [],
+//         },
+//       };
 
-      //--Upload attachments first
-      let uploadBoundary = `batch_${crypto.randomUUID()}`; // batch id
-      let uploadChangeSet = `changeset_${crypto.randomUUID()}`; // changeset id
-      let uploadBatchBody =
-        `--${uploadBoundary}\r\n` +
-        `Content-Type: multipart/mixed; boundary=${uploadChangeSet}\r\n\r\n`;
-      let uploadBatchOperation = [];
-      body.members.forEach((oMember) => {
-        if (oMember.attachments.length > 0) {
-          let uploadPostRequest = {
-            __metadata: {
-              uri: cookies.SF.URL + "Attachment",
-              type: "SFOData.Attachment",
-            },
-            userId: userInfo,
-            fileName: oMember.attachments[0].fileName,
-            module: "GENERIC_OBJECT",
-            viewable: true,
-            fileContent: oMember.attachments[0].file,
-          };
+//       //--Upload attachments first
+//       let uploadBoundary = `batch_${crypto.randomUUID()}`; // batch id
+//       let uploadChangeSet = `changeset_${crypto.randomUUID()}`; // changeset id
+//       let uploadBatchBody =
+//         `--${uploadBoundary}\r\n` +
+//         `Content-Type: multipart/mixed; boundary=${uploadChangeSet}\r\n\r\n`;
+//       let uploadBatchOperation = [];
+//       body.members.forEach((oMember) => {
+//         if (oMember.attachments.length > 0) {
+//           let uploadPostRequest = {
+//             __metadata: {
+//               uri: cookies.SF.URL + "Attachment",
+//               type: "SFOData.Attachment",
+//             },
+//             userId: userInfo,
+//             fileName: oMember.attachments[0].fileName,
+//             module: "GENERIC_OBJECT",
+//             viewable: true,
+//             fileContent: oMember.attachments[0].file,
+//           };
 
-          uploadBatchBody =
-            uploadBatchBody +
-            `--${uploadChangeSet}\r\n` +
-            `Content-Type: application/http\r\n` +
-            `Content-Transfer-Encoding: binary\r\n\r\n` +
-            `POST upsert?$format=json HTTP/1.1\r\n` +
-            `Content-Type: application/json;charset=utf-8\r\n` +
-            `Accept: application/json\r\n\r\n` +
-            `${JSON.stringify(uploadPostRequest)}\r\n\r\n`;
+//           uploadBatchBody =
+//             uploadBatchBody +
+//             `--${uploadChangeSet}\r\n` +
+//             `Content-Type: application/http\r\n` +
+//             `Content-Transfer-Encoding: binary\r\n\r\n` +
+//             `POST upsert?$format=json HTTP/1.1\r\n` +
+//             `Content-Type: application/json;charset=utf-8\r\n` +
+//             `Accept: application/json\r\n\r\n` +
+//             `${JSON.stringify(uploadPostRequest)}\r\n\r\n`;
 
-          uploadBatchOperation.push({
-            employeeID: oMember.employeeID,
-            attachmentId: null,
-          });
-        }
-      });
+//           uploadBatchOperation.push({
+//             employeeID: oMember.employeeID,
+//             attachmentId: null,
+//           });
+//         }
+//       });
 
-      if (uploadBatchOperation.length > 0) {
-        uploadBatchBody =
-          uploadBatchBody +
-          `--${uploadChangeSet}--\r\n\r\n` +
-          `--${uploadBoundary}--`;
+//       if (uploadBatchOperation.length > 0) {
+//         uploadBatchBody =
+//           uploadBatchBody +
+//           `--${uploadChangeSet}--\r\n\r\n` +
+//           `--${uploadBoundary}--`;
 
-        const uploadBatchResponse = await axios.post(
-          batchURL,
-          uploadBatchBody,
-          {
-            headers: {
-              Authorization: auth,
-              "Content-Type": `multipart/mixed; boundary=${uploadBoundary}`,
-            },
-          },
-        );
+//         const uploadBatchResponse = await axios.post(
+//           batchURL,
+//           uploadBatchBody,
+//           {
+//             headers: {
+//               Authorization: auth,
+//               "Content-Type": `multipart/mixed; boundary=${uploadBoundary}`,
+//             },
+//           },
+//         );
 
-        //Extract and handle each individual response from the batch
-        const uploadBatchResult =
-          (await _parseMultipartResponse(uploadBatchResponse)) || [];
+//         //Extract and handle each individual response from the batch
+//         const uploadBatchResult =
+//           (await _parseMultipartResponse(uploadBatchResponse)) || [];
 
-        uploadBatchResult.forEach((r, i) => {
-          if (r.d && r.d.length > 0 && r.d[0].key) {
-            try {
-              let attachmentId = r.d[0].key.split("=")[1] || null;
-              uploadBatchOperation[i]["attachmentId"] = attachmentId;
-            } catch (ex) {
-              //
-            }
-          }
-        });
-      }
+//         uploadBatchResult.forEach((r, i) => {
+//           if (r.d && r.d.length > 0 && r.d[0].key) {
+//             try {
+//               let attachmentId = r.d[0].key.split("=")[1] || null;
+//               uploadBatchOperation[i]["attachmentId"] = attachmentId;
+//             } catch (ex) {
+//               //
+//             }
+//           }
+//         });
+//       }
 
-      //--Upload attachments first
+//       //--Upload attachments first
 
-      let postBoundary = `batch_${crypto.randomUUID()}`; // batch id
-      let changeSet = `changeset_${crypto.randomUUID()}`; // changeset id
-      let postBatchBody =
-        `--${postBoundary}\r\n` +
-        `Content-Type: multipart/mixed; boundary=${changeSet}\r\n\r\n`;
+//       let postBoundary = `batch_${crypto.randomUUID()}`; // batch id
+//       let changeSet = `changeset_${crypto.randomUUID()}`; // changeset id
+//       let postBatchBody =
+//         `--${postBoundary}\r\n` +
+//         `Content-Type: multipart/mixed; boundary=${changeSet}\r\n\r\n`;
 
-      //--First add delete requests
-      missionData.cust_Members.results.forEach((oMember) => {
-        //--Remove first children
-        oMember.cust_itinerary_details_child.results.forEach(
-          (oItinerary, i) => {
-            let sItineraryUrl = oItinerary.__metadata.uri;
-            let sItineraryIndex = sItineraryUrl.indexOf(
-              "/cust_itinerary_details_child(",
-            );
-            if (sItineraryIndex !== -1) {
-              let sItineraryKey = sItineraryUrl.substring(sItineraryIndex + 1);
-              postBatchBody =
-                postBatchBody +
-                `--${changeSet}\r\n` +
-                `Content-Type: application/http\r\n` +
-                `Content-Transfer-Encoding: binary\r\n\r\n` +
-                `DELETE ${sItineraryKey} HTTP/1.1\r\n\r\n`;
-            }
-          },
-        );
+//       //--First add delete requests
+//       missionData.cust_Members.results.forEach((oMember) => {
+//         //--Remove first children
+//         oMember.cust_itinerary_details_child.results.forEach(
+//           (oItinerary, i) => {
+//             let sItineraryUrl = oItinerary.__metadata.uri;
+//             let sItineraryIndex = sItineraryUrl.indexOf(
+//               "/cust_itinerary_details_child(",
+//             );
+//             if (sItineraryIndex !== -1) {
+//               let sItineraryKey = sItineraryUrl.substring(sItineraryIndex + 1);
+//               postBatchBody =
+//                 postBatchBody +
+//                 `--${changeSet}\r\n` +
+//                 `Content-Type: application/http\r\n` +
+//                 `Content-Transfer-Encoding: binary\r\n\r\n` +
+//                 `DELETE ${sItineraryKey} HTTP/1.1\r\n\r\n`;
+//             }
+//           },
+//         );
 
-        if (oMember.cust_AttachmentNav) {
-          let sAttachmentUrl = oMember.cust_AttachmentNav.__metadata.uri;
-          let sAttachmentIndex = sAttachmentUrl.indexOf("/Attachment(");
-          if (sAttachmentIndex !== -1) {
-            let sAttachmentKey = sAttachmentUrl.substring(sAttachmentIndex + 1);
-            postBatchBody =
-              postBatchBody +
-              `--${changeSet}\r\n` +
-              `Content-Type: application/http\r\n` +
-              `Content-Transfer-Encoding: binary\r\n\r\n` +
-              `DELETE ${sAttachmentKey} HTTP/1.1\r\n\r\n`;
-          }
-        }
+//         if (oMember.cust_AttachmentNav) {
+//           let sAttachmentUrl = oMember.cust_AttachmentNav.__metadata.uri;
+//           let sAttachmentIndex = sAttachmentUrl.indexOf("/Attachment(");
+//           if (sAttachmentIndex !== -1) {
+//             let sAttachmentKey = sAttachmentUrl.substring(sAttachmentIndex + 1);
+//             postBatchBody =
+//               postBatchBody +
+//               `--${changeSet}\r\n` +
+//               `Content-Type: application/http\r\n` +
+//               `Content-Transfer-Encoding: binary\r\n\r\n` +
+//               `DELETE ${sAttachmentKey} HTTP/1.1\r\n\r\n`;
+//           }
+//         }
 
-        let sMemberUrl = oMember.__metadata.uri;
-        let sIndex = sMemberUrl.indexOf("/cust_Members(");
-        if (sIndex !== -1) {
-          let sMemberKey = sMemberUrl.substring(sIndex + 1);
-          postBatchBody =
-            postBatchBody +
-            `--${changeSet}\r\n` +
-            `Content-Type: application/http\r\n` +
-            `Content-Transfer-Encoding: binary\r\n\r\n` +
-            `DELETE ${sMemberKey} HTTP/1.1\r\n\r\n`;
-        }
-      });
-      //--First add delete requests
+//         let sMemberUrl = oMember.__metadata.uri;
+//         let sIndex = sMemberUrl.indexOf("/cust_Members(");
+//         if (sIndex !== -1) {
+//           let sMemberKey = sMemberUrl.substring(sIndex + 1);
+//           postBatchBody =
+//             postBatchBody +
+//             `--${changeSet}\r\n` +
+//             `Content-Type: application/http\r\n` +
+//             `Content-Transfer-Encoding: binary\r\n\r\n` +
+//             `DELETE ${sMemberKey} HTTP/1.1\r\n\r\n`;
+//         }
+//       });
+//       //--First add delete requests
 
-      body.members.forEach((oMember) => {
-        let memberUpdateRequest = {
-          __metadata: {
-            uri: cookies.SF.URL + "cust_Members",
-          },
-          cust_Employee_Total_Expense: _convertFloat(
-            oMember.employeeTotalExpense,
-          ),
-          cust_Employee_Total_Perdiem: _convertFloat(
-            oMember.employeeTotalPerdiem,
-          ),
-          cust_Employee_Total_Ticket: _convertFloat(
-            oMember.employeeTotalTicket,
-          ),
-          cust_Department: oMember.department,
-          cust_Employee_ID: oMember.userID,
-          cust_EmployeeID: oMember.employeeID,
-          cust_First_Name: oMember.employeeName,
-          cust_Grade: oMember.grade,
-          cust_Multiple_Cities: oMember.multipleCities,
-          cust_saluatation: oMember.salutation,
-          cust_Title_Of_Employee: oMember.title,
-          cust_NoOfCities: oMember.noOfCities,
-          cust_Mission_ID: body.info.missionId,
-          cust_Mission_Description: body.info.missionDescription,
-          cust_HeadOfMission: "N",
-          cust_itinerary_details_child: {
-            results: [],
-          },
-        };
+//       body.members.forEach((oMember) => {
+//         let memberUpdateRequest = {
+//           __metadata: {
+//             uri: cookies.SF.URL + "cust_Members",
+//           },
+//           cust_Employee_Total_Expense: _convertFloat(
+//             oMember.employeeTotalExpense,
+//           ),
+//           cust_Employee_Total_Perdiem: _convertFloat(
+//             oMember.employeeTotalPerdiem,
+//           ),
 
-        let oAttachment = _.find(uploadBatchOperation, [
-          "employeeID",
-          oMember.employeeID,
-        ]);
+//           cust_Reserved_Budget: _convertFloat(oMember.reservedBudget),
 
-        if (oAttachment && oAttachment.attachmentId) {
-          memberUpdateRequest.cust_AttachmentNav = {
-            __metadata: {
-              uri:
-                cookies.SF.URL + "Attachment(" + oAttachment.attachmentId + ")",
-            },
-          };
-        }
+//           cust_Employee_Total_Ticket: _convertFloat(
+//             oMember.employeeTotalTicket,
+//           ),
+//           cust_Department: oMember.department,
+//           cust_Employee_ID: oMember.userID,
+//           cust_EmployeeID: oMember.employeeID,
+//           cust_First_Name: oMember.employeeName,
+//           cust_Grade: oMember.grade,
+//           cust_Multiple_Cities: oMember.multipleCities,
+//           cust_saluatation: oMember.salutation,
+//           cust_Title_Of_Employee: oMember.title,
+//           cust_NoOfCities: oMember.noOfCities,
+//           cust_Mission_ID: body.info.missionId,
+//           cust_Mission_Description: body.info.missionDescription,
+//           cust_HeadOfMission: "N",
+//           cust_itinerary_details_child: {
+//             results: [],
+//           },
+//         };
 
-        oMember.itinerary.forEach((oItinerary, i) => {
-          //--cust_Members - head of mission was missing revised on 12th May 2025 - BD - DS
-          //Daniel: please pass the value in head of mission for itinerary to members also.... just like we do in CPI
-          if (oItinerary.headOfMission === "Y") {
-            memberUpdateRequest.cust_HeadOfMission = "Y";
-          }
-          //--cust_Members - head of mission was missing revised on 12th May 2025 - BD - DS
-          //Daniel: please pass the value in head of mission for itinerary to members also.... just like we do in CPI
+//         let oAttachment = _.find(uploadBatchOperation, [
+//           "employeeID",
+//           oMember.employeeID,
+//         ]);
 
-          let itineraryUpdateRequest = {
-            __metadata: {
-              uri: cookies.SF.URL + "cust_itinerary_details_child",
-            },
-            cust_Mission_externalCode: body.info.missionId,
-            cust_start_date: oItinerary.startDate,
-            cust_end_date: oItinerary.endDate,
-            cust_head_of_mission: oItinerary.headOfMission,
-            cust_ticket_type: oItinerary.ticketType,
-            cust_perdiem_per_city: _convertFloat(oItinerary.perDiemPerCity),
-            cust_Ticket_Actual_Cost: parseFloat(oItinerary.ticketActualCost),
-            cust_ticket_average: _convertFloat(oItinerary.ticketAverage),
-            cust_hospitality_default: oItinerary.hospitalityDefault,
-            cust_city: oItinerary.city,
-          };
-          memberUpdateRequest.cust_itinerary_details_child.results.push(
-            itineraryUpdateRequest,
-          );
-        });
+//         if (oAttachment && oAttachment.attachmentId) {
+//           memberUpdateRequest.cust_AttachmentNav = {
+//             __metadata: {
+//               uri:
+//                 cookies.SF.URL + "Attachment(" + oAttachment.attachmentId + ")",
+//             },
+//           };
+//         }
 
-        missionUpdateRequest.cust_Members.results.push(memberUpdateRequest);
-      });
+//         oMember.itinerary.forEach((oItinerary, i) => {
+//           //--cust_Members - head of mission was missing revised on 12th May 2025 - BD - DS
+//           //Daniel: please pass the value in head of mission for itinerary to members also.... just like we do in CPI
+//           if (oItinerary.headOfMission === "Y") {
+//             memberUpdateRequest.cust_HeadOfMission = "Y";
+//           }
+//           //--cust_Members - head of mission was missing revised on 12th May 2025 - BD - DS
+//           //Daniel: please pass the value in head of mission for itinerary to members also.... just like we do in CPI
 
-      let auditLogUpdateRequest = {
-        __metadata: {
-          uri: cookies.SF.URL + "cust_Audit_Log",
-        },
-        externalCode: "1234",
-        cust_Timestamp: body.info.date,
-        cust_Key: body.info.missionId,
-        cust_User: userInfo,
-        cust_Action: "Edited",
-        cust_Comments: "Mission is edited " + body.info.missionId,
-      };
+//           let itineraryUpdateRequest = {
+//             __metadata: {
+//               uri: cookies.SF.URL + "cust_itinerary_details_child",
+//             },
+//             cust_Mission_externalCode: body.info.missionId,
+//             cust_start_date: oItinerary.startDate,
+//             cust_end_date: oItinerary.endDate,
+//             cust_head_of_mission: oItinerary.headOfMission,
+//             cust_ticket_type: oItinerary.ticketType,
+//             cust_perdiem_per_city: _convertFloat(oItinerary.perDiemPerCity),
+//             cust_Ticket_Actual_Cost: parseFloat(oItinerary.ticketActualCost),
+//             cust_ticket_average: _convertFloat(oItinerary.ticketAverage),
+//             cust_hospitality_default: oItinerary.hospitalityDefault,
+//             cust_city: oItinerary.city,
+//           };
+//           memberUpdateRequest.cust_itinerary_details_child.results.push(
+//             itineraryUpdateRequest,
+//           );
+//         });
 
-      //--Generate request
-      if (sectorUpdateRequest.length > 0) {
-        postBatchBody =
-          postBatchBody +
-          `--${changeSet}\r\n` +
-          `Content-Type: application/http\r\n` +
-          `Content-Transfer-Encoding: binary\r\n\r\n` +
-          `POST upsert?$format=json HTTP/1.1\r\n` +
-          `Content-Type: application/json;charset=utf-8\r\n` +
-          `Accept: application/json\r\n\r\n` +
-          `${JSON.stringify(sectorUpdateRequest)}\r\n\r\n`;
-      }
-      if (budgetTrackingUpdateRequest.length > 0) {
-        postBatchBody =
-          postBatchBody +
-          `--${changeSet}\r\n` +
-          `Content-Type: application/http\r\n` +
-          `Content-Transfer-Encoding: binary\r\n\r\n` +
-          `POST upsert?$format=json HTTP/1.1\r\n` +
-          `Content-Type: application/json;charset=utf-8\r\n` +
-          `Accept: application/json\r\n\r\n` +
-          `${JSON.stringify(budgetTrackingUpdateRequest)}\r\n\r\n`;
-      }
+//         missionUpdateRequest.cust_Members.results.push(memberUpdateRequest);
+//       });
 
-      postBatchBody =
-        postBatchBody +
-        `--${changeSet}\r\n` +
-        `Content-Type: application/http\r\n` +
-        `Content-Transfer-Encoding: binary\r\n\r\n` +
-        `POST upsert?$format=json HTTP/1.1\r\n` +
-        `Content-Type: application/json;charset=utf-8\r\n` +
-        `Accept: application/json\r\n\r\n` +
-        `${JSON.stringify(missionUpdateRequest)}\r\n\r\n` +
-        `--${changeSet}\r\n` +
-        `Content-Type: application/http\r\n` +
-        `Content-Transfer-Encoding: binary\r\n\r\n` +
-        `POST upsert?$format=json HTTP/1.1\r\n` +
-        `Content-Type: application/json;charset=utf-8\r\n` +
-        `Accept: application/json\r\n\r\n` +
-        `${JSON.stringify(auditLogUpdateRequest)}\r\n\r\n` +
-        `--${changeSet}--\r\n\r\n` +
-        `--${postBoundary}--`;
+//       let auditLogUpdateRequest = {
+//         __metadata: {
+//           uri: cookies.SF.URL + "cust_Audit_Log",
+//         },
+//         externalCode: "1234",
+//         cust_Timestamp: body.info.date,
+//         cust_Key: body.info.missionId,
+//         cust_User: userInfo,
+//         cust_Action: "Edited",
+//         cust_Comments: "Mission is edited " + body.info.missionId,
+//       };
 
-      const postBatchResponse = await axios.post(batchURL, postBatchBody, {
-        headers: {
-          Authorization: auth,
-          "Content-Type": `multipart/mixed; boundary=${postBoundary}`,
-        },
-      });
+//       //--Generate request
+//       if (sectorUpdateRequest.length > 0) {
+//         postBatchBody =
+//           postBatchBody +
+//           `--${changeSet}\r\n` +
+//           `Content-Type: application/http\r\n` +
+//           `Content-Transfer-Encoding: binary\r\n\r\n` +
+//           `POST upsert?$format=json HTTP/1.1\r\n` +
+//           `Content-Type: application/json;charset=utf-8\r\n` +
+//           `Accept: application/json\r\n\r\n` +
+//           `${JSON.stringify(sectorUpdateRequest)}\r\n\r\n`;
+//       }
+//       if (budgetTrackingUpdateRequest.length > 0) {
+//         postBatchBody =
+//           postBatchBody +
+//           `--${changeSet}\r\n` +
+//           `Content-Type: application/http\r\n` +
+//           `Content-Transfer-Encoding: binary\r\n\r\n` +
+//           `POST upsert?$format=json HTTP/1.1\r\n` +
+//           `Content-Type: application/json;charset=utf-8\r\n` +
+//           `Accept: application/json\r\n\r\n` +
+//           `${JSON.stringify(budgetTrackingUpdateRequest)}\r\n\r\n`;
+//       }
 
-      //Extract and handle each individual response from the batch
-      const postBatchResult =
-        (await _parseMultipartResponse(postBatchResponse)) || [];
-      //--TODO: Error handling
-      if (postBatchResult && postBatchResult[0] && postBatchResult[0].error) {
-        console.log(
-          "Error during update mission:",
-          postBatchResult[0].error.value,
-        );
-        throw new Error(
-          `Error during update mission: ${postBatchResult[0].error.value}`,
-        );
-      }
+//       postBatchBody =
+//         postBatchBody +
+//         `--${changeSet}\r\n` +
+//         `Content-Type: application/http\r\n` +
+//         `Content-Transfer-Encoding: binary\r\n\r\n` +
+//         `POST upsert?$format=json HTTP/1.1\r\n` +
+//         `Content-Type: application/json;charset=utf-8\r\n` +
+//         `Accept: application/json\r\n\r\n` +
+//         `${JSON.stringify(missionUpdateRequest)}\r\n\r\n` +
+//         `--${changeSet}\r\n` +
+//         `Content-Type: application/http\r\n` +
+//         `Content-Transfer-Encoding: binary\r\n\r\n` +
+//         `POST upsert?$format=json HTTP/1.1\r\n` +
+//         `Content-Type: application/json;charset=utf-8\r\n` +
+//         `Accept: application/json\r\n\r\n` +
+//         `${JSON.stringify(auditLogUpdateRequest)}\r\n\r\n` +
+//         `--${changeSet}--\r\n\r\n` +
+//         `--${postBoundary}--`;
 
-      //--Call S4 Odata
-      if (postBatchResponse) {
-        //Approve
-        try {
-          const createS4Document = await _createS4Documentv2(
-            { missionId: body.info.missionId },
-            cookies,
-          );
-        } catch (e) {
-          console.log("S4 document create error during 'Update Mission'", e);
-        }
-      }
-      //--Call S4 Odata
+//       const postBatchResponse = await axios.post(batchURL, postBatchBody, {
+//         headers: {
+//           Authorization: auth,
+//           "Content-Type": `multipart/mixed; boundary=${postBoundary}`,
+//         },
+//       });
 
-      return postBatchResult;
-    } else {
-      throw new Error("Sector or mission data could not be read!");
-    }
-  } catch (e) {
-    console.log("Update mission batch error", e);
-    throw new CustomHttpError(500, "Something went wrong. Please try again");
-  }
-};
+//       //Extract and handle each individual response from the batch
+//       const postBatchResult =
+//         (await _parseMultipartResponse(postBatchResponse)) || [];
+//       //--TODO: Error handling
+//       if (postBatchResult && postBatchResult[0] && postBatchResult[0].error) {
+//         console.log(
+//           "Error during update mission:",
+//           postBatchResult[0].error.value,
+//         );
+//         throw new Error(
+//           `Error during update mission: ${postBatchResult[0].error.value}`,
+//         );
+//       }
+
+//       //--Call S4 Odata
+//       if (postBatchResponse) {
+//         //Approve
+//         try {
+//           const createS4Document = await _createS4Documentv2(
+//             { missionId: body.info.missionId },
+//             cookies,
+//           );
+//         } catch (e) {
+//           console.log("S4 document create error during 'Update Mission'", e);
+//         }
+//       }
+//       //--Call S4 Odata
+
+//       return postBatchResult;
+//     } else {
+//       throw new Error("Sector or mission data could not be read!");
+//     }
+//   } catch (e) {
+//     console.log("Update mission batch error", e);
+//     throw new CustomHttpError(500, "Something went wrong. Please try again");
+//   }
+// };
 const _updateMission = async function (body, userInfo, cookies) {
   try {
     var auth = "Basic " + cookies.SF.basicAuth;
@@ -6599,6 +6663,7 @@ const _updateMission = async function (body, userInfo, cookies) {
                   body.members[j].employeeTotalExpense,
                 cust_Employee_Total_Perdiem:
                   body.members[j].employeeTotalPerdiem,
+                cust_Reserved_Budget: body.members[j].reservedBudget,
                 cust_Employee_Total_Ticket: body.members[j].employeeTotalTicket,
                 cust_Grade: body.members[j].grade,
                 cust_Multiple_Cities: body.members[j].multipleCities,
@@ -6626,6 +6691,7 @@ const _updateMission = async function (body, userInfo, cookies) {
                   body.members[j].employeeTotalExpense,
                 cust_Employee_Total_Perdiem:
                   body.members[j].employeeTotalPerdiem,
+                cust_Reserved_Budget: body.members[j].reservedBudget,
                 cust_Employee_Total_Ticket: body.members[j].employeeTotalTicket,
                 cust_Grade: body.members[j].grade,
                 cust_Multiple_Cities: body.members[j].multipleCities,
@@ -7062,7 +7128,7 @@ const _constructS4DocumentDetailsFromMissionId = async function (
       "cust_ReplicationFlag,cust_Hospitality_Type,cust_Flight_type,cust_Destination,cust_TotalPerdiemMission,cust_TicketAverage,cust_Sector," +
       "cust_Total_Expense,cust_Budget_Available,cust_Budget_Parked,cust_Decree_Type,cust_Status,cust_S4_Document_Number," +
       "cust_Members/cust_Mission_externalCode,cust_Members/cust_Employee_ID,cust_Members/cust_EmployeeID,cust_Members/cust_First_Name,cust_Members/cust_Last_Name,cust_Members/cust_Title_Of_Employee," +
-      "cust_Members/cust_Employee_Total_Ticket,cust_Members/cust_Employee_Total_Perdiem,cust_Members/cust_Employee_Total_Expense," +
+      "cust_Members/cust_Employee_Total_Ticket,cust_Members/cust_Employee_Total_Perdiem,cust_Members/cust_Reserved_Budget,cust_Members/cust_Employee_Total_Expense," +
       "cust_Members/cust_Multiple_Cities,cust_Members/cust_Employee_IDNav/empInfo/jobInfoNav/costCenter";
 
     const missionExpandQuery =
@@ -7185,10 +7251,13 @@ const _constructS4DocumentFromPayload = async function (
       s4DocumentNumber = oMissionResponse.cust_S4_Document_Number;
       let employeeFilterQuery = "";
       oMissionRequest.members.forEach((m) => {
-        employeeFilterQuery =
-          employeeFilterQuery === ""
-            ? `userId in '${m.userID}'`
-            : `${employeeFilterQuery},'${m.userID}'`;
+        if (!m.costCenter) {
+          //--member does not have a cost center
+          employeeFilterQuery =
+            employeeFilterQuery === ""
+              ? `userId in '${m.userID}'`
+              : `${employeeFilterQuery},'${m.userID}'`;
+        }
       });
 
       let employeeFetchUrl = `${cookies.SF.URL}EmpJob?$format=json&$filter=${employeeFilterQuery}&$select=userId,costCenter`;
@@ -8226,7 +8295,7 @@ const _getAdminMissionReport = async function (body, cookies) {
       "cust_Status,createdDateTime,createdBy," +
       "cust_Members/cust_Mission_effectiveStartDate,cust_Members/cust_Mission_externalCode,cust_Members/cust_Mission_transactionSequence," +
       "cust_Members/cust_Employee_ID,cust_Members/cust_EmployeeID,cust_Members/cust_First_Name,cust_Members/cust_Last_Name,cust_Members/cust_Title_Of_Employee," +
-      "cust_Members/cust_Employee_Total_Ticket,cust_Members/cust_Employee_Total_Perdiem,cust_Members/cust_Employee_Total_Expense," +
+      "cust_Members/cust_Employee_Total_Ticket,cust_Members/cust_Employee_Total_Perdiem,cust_Members/cust_Reserved_Budget,cust_Members/cust_Employee_Total_Expense," +
       "cust_Members/cust_Multiple_Cities," +
       "cust_Members/cust_itinerary_details_child/cust_Mission_effectiveStartDate," +
       "cust_Members/cust_itinerary_details_child/cust_Mission_externalCode,cust_Members/cust_itinerary_details_child/cust_Members_externalCode," +
@@ -8433,6 +8502,9 @@ const _getAdminMissionReport = async function (body, cookies) {
             resultRow[`employeeTotalPerdiem`] = _formatCurrency(
               m1.cust_Employee_Total_Perdiem,
             );
+            // resultRow[`reservedBudget`] = _formatCurrency(
+            //   m1.cust_Reserved_Budget,
+            // );
             resultRow[`employeeTotalTicket`] = _formatCurrency(
               m1.cust_Employee_Total_Ticket,
             );
@@ -10886,42 +10958,42 @@ ar.beforeRequestHandler.use("/deleteS4Document", async (req, res, next) => {
   }
 });
 
-ar.beforeRequestHandler.use("/updateS4Document", async (req, res, next) => {
-  try {
-    const reqCookies = await _fetchCookies(req);
+// ar.beforeRequestHandler.use("/updateS4Document", async (req, res, next) => {
+//   try {
+//     const reqCookies = await _fetchCookies(req);
 
-    const updateDocument = await _createS4Documentv2(req.body, reqCookies);
+//     const updateDocument = await _createS4Documentv2(req.body, reqCookies);
 
-    res.end(Buffer.from(JSON.stringify(updateDocument)));
-  } catch (error) {
-    const errorObj = {
-      status: 0,
-      message: "",
-    };
-    if (error instanceof CustomHttpError) {
-      errorObj.status = error.httpStatusCode;
-      errorObj.message = error.message;
-    } else {
-      if (typeof error === "string") {
-        errorObj.status = 500;
-        errorObj.message = error;
-      } else if (error instanceof Error) {
-        errorObj.status = 500;
-        errorObj.message = error.message;
-      }
-    }
+//     res.end(Buffer.from(JSON.stringify(updateDocument)));
+//   } catch (error) {
+//     const errorObj = {
+//       status: 0,
+//       message: "",
+//     };
+//     if (error instanceof CustomHttpError) {
+//       errorObj.status = error.httpStatusCode;
+//       errorObj.message = error.message;
+//     } else {
+//       if (typeof error === "string") {
+//         errorObj.status = 500;
+//         errorObj.message = error;
+//       } else if (error instanceof Error) {
+//         errorObj.status = 500;
+//         errorObj.message = error.message;
+//       }
+//     }
 
-    console.log(
-      "Travel mission update s4 document -> status / " +
-        errorObj.status +
-        " & message / " +
-        errorObj.message,
-    );
+//     console.log(
+//       "Travel mission update s4 document -> status / " +
+//         errorObj.status +
+//         " & message / " +
+//         errorObj.message,
+//     );
 
-    res.statusCode = errorObj.status;
-    res.end(Buffer.from(JSON.stringify(errorObj)));
-  }
-});
+//     res.statusCode = errorObj.status;
+//     res.end(Buffer.from(JSON.stringify(errorObj)));
+//   }
+// });
 
 ar.beforeRequestHandler.use("/checkIsAdmin", async (req, res, next) => {
   try {

@@ -21,12 +21,13 @@ sap.ui.define(
     MessageBox,
     MessageToast,
     Storage,
-    formatter
+    formatter,
   ) {
     "use strict";
 
     return BaseController.extend("ui5appuat.controller.AdvanceMission", {
       missionTotalPerdiem: 0,
+      missionTotalTicketAverage:0,
 
       onInit: function (evt) {
         this.initializeAppSettings(true);
@@ -94,7 +95,7 @@ sap.ui.define(
               "errorOperation",
               "sessionExpired",
               [],
-              null
+              null,
             );
             // MessageBox.error("The session is expired. Please refresh.", {
             // 	actions: [MessageBox.Action.CLOSE],
@@ -205,6 +206,8 @@ sap.ui.define(
               employeeTotalExpense: 0,
               employeeTotalTicket: 0,
               employeeTotalPerdiem: 0,
+              reservedBudget:0,
+              costCenter:"",
               jobLevel: "",
               itinerary: [],
               attachments: [],
@@ -276,7 +279,7 @@ sap.ui.define(
                 xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                 xhr.setRequestHeader(
                   "x-approuter-authorization",
-                  "Bearer " + envInfo.CF.accessToken
+                  "Bearer " + envInfo.CF.accessToken,
                 );
               }
             },
@@ -360,7 +363,7 @@ sap.ui.define(
                     fileSize:
                       Math.round(
                         (parseFloat(missionAttachments[a].fileSize) / 1024) *
-                          100
+                          100,
                       ) /
                         100 +
                       " KB",
@@ -405,6 +408,8 @@ sap.ui.define(
                     employeeTotalExpense: memberInfo.totalExpense,
                     employeeTotalTicket: memberInfo.totalTicket,
                     employeeTotalPerdiem: memberInfo.totalPerDiem,
+                    costCenter: memberInfo.costCenter,
+                    reservedBudget: memberInfo.reservedBudget,
                     itinerary: [],
                     attachments: [],
                   };
@@ -430,7 +435,7 @@ sap.ui.define(
                       city: itineraryInfo.city,
                       ticketType: itineraryInfo.ticketType,
                       startDate: formatter.formatDateUI(
-                        itineraryInfo.startDate
+                        itineraryInfo.startDate,
                       ),
                       endDate: formatter.formatDateUI(itineraryInfo.endDate),
                       headOfMission: itineraryInfo.isHeadOfMission,
@@ -461,7 +466,7 @@ sap.ui.define(
                           Math.round(
                             (parseFloat(memberAttachments[ma].fileSize) /
                               1024) *
-                              100
+                              100,
                           ) /
                             100 +
                           " KB",
@@ -523,7 +528,7 @@ sap.ui.define(
                     xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                     xhr.setRequestHeader(
                       "x-approuter-authorization",
-                      "Bearer " + envInfo.CF.accessToken
+                      "Bearer " + envInfo.CF.accessToken,
                     );
                   }
                 },
@@ -592,7 +597,7 @@ sap.ui.define(
                 xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                 xhr.setRequestHeader(
                   "x-approuter-authorization",
-                  "Bearer " + envInfo.CF.accessToken
+                  "Bearer " + envInfo.CF.accessToken,
                 );
               }
             },
@@ -681,7 +686,7 @@ sap.ui.define(
             var hoursToAdd = 12 * 60 * 60 * 1000;
             var itineraryStartDate = new Date(itineraryData[j].startDate);
             itineraryStartDate.setTime(
-              itineraryStartDate.getTime() + hoursToAdd
+              itineraryStartDate.getTime() + hoursToAdd,
             );
             var itineraryEndDate = new Date(itineraryData[j].endDate);
             itineraryEndDate.setTime(itineraryEndDate.getTime() + hoursToAdd);
@@ -697,7 +702,7 @@ sap.ui.define(
             if (advanceEnDate == null) {
               advanceEnDate = itineraryEndDate;
             } else {
-             //--Fixed 22.01.2026 - Bug Fix CDA - Case - 174373
+              //--Fixed 22.01.2026 - Bug Fix CDA - Case - 174373
               if (itineraryEndDate.getTime() > advanceEnDate.getTime()) {
                 advanceEnDate = itineraryEndDate;
               }
@@ -709,7 +714,7 @@ sap.ui.define(
             } else {
               if (itineraryData[j].perDiemPerCity.indexOf(",") > -1) {
                 itineraryPerDiem = parseFloat(
-                  itineraryData[j].perDiemPerCity.replace(/\,/g, "")
+                  itineraryData[j].perDiemPerCity.replace(/\,/g, ""),
                 );
               } else {
                 itineraryPerDiem = parseFloat(itineraryData[j].perDiemPerCity);
@@ -751,7 +756,7 @@ sap.ui.define(
               xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
               xhr.setRequestHeader(
                 "x-approuter-authorization",
-                "Bearer " + envInfo.CF.accessToken
+                "Bearer " + envInfo.CF.accessToken,
               );
             }
           },
@@ -762,7 +767,7 @@ sap.ui.define(
               "successfulOperation",
               "advanceSubmitted",
               [],
-              null
+              null,
             );
 
             // MessageBox.success("The advance has been submitted successfully", {
@@ -801,5 +806,5 @@ sap.ui.define(
         return window.btoa(binary);
       },
     });
-  }
+  },
 );

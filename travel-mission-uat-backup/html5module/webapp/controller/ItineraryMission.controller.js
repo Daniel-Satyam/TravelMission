@@ -21,12 +21,13 @@ sap.ui.define(
     MessageBox,
     MessageToast,
     Storage,
-    formatter
+    formatter,
   ) {
     "use strict";
 
     return BaseController.extend("ui5appuat.controller.ItineraryMission", {
       missionTotalExpense: 0,
+      formerMembers: [],
 
       onInit: function (evt) {
         this.initializeAppSettings(true);
@@ -210,6 +211,8 @@ sap.ui.define(
               employeeTotalExpense: 0,
               employeeTotalTicket: 0,
               employeeTotalPerdiem: 0,
+              reservedBudget:0,//--reserved budget
+              costCenter:"",
               jobLevel: "",
               itinerary: [],
               attachments: [],
@@ -270,7 +273,7 @@ sap.ui.define(
                 xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                 xhr.setRequestHeader(
                   "x-approuter-authorization",
-                  "Bearer " + envInfo.CF.accessToken
+                  "Bearer " + envInfo.CF.accessToken,
                 );
               }
             },
@@ -280,6 +283,7 @@ sap.ui.define(
               var missionInfo = missionData.info;
 
               that.missionTotalExpense = missionInfo.totalExpenseOnMission;
+              that.formerMembers = _.cloneDeep(missionData.members);
 
               var missionInfoObj = {
                 missionDescription: missionInfo.description,
@@ -332,7 +336,7 @@ sap.ui.define(
                     fileSize:
                       Math.round(
                         (parseFloat(missionAttachments[a].fileSize) / 1024) *
-                          100
+                          100,
                       ) /
                         100 +
                       " KB",
@@ -387,6 +391,8 @@ sap.ui.define(
                   employeeTotalExpense: memberInfo.totalExpense,
                   employeeTotalTicket: memberInfo.totalTicket,
                   employeeTotalPerdiem: memberInfo.totalPerDiem,
+                  costCenter: memberInfo.costCenter,
+                  reservedBudget: memberInfo.reservedBudget,
                   itinerary: [],
                   attachments: [],
                 };
@@ -407,6 +413,7 @@ sap.ui.define(
                     perDiemPerCity: itineraryInfo.perDiemPerCity,
                     ticketAverage: itineraryInfo.ticketAverage,
                     ticketActualCost: itineraryInfo.ticketActualCost,
+                    reservedBudget: 0,
                     //"startDateMinDate": startDtModified,
                     //"startDateMaxDate": endDtModified,
                     //"endDateMinDate": startDtModified,
@@ -429,7 +436,7 @@ sap.ui.define(
                       fileSize:
                         Math.round(
                           (parseFloat(memberAttachments[ma].fileSize) / 1024) *
-                            100
+                            100,
                         ) /
                           100 +
                         " KB",
@@ -553,7 +560,7 @@ sap.ui.define(
               "errorsFound",
               "overlapItineraryError",
               [],
-              null
+              null,
             );
             // MessageBox.error(
             //   "Please select any other date which is not overlap with other cities dates",
@@ -647,7 +654,7 @@ sap.ui.define(
               "errorsFound",
               "overlapItineraryError",
               [],
-              null
+              null,
             );
             // MessageBox.error(
             //   "Please select any other date which is not overlap with other cities dates",
@@ -809,7 +816,7 @@ sap.ui.define(
                 xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                 xhr.setRequestHeader(
                   "x-approuter-authorization",
-                  "Bearer " + envInfo.CF.accessToken
+                  "Bearer " + envInfo.CF.accessToken,
                 );
               }
             },
@@ -845,6 +852,19 @@ sap.ui.define(
                         itineraryData[j].ticketAverage = 0;
                       }
 
+                      //--reservedBudget
+                      if (
+                        !isNaN(parseInt(ticketAndPerDiemData.reservedBudget))
+                      ) {
+                        itineraryData[j].reservedBudget = 0;
+
+                        itineraryData[j].reservedBudget =
+                          ticketAndPerDiemData.reservedBudget;
+                      } else {
+                        itineraryData[j].reservedBudget = 0;
+                      }
+                      //--reservedBudget
+
                       itineraryData[j].ticketType =
                         ticketAndPerDiemData.ticketType;
                     }
@@ -854,6 +874,7 @@ sap.ui.define(
 
               var memberTicketAverage = 0;
               var memberPerDiemPerCity = 0;
+              var memberReservedBudget = 0;
               var missionTicketAverage = 0;
               var missionPerDiemPerCity = 0;
               var missionTotalExpense = 0;
@@ -861,22 +882,23 @@ sap.ui.define(
               for (var i = 0; i < mModelData.length; i++) {
                 memberTicketAverage = 0;
                 memberPerDiemPerCity = 0;
+                memberReservedBudget = 0;
                 if (guid == mModelData[i].guid) {
                   var itineraryData = mModelData[i].itinerary;
                   for (var j = 0; j < itineraryData.length; j++) {
                     var itineraryPerDiemPerCity;
                     if (!isNaN(itineraryData[j].perDiemPerCity)) {
                       itineraryPerDiemPerCity = parseFloat(
-                        itineraryData[j].perDiemPerCity
+                        itineraryData[j].perDiemPerCity,
                       );
                     } else {
                       if (itineraryData[j].perDiemPerCity.indexOf(",") > -1) {
                         itineraryPerDiemPerCity = parseFloat(
-                          itineraryData[j].perDiemPerCity.replace(/\,/g, "")
+                          itineraryData[j].perDiemPerCity.replace(/\,/g, ""),
                         );
                       } else {
                         itineraryPerDiemPerCity = parseFloat(
-                          itineraryData[j].perDiemPerCity
+                          itineraryData[j].perDiemPerCity,
                         );
                       }
                     }
@@ -884,29 +906,54 @@ sap.ui.define(
                     var itineraryTicketAverage;
                     if (!isNaN(itineraryData[j].ticketAverage)) {
                       itineraryTicketAverage = parseFloat(
-                        itineraryData[j].ticketAverage
+                        itineraryData[j].ticketAverage,
                       );
                     } else {
                       if (itineraryData[j].ticketAverage.indexOf(",") > -1) {
                         itineraryTicketAverage = parseFloat(
-                          itineraryData[j].ticketAverage.replace(/\,/g, "")
+                          itineraryData[j].ticketAverage.replace(/\,/g, ""),
                         );
                       } else {
                         itineraryTicketAverage = parseFloat(
-                          itineraryData[j].ticketAverage
+                          itineraryData[j].ticketAverage,
                         );
                       }
                     }
+
+                    //--Reserved budget
+                    var itineraryReservedBudget;
+                    if (!isNaN(itineraryData[j].reservedBudget)) {
+                      itineraryReservedBudget = parseFloat(
+                        itineraryData[j].reservedBudget,
+                      );
+                    } else {
+                      if (itineraryData[j].reservedBudget.indexOf(",") > -1) {
+                        itineraryReservedBudget = parseFloat(
+                          itineraryData[j].reservedBudget.replace(/\,/g, ""),
+                        );
+                      } else {
+                        itineraryReservedBudget = parseFloat(
+                          itineraryData[j].reservedBudget,
+                        );
+                      }
+                    }
+                    //--Reserved budget
 
                     memberPerDiemPerCity =
                       memberPerDiemPerCity + itineraryPerDiemPerCity;
                     memberTicketAverage =
                       memberTicketAverage + itineraryTicketAverage;
+
+                    memberReservedBudget =
+                      memberReservedBudget + itineraryReservedBudget; //--Reserved budget
                   }
                   mModelData[i].employeeTotalPerdiem = memberPerDiemPerCity;
                   mModelData[i].employeeTotalTicket = memberTicketAverage;
+                  mModelData[i].reservedBudget = memberReservedBudget; //--Reserved budget
                   mModelData[i].employeeTotalExpense =
                     memberPerDiemPerCity + memberTicketAverage;
+                  mModelData[i].reservedBudget =
+                    memberPerDiemPerCity + memberReservedBudget;
                   missionTicketAverage =
                     missionTicketAverage + memberTicketAverage;
                   missionPerDiemPerCity =
@@ -921,16 +968,16 @@ sap.ui.define(
                     var itineraryPerDiemPerCity;
                     if (!isNaN(itineraryData[j].perDiemPerCity)) {
                       itineraryPerDiemPerCity = parseFloat(
-                        itineraryData[j].perDiemPerCity
+                        itineraryData[j].perDiemPerCity,
                       );
                     } else {
                       if (itineraryData[j].ticketAverage.indexOf(",") > -1) {
                         itineraryPerDiemPerCity = parseFloat(
-                          itineraryData[j].perDiemPerCity.replace(/\,/g, "")
+                          itineraryData[j].perDiemPerCity.replace(/\,/g, ""),
                         );
                       } else {
                         itineraryPerDiemPerCity = parseFloat(
-                          itineraryData[j].perDiemPerCity
+                          itineraryData[j].perDiemPerCity,
                         );
                       }
                     }
@@ -938,16 +985,16 @@ sap.ui.define(
                     var itineraryTicketAverage;
                     if (!isNaN(itineraryData[j].ticketAverage)) {
                       itineraryTicketAverage = parseFloat(
-                        itineraryData[j].ticketAverage
+                        itineraryData[j].ticketAverage,
                       );
                     } else {
                       if (itineraryData[j].ticketAverage.indexOf(",") > -1) {
                         itineraryTicketAverage = parseFloat(
-                          itineraryData[j].ticketAverage.replace(/\,/g, "")
+                          itineraryData[j].ticketAverage.replace(/\,/g, ""),
                         );
                       } else {
                         itineraryTicketAverage = parseFloat(
-                          itineraryData[j].ticketAverage
+                          itineraryData[j].ticketAverage,
                         );
                       }
                     }
@@ -993,7 +1040,7 @@ sap.ui.define(
                 null,
                 "perdiemCalculatedSaveToUpdate",
                 [],
-                { showConfirmButton: true }
+                { showConfirmButton: true },
               );
 
               that.enableSaveButton();
@@ -1031,7 +1078,7 @@ sap.ui.define(
                 xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                 xhr.setRequestHeader(
                   "x-approuter-authorization",
-                  "Bearer " + envInfo.CF.accessToken
+                  "Bearer " + envInfo.CF.accessToken,
                 );
               }
             },
@@ -1108,37 +1155,23 @@ sap.ui.define(
 
         const travelStorageEncrypted = Storage.get("travel_mission_storage");
         const travelStorage = await that.getDecryptedData(
-          travelStorageEncrypted
+          travelStorageEncrypted,
         );
         const travelStorageInfo = JSON.parse(travelStorage);
 
+        const {
+          isBudgetAvailable,
+          budgetTracking,
+          memberBudgetChecks,
+          missionBudgetAvailable,
+          missionParkedAmount,
+        } = await this.checkBudgetAvailability(true);
 
-        this.openBusyFragment("checkingBudget", []);
-
-        try {
-          const i = await this.refreshSectors();
-
-          this.closeBusyFragment();
-        } catch (e) {
-          this.closeBusyFragment();
-          //--Could not refresh somehow
+        if (isBudgetAvailable === false) {
+          this.alertBudgetLow(memberBudgetChecks);
+          return null;
         }
 
-        const oSectorsModel = this.getModel("sectorsModel");
-        const sectorsModelData = oSectorsModel.getProperty("/sectors");
-
-        const oSubSector = _.find(sectorsModelData, [
-          "externalCode",
-          oMission.sector,
-        ]);
-
-        // const oMainSector = oSubSector
-        //   ? _.find(sectorsModelData, {
-        //       cust_S4_Sector: oSubSector.cust_S4_Sector,
-        //       cust_S4_SubSector: oSubSector.cust_S4_Sector,
-        //     })
-        //   : null;
-      
 
         let oMissionRequest = {
           info: {
@@ -1173,9 +1206,12 @@ sap.ui.define(
         aMembers.forEach((oMember) => {
           let oMemberRequest = {
             employeeID: oMember.employeeID,
+            userID: oMember.userID,
+            costCenter: oMember.costCenter,
             employeeTotalExpense: 0,
             employeeTotalPerdiem: 0,
             employeeTotalTicket: 0,
+            reservedBudget: 0,
             itinerary: [],
           };
           if (oMember.itinerary && oMember.itinerary.length > 0) {
@@ -1191,26 +1227,35 @@ sap.ui.define(
                 perDiemPerCity: 0,
                 ticketActualCost: 0,
                 ticketAverage: 0,
+                reservedBudget: oItinerary.reservedBudget || 0,
               };
 
               if (!isNaN(oItinerary.perDiemPerCity)) {
                 oItineraryRequest.perDiemPerCity = parseFloat(
-                  oItinerary.perDiemPerCity
+                  oItinerary.perDiemPerCity,
                 );
               }
 
               if (!isNaN(oItinerary.ticketAverage)) {
                 oItineraryRequest.ticketAverage = parseFloat(
-                  oItinerary.ticketAverage
+                  oItinerary.ticketAverage,
                 );
               }
 
               if (!isNaN(oItinerary.ticketActualCost)) {
                 oItineraryRequest.ticketAverage =
                   oItineraryRequest.ticketActualCost = parseFloat(
-                    oItinerary.ticketActualCost
+                    oItinerary.ticketActualCost,
                   );
               }
+
+              //--Reserved budget
+              if (!isNaN(oItinerary.reservedBudget)) {
+                oItineraryRequest.reservedBudget = parseFloat(
+                  oItinerary.reservedBudget,
+                );
+              }
+              //--Reserved budget
 
               oMemberRequest.employeeTotalPerdiem =
                 oMemberRequest.employeeTotalPerdiem +
@@ -1218,6 +1263,10 @@ sap.ui.define(
               oMemberRequest.employeeTotalTicket =
                 oMemberRequest.employeeTotalTicket +
                 oItineraryRequest.ticketAverage;
+
+              oMemberRequest.reservedBudget =
+                oMemberRequest.reservedBudget +
+                oItineraryRequest.reservedBudget; //--Reserved budget
 
               //--Convert to string
               oItineraryRequest.perDiemPerCity =
@@ -1251,6 +1300,8 @@ sap.ui.define(
             oMemberRequest.employeeTotalTicket.toString();
           oMemberRequest.employeeTotalExpense =
             oMemberRequest.employeeTotalExpense.toString();
+          oMemberRequest.reservedBudget =
+            oMemberRequest.reservedBudget.toString();
 
           oMissionRequest.members.push(oMemberRequest);
         });
@@ -1259,170 +1310,6 @@ sap.ui.define(
           parseFloat(this.missionTotalExpense) -
           parseFloat(oMissionRequest.info.missionTotalExpense);
 
-        // let oSector = _.find(aSectors, ["externalCode", oMission.sector]);
-        // if (oSector) {
-        //   if (oSector.cust_Available_budget != null) {
-        //     sectorAvailableBudget = parseFloat(oSector.cust_Available_budget);
-        //   }
-
-        //   if (oSector.cust_Parked_Amount != null) {
-        //     sectorUtilizedBudget = parseFloat(oSector.cust_Utilized_Budget);
-        //   }
-        // }
-        let aBudgetTracking = [];
-        // let bBudgetAvailable = false;
-        let bBudgetAvailable = true;
-
-        if (missionTotalExpenseDifference >= 0) {
-          sectorUtilizedBudget =
-            parseFloat(oSubSector.cust_Utilized_Budget) -
-            Math.abs(parseFloat(missionTotalExpenseDifference));
-          sectorAvailableBudget =
-            parseFloat(oSubSector.cust_Available_budget) +
-            Math.abs(parseFloat(missionTotalExpenseDifference));
-        } else {
-          sectorUtilizedBudget =
-            parseFloat(oSubSector.cust_Utilized_Budget) +
-            Math.abs(parseFloat(missionTotalExpenseDifference));
-          sectorAvailableBudget =
-            parseFloat(oSubSector.cust_Available_budget) -
-            Math.abs(parseFloat(missionTotalExpenseDifference));
-        }
-
-        //--Budget tracking
-        // let remainingConsumption;
-
-        // if (missionTotalExpenseDifference >= 0) {
-        //   //--Surplus value to budget
-
-        //   let oSubBudgetTracking = {
-        //     cust_MissionID: oMission.missionID,
-        //     cust_SFSector: oSubSector.externalCode,
-        //     cust_S4Sector: oSubSector.cust_S4_SubSector,
-        //     cust_Consumption: 0,
-        //     cust_Remaining_Budget:
-        //       parseFloat(oSubSector.cust_Available_budget) +
-        //       parseFloat(missionTotalExpenseDifference),
-        //     cust_Utilized_Budget:
-        //       parseFloat(oSubSector.cust_Utilized_Budget) -
-        //       parseFloat(missionTotalExpenseDifference),
-        //     cust_Comments: "Update itinerary",
-        //     real_Consumption: 0,
-        //   };
-        //   aBudgetTracking.push(oSubBudgetTracking);
-
-        //   let oMainBudgetTracking = {
-        //     cust_MissionID: oMission.missionID,
-        //     cust_SFSector: oMainSector.externalCode,
-        //     cust_S4Sector: oMainSector.cust_S4_SubSector,
-        //     cust_Consumption: 0,
-        //     cust_Remaining_Budget:
-        //       parseFloat(oMainSector.cust_Available_budget) +
-        //       parseFloat(missionTotalExpenseDifference),
-        //     cust_Utilized_Budget:
-        //       parseFloat(oMainSector.cust_Utilized_Budget) -
-        //       parseFloat(missionTotalExpenseDifference),
-        //     cust_Comments: "Update itinerary",
-        //     real_Consumption: 0,
-        //   };
-        //   aBudgetTracking.push(oMainBudgetTracking);
-
-        //   if (missionTotalExpenseDifference === 0) {
-        //     aBudgetTracking = [];
-        //   }
-
-        //   bBudgetAvailable = true;
-        // } else {
-        //   missionTotalExpenseDifference = Math.abs(
-        //     parseFloat(missionTotalExpenseDifference)
-        //   );
-
-        //   if (parseFloat(oSubSector.cust_Available_budget) > 0) {
-        //     remainingConsumption =
-        //       parseFloat(oSubSector.cust_Available_budget) -
-        //       parseFloat(missionTotalExpenseDifference);
-        //     let oBudgetTracking = {
-        //       cust_MissionID: oMission.missionID,
-        //       cust_SFSector: oSubSector.externalCode,
-        //       cust_S4Sector: oSubSector.cust_S4_SubSector,
-        //       cust_Consumption: parseFloat(missionTotalExpenseDifference),
-        //       cust_Remaining_Budget:
-        //         parseFloat(oSubSector.cust_Available_budget) -
-        //         parseFloat(missionTotalExpenseDifference),
-        //       cust_Utilized_Budget:
-        //         parseFloat(oSubSector.cust_Utilized_Budget) +
-        //         parseFloat(missionTotalExpenseDifference),
-        //       cust_Comments: "Update itinerary",
-        //       real_Consumption:
-        //         remainingConsumption >= 0
-        //           ? parseFloat(missionTotalExpenseDifference)
-        //           : parseFloat(oSubSector.cust_Available_budget),
-        //     };
-        //     aBudgetTracking.push(oBudgetTracking);
-
-        //     if (remainingConsumption >= 0) {
-        //       bBudgetAvailable = true;
-        //       remainingConsumption = 0;
-        //     }
-        //   } else {
-        //     let oBudgetTracking = {
-        //       cust_MissionID: oMission.missionID,
-        //       cust_SFSector: oSubSector.externalCode,
-        //       cust_S4Sector: oSubSector.cust_S4_SubSector,
-        //       cust_Consumption: parseFloat(missionTotalExpenseDifference),
-        //       cust_Remaining_Budget:
-        //         parseFloat(oSubSector.cust_Available_budget) -
-        //         parseFloat(missionTotalExpenseDifference),
-        //       cust_Utilized_Budget:
-        //         parseFloat(oSubSector.cust_Utilized_Budget) +
-        //         parseFloat(missionTotalExpenseDifference),
-        //       cust_Comments: "Update itinerary",
-        //       real_Consumption: 0,
-        //     };
-        //     aBudgetTracking.push(oBudgetTracking);
-        //     remainingConsumption =
-        //       parseFloat(missionTotalExpenseDifference) * -1;
-        //   }
-
-        //   let remainingSectorBudget;
-        //   if (
-        //     oMainSector &&
-        //     parseFloat(oMainSector.cust_Available_budget) > 0
-        //   ) {
-        //     //--Subsector budget may not be enough use main sector budget
-        //     remainingSectorBudget =
-        //       parseFloat(oMainSector.cust_Available_budget) -
-        //       parseFloat(missionTotalExpenseDifference);
-
-        //     let oBudgetTracking = {
-        //       cust_MissionID: oMission.missionID,
-        //       cust_SFSector: oMainSector.externalCode,
-        //       cust_S4Sector: oMainSector.cust_S4_SubSector,
-        //       cust_Consumption: parseFloat(missionTotalExpenseDifference),
-        //       cust_Remaining_Budget: remainingSectorBudget,
-        //       cust_Utilized_Budget:
-        //         parseFloat(oMainSector.cust_Utilized_Budget) +
-        //         parseFloat(missionTotalExpenseDifference),
-        //       cust_Comments: "Update itinerary",
-        //       real_Consumption:
-        //         remainingSectorBudget >= 0
-        //           ? parseFloat(missionTotalExpenseDifference)
-        //           : 0,
-        //     };
-        //     aBudgetTracking.push(oBudgetTracking);
-
-        //     if (remainingSectorBudget >= 0) {
-        //       bBudgetAvailable = true;
-        //     } else {
-        //       bBudgetAvailable = false;
-        //     }
-        //   }
-        // }
-        //--Budget tracking
-
-        if (sectorUtilizedBudget < 0) {
-          sectorUtilizedBudget = 0;
-        }
 
         oMissionRequest.info.sectorAvailableBudget =
           sectorAvailableBudget.toString();
@@ -1430,20 +1317,141 @@ sap.ui.define(
         oMissionRequest.info.sectorUtilizedBudget =
           sectorUtilizedBudget.toString();
 
-        oMissionRequest.budgetTracking = aBudgetTracking;
+       
+        return oMissionRequest;
+        
+      },
+      checkBudgetAvailability: async function (bShowLoading = false) {
+        let aBudgetTracking = [];
+        let aMemberBudgetChecks = [];
+        let bBudgetAvailable = false;
+        const oMissionInfoModel = this.getModel("missionInfoModel");
+        const oMissionInfo = oMissionInfoModel.getProperty("/info");
+        let missionBudgetAvailable = 0;
+        let missionParkedAmount = 0;
 
-        if (bBudgetAvailable === true) {
-          return oMissionRequest;
-        } else {
-          this.alertMessage(
+        if (
+          !oMissionInfo.totalExpense ||
+          parseFloat(oMissionInfo.totalExpense) <= 0
+        ) {
+          this.toastMessage(
             "E",
             "errorOperation",
-            "sectorBudgetLowError",
+            "totalMissionExpenseZero",
             [],
-            null
+            null,
           );
-          return null;
+          return {
+            isBudgetAvailable: bBudgetAvailable,
+            budgetTracking: aBudgetTracking,
+            memberBudgetChecks: aMemberBudgetChecks,
+            missionBudgetAvailable,
+            missionParkedAmount,
+          };
         }
+
+        //--Budget check for members
+        const oMembersModel = this.getModel("membersModel");
+        const aMembers = oMembersModel.getProperty("/members");
+        const aBudgetCheck = [];
+        const aCostCenters = [];
+
+        //--Collect the selected cost centers and fetch budget
+        if (bShowLoading) {
+          this.openBusyFragment("checkingBudget", []);
+        }
+        aMembers.forEach((oMember) => {
+          if (!aCostCenters.includes(oMember.costCenter)) {
+            aCostCenters.push(oMember.costCenter);
+          }
+        });
+
+        for (const c of aCostCenters) {
+          try {
+            if (c) {
+              const oBudget = await this.getFCBudgetS4(
+                c,
+                oMissionInfo.missionStartDate.getFullYear(),
+              );
+              aBudgetCheck.push({
+                CostCenter: c,
+                AvailableBudget: oBudget.hasOwnProperty("GetFCBudget")
+                  ? parseFloat(oBudget.GetFCBudget.AvailableBudget)
+                  : 0,
+                TotalPerDiem: 0,
+                IsBudgetAvailable: false,
+              });
+            }
+          } catch (e) {
+            aBudgetCheck.push({
+              CostCenter: c,
+              AvailableBudget: 0,
+              TotalPerDiem: 0,
+              IsBudgetAvailable: false,
+            });
+          }
+        }
+        //--Collect the selected cost centers and fetch bsudget
+
+        //--Loop through the members and check the available budget
+        aMembers.forEach((oMember) => {
+          let perDiemDeficit = parseFloat(oMember.employeeTotalPerdiem);
+          const oBudgetCheck = _.find(aBudgetCheck, [
+            "CostCenter",
+            oMember.costCenter,
+          ]);
+
+          const oFormerMember = _.find(this.formerMembers, ["employeeID", oMember.employeeID]);
+
+          //--Find the difference by taking the old member's perdiem
+          if(oFormerMember && oFormerMember.employeeTotalPerdiem && isNaN(parseFloat(oFormerMember.employeeTotalPerdiem))){
+            perDiemDeficit = perDiemDeficit - parseFloat(oFormerMember.employeeTotalPerdiem);
+          }
+          //--Find the difference of taking the old member's perdiem
+
+          oBudgetCheck.TotalPerDiem =
+            oBudgetCheck.TotalPerDiem +  perDiemDeficit;
+        });
+        //--Loop through the members and check the available budget
+
+        //--Check budget availability and give errors
+        aBudgetCheck.forEach((oBudgetCheck) => {
+          if (oBudgetCheck.AvailableBudget >= oBudgetCheck.TotalPerDiem) {
+            oBudgetCheck.IsBudgetAvailable = true;
+          }
+        });
+        bBudgetAvailable = true;
+        aMembers.forEach((oMember) => {
+          const oBudgetCheck = _.find(aBudgetCheck, [
+            "CostCenter",
+            oMember.costCenter,
+          ]);
+          if (!oBudgetCheck.IsBudgetAvailable) {
+            bBudgetAvailable = false;
+            aMemberBudgetChecks.push({
+              EmployeeId: oMember.employeeID,
+              EmployeeName: oMember.employeeName,
+              CostCenter: oMember.costCenter,
+              AvailableBudget: oBudgetCheck.AvailableBudget,
+              TotalPerDiem: oBudgetCheck.TotalPerDiem,
+              EmployeePerDiem: oMember.employeeTotalPerdiem,
+            });
+          }
+        });
+        //--Check budget availability and give errors
+
+        if (bShowLoading) {
+          this.closeBusyFragment();
+        }
+        //--Budget check for members
+
+        return {
+          isBudgetAvailable: bBudgetAvailable,
+          budgetTracking: aBudgetTracking,
+          memberBudgetChecks: aMemberBudgetChecks,
+          missionBudgetAvailable,
+          missionParkedAmount,
+        };
       },
       updateChanges: async function () {
         const that = this;
@@ -1451,6 +1459,10 @@ sap.ui.define(
         const oUpdateRequest = await this.prepareMissionForUpdate();
         const envInfo = await this.getEnvInfo();
         const url = "/updateTicketItinerary";
+
+        if(!oUpdateRequest){
+          return;
+        }
 
         this.openBusyFragment("missionBeingUpdated");
 
@@ -1473,7 +1485,7 @@ sap.ui.define(
               xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
               xhr.setRequestHeader(
                 "x-approuter-authorization",
-                "Bearer " + envInfo.CF.accessToken
+                "Bearer " + envInfo.CF.accessToken,
               );
             }
           },
@@ -1488,7 +1500,7 @@ sap.ui.define(
                 "successfulOperation",
                 "missionUpdated",
                 [],
-                null
+                null,
               );
               oViewModel.setProperty("/enableSave", false);
             }
@@ -1599,7 +1611,7 @@ sap.ui.define(
             for (var j = 0; j < itineraryData.length; j++) {
               if (id == itineraryData[j].id) {
                 itineraryActualCost = parseFloat(
-                  itineraryData[j].ticketActualCost
+                  itineraryData[j].ticketActualCost,
                 );
                 if (!isNaN(itineraryActualCost)) {
                   obj.itinerayActualCost = itineraryActualCost;
@@ -1608,11 +1620,11 @@ sap.ui.define(
                   var hoursToAdd = 12 * 60 * 60 * 1000;
                   var itineraryStartDate = new Date(itineraryData[j].startDate);
                   itineraryStartDate.setTime(
-                    itineraryStartDate.getTime() + hoursToAdd
+                    itineraryStartDate.getTime() + hoursToAdd,
                   );
                   var itineraryEndDate = new Date(itineraryData[j].endDate);
                   itineraryEndDate.setTime(
-                    itineraryEndDate.getTime() + hoursToAdd
+                    itineraryEndDate.getTime() + hoursToAdd,
                   );
                   obj.itineraryStartDate =
                     "/Date(" + itineraryStartDate.getTime() + ")/";
@@ -1622,16 +1634,16 @@ sap.ui.define(
                   var itineraryPerDiem;
                   if (!isNaN(itineraryData[j].perDiemPerCity)) {
                     itineraryPerDiem = parseFloat(
-                      itineraryData[j].perDiemPerCity
+                      itineraryData[j].perDiemPerCity,
                     );
                   } else {
                     if (itineraryData[j].perDiemPerCity.indexOf(",") > -1) {
                       itineraryPerDiem = parseFloat(
-                        itineraryData[j].perDiemPerCity.replace(/\,/g, "")
+                        itineraryData[j].perDiemPerCity.replace(/\,/g, ""),
                       );
                     } else {
                       itineraryPerDiem = parseFloat(
-                        itineraryData[j].perDiemPerCity
+                        itineraryData[j].perDiemPerCity,
                       );
                     }
                   }
@@ -1645,6 +1657,7 @@ sap.ui.define(
 
         var memberTicketAverageCalculate = 0;
         var memberPerDiemPerCityCalculate = 0;
+        var memberReservedBudget = 0;
         var missionTicketAverageCalculate = 0;
         var missionPerDiemPerCityCalculate = 0;
         var missionTotalExpenseCalculate = 0;
@@ -1652,22 +1665,23 @@ sap.ui.define(
         for (var i = 0; i < mModelDataCalculate.length; i++) {
           memberTicketAverageCalculate = 0;
           memberPerDiemPerCityCalculate = 0;
+          memberReservedBudget = 0;
           if (guid == mModelDataCalculate[i].guid) {
             var itineraryData = mModelDataCalculate[i].itinerary;
             for (var j = 0; j < itineraryData.length; j++) {
               var itineraryPerDiemPerCity;
               if (!isNaN(itineraryData[j].perDiemPerCity)) {
                 itineraryPerDiemPerCity = parseFloat(
-                  itineraryData[j].perDiemPerCity
+                  itineraryData[j].perDiemPerCity,
                 );
               } else {
                 if (itineraryData[j].perDiemPerCity.indexOf(",") > -1) {
                   itineraryPerDiemPerCity = parseFloat(
-                    itineraryData[j].perDiemPerCity.replace(/\,/g, "")
+                    itineraryData[j].perDiemPerCity.replace(/\,/g, ""),
                   );
                 } else {
                   itineraryPerDiemPerCity = parseFloat(
-                    itineraryData[j].perDiemPerCity
+                    itineraryData[j].perDiemPerCity,
                   );
                 }
               }
@@ -1675,28 +1689,51 @@ sap.ui.define(
               var itineraryTicketAverage;
               if (!isNaN(itineraryActualCost)) {
                 itineraryTicketAverage = parseFloat(
-                  itineraryData[j].ticketAverage
+                  itineraryData[j].ticketAverage,
                 );
               } else {
                 if (itineraryData[j].ticketAverage.indexOf(",") > -1) {
                   itineraryTicketAverage = parseFloat(
-                    itineraryData[j].ticketAverage.replace(/\,/g, "")
+                    itineraryData[j].ticketAverage.replace(/\,/g, ""),
                   );
                 } else {
                   itineraryTicketAverage = parseFloat(
-                    itineraryData[j].ticketAverage
+                    itineraryData[j].ticketAverage,
                   );
                 }
               }
+
+              //--reserved budget
+              var itineraryReservedBudget;
+              if (!isNaN(itineraryData[j].reservedBudget)) {
+                itineraryReservedBudget = parseFloat(
+                  itineraryData[j].reservedBudget,
+                );
+              } else {
+                if (itineraryData[j].reservedBudget.indexOf(",") > -1) {
+                  itineraryReservedBudget = parseFloat(
+                    itineraryData[j].reservedBudget.replace(/\,/g, ""),
+                  );
+                } else {
+                  itineraryReservedBudget = parseFloat(
+                    itineraryData[j].reservedBudget,
+                  );
+                }
+              }
+              //--reserved budget
+
               memberPerDiemPerCityCalculate =
                 memberPerDiemPerCityCalculate + itineraryPerDiemPerCity;
               memberTicketAverageCalculate =
                 memberTicketAverageCalculate + itineraryTicketAverage;
+              memberReservedBudget =
+                memberReservedBudget + itineraryReservedBudget; //--reserved budget
             }
             mModelDataCalculate[i].employeeTotalPerdiem =
               memberPerDiemPerCityCalculate;
             mModelDataCalculate[i].employeeTotalTicket =
               memberTicketAverageCalculate;
+            mModelDataCalculate[i].reservedBudget = memberReservedBudget;
             mModelDataCalculate[i].employeeTotalExpense =
               memberPerDiemPerCityCalculate + memberTicketAverageCalculate;
             missionTicketAverageCalculate =
@@ -1719,32 +1756,32 @@ sap.ui.define(
 
               if (!isNaN(itineraryData[j].perDiemPerCity)) {
                 itineraryPerDiemPerCity = parseFloat(
-                  itineraryData[j].perDiemPerCity
+                  itineraryData[j].perDiemPerCity,
                 );
               } else {
                 if (itineraryData[j].perDiemPerCity.indexOf(",") > -1) {
                   itineraryPerDiemPerCity = parseFloat(
-                    itineraryData[j].perDiemPerCity.replace(/\,/g, "")
+                    itineraryData[j].perDiemPerCity.replace(/\,/g, ""),
                   );
                 } else {
                   itineraryPerDiemPerCity = parseFloat(
-                    itineraryData[j].perDiemPerCity
+                    itineraryData[j].perDiemPerCity,
                   );
                 }
               }
 
               if (!isNaN(itineraryData[j].ticketAverage)) {
                 itineraryTicketAverage = parseFloat(
-                  itineraryData[j].ticketAverage
+                  itineraryData[j].ticketAverage,
                 );
               } else {
                 if (itineraryData[j].ticketAverage.indexOf(",") > -1) {
                   itineraryTicketAverage = parseFloat(
-                    itineraryData[j].ticketAverage.replace(/\,/g, "")
+                    itineraryData[j].ticketAverage.replace(/\,/g, ""),
                   );
                 } else {
                   itineraryTicketAverage = parseFloat(
-                    itineraryData[j].ticketAverage
+                    itineraryData[j].ticketAverage,
                   );
                 }
               }
@@ -1962,7 +1999,7 @@ sap.ui.define(
             "errorOperation",
             "sectorBudgetLowError",
             [],
-            null
+            null,
           );
           return;
         }
@@ -2010,7 +2047,7 @@ sap.ui.define(
                 xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                 xhr.setRequestHeader(
                   "x-approuter-authorization",
-                  "Bearer " + envInfo.CF.accessToken
+                  "Bearer " + envInfo.CF.accessToken,
                 );
               }
             },
@@ -2022,7 +2059,7 @@ sap.ui.define(
                   for (var j = 0; j < itineraryData.length; j++) {
                     if (id == itineraryData[j].id) {
                       itineraryActualCost = parseFloat(
-                        itineraryData[j].ticketActualCost
+                        itineraryData[j].ticketActualCost,
                       );
                       if (!isNaN(parseInt(itineraryData[j].ticketActualCost))) {
                         itineraryData[j].ticketAverage = itineraryActualCost;
@@ -2034,6 +2071,7 @@ sap.ui.define(
 
               var memberTicketAverage = 0;
               var memberPerDiemPerCity = 0;
+              var memberReservedBudget = 0;
               var missionTicketAverage = 0;
               var missionPerDiemPerCity = 0;
               var missionTotalExpense = 0;
@@ -2047,16 +2085,16 @@ sap.ui.define(
                     var itineraryPerDiemPerCity;
                     if (!isNaN(itineraryData[j].perDiemPerCity)) {
                       itineraryPerDiemPerCity = parseFloat(
-                        itineraryData[j].perDiemPerCity
+                        itineraryData[j].perDiemPerCity,
                       );
                     } else {
                       if (itineraryData[j].perDiemPerCity.indexOf(",") > -1) {
                         itineraryPerDiemPerCity = parseFloat(
-                          itineraryData[j].perDiemPerCity.replace(/\,/g, "")
+                          itineraryData[j].perDiemPerCity.replace(/\,/g, ""),
                         );
                       } else {
                         itineraryPerDiemPerCity = parseFloat(
-                          itineraryData[j].perDiemPerCity
+                          itineraryData[j].perDiemPerCity,
                         );
                       }
                     }
@@ -2064,16 +2102,33 @@ sap.ui.define(
                     var itineraryTicketAverage;
                     if (!isNaN(itineraryData[j].ticketAverage)) {
                       itineraryTicketAverage = parseFloat(
-                        itineraryData[j].ticketAverage
+                        itineraryData[j].ticketAverage,
                       );
                     } else {
                       if (itineraryData[j].ticketAverage.indexOf(",") > -1) {
                         itineraryTicketAverage = parseFloat(
-                          itineraryData[j].ticketAverage.replace(/\,/g, "")
+                          itineraryData[j].ticketAverage.replace(/\,/g, ""),
                         );
                       } else {
                         itineraryTicketAverage = parseFloat(
-                          itineraryData[j].ticketAverage
+                          itineraryData[j].ticketAverage,
+                        );
+                      }
+                    }
+
+                    var itineraryReservedBudget;
+                    if (!isNaN(itineraryData[j].reservedBudget)) {
+                      itineraryReservedBudget = parseFloat(
+                        itineraryData[j].reservedBudget,
+                      );
+                    } else {
+                      if (itineraryData[j].reservedBudget.indexOf(",") > -1) {
+                        itineraryReservedBudget = parseFloat(
+                          itineraryData[j].reservedBudget.replace(/\,/g, ""),
+                        );
+                      } else {
+                        itineraryReservedBudget = parseFloat(
+                          itineraryData[j].reservedBudget,
                         );
                       }
                     }
@@ -2081,9 +2136,12 @@ sap.ui.define(
                       memberPerDiemPerCity + itineraryPerDiemPerCity;
                     memberTicketAverage =
                       memberTicketAverage + itineraryTicketAverage;
+                    memberReservedBudget =
+                      memberReservedBudget + itineraryReservedBudget;
                   }
                   mModelData[i].employeeTotalPerdiem = memberPerDiemPerCity;
                   mModelData[i].employeeTotalTicket = memberTicketAverage;
+                  mModelData[i].reservedBudget = memberReservedBudget;
                   mModelData[i].employeeTotalExpense =
                     memberPerDiemPerCity + memberTicketAverage;
                   missionTicketAverage =
@@ -2100,16 +2158,16 @@ sap.ui.define(
                     var itineraryPerDiemPerCity;
                     if (!isNaN(itineraryData[j].perDiemPerCity)) {
                       itineraryPerDiemPerCity = parseFloat(
-                        itineraryData[j].perDiemPerCity
+                        itineraryData[j].perDiemPerCity,
                       );
                     } else {
                       if (itineraryData[j].perDiemPerCity.indexOf(",") > -1) {
                         itineraryPerDiemPerCity = parseFloat(
-                          itineraryData[j].perDiemPerCity.replace(/\,/g, "")
+                          itineraryData[j].perDiemPerCity.replace(/\,/g, ""),
                         );
                       } else {
                         itineraryPerDiemPerCity = parseFloat(
-                          itineraryData[j].perDiemPerCity
+                          itineraryData[j].perDiemPerCity,
                         );
                       }
                     }
@@ -2117,16 +2175,16 @@ sap.ui.define(
                     var itineraryTicketAverage;
                     if (!isNaN(itineraryData[j].ticketAverage)) {
                       itineraryTicketAverage = parseFloat(
-                        itineraryData[j].ticketAverage
+                        itineraryData[j].ticketAverage,
                       );
                     } else {
                       if (itineraryData[j].ticketAverage.indexOf(",") > -1) {
                         itineraryTicketAverage = parseFloat(
-                          itineraryData[j].ticketAverage.replace(/\,/g, "")
+                          itineraryData[j].ticketAverage.replace(/\,/g, ""),
                         );
                       } else {
                         itineraryTicketAverage = parseFloat(
-                          itineraryData[j].ticketAverage
+                          itineraryData[j].ticketAverage,
                         );
                       }
                     }
@@ -2176,7 +2234,7 @@ sap.ui.define(
                   confirmCallbackFn: () => {
                     that.closeMission();
                   },
-                }
+                },
               );
 
               // MessageBox.success(
@@ -2200,7 +2258,7 @@ sap.ui.define(
                   "errorOperation",
                   "serverError",
                   [],
-                  null
+                  null,
                 );
                 // MessageBox.error("Something went wrong", {
                 //   actions: [MessageBox.Action.CLOSE],
@@ -2229,5 +2287,5 @@ sap.ui.define(
         // }
       },
     });
-  }
+  },
 );
