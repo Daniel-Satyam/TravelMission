@@ -443,6 +443,7 @@ sap.ui.define(
                       perDiemPerCity: itineraryInfo.perDiemPerCity,
                       ticketAverage: itineraryInfo.ticketAverage,
                       ticketActualCost: itineraryInfo.ticketActualCost,
+                      reservedBudget:itineraryInfo.reservedBudget,
                       startDateMinDate: startDtModified,
                       startDateMaxDate: endDtModified,
                       endDateMinDate: startDtModified,

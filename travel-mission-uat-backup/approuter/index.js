@@ -643,7 +643,7 @@ const _updateItineraryBatch = async function (body, cookies) {
       "cust_Members/cust_itinerary_details_child/cust_head_of_mission,cust_Members/cust_itinerary_details_child/cust_hospitality_default," +
       "cust_Members/cust_itinerary_details_child/cust_city,cust_Members/cust_itinerary_details_child/cust_ticket_type," +
       "cust_Members/cust_itinerary_details_child/cust_ticket_average,cust_Members/cust_itinerary_details_child/cust_perdiem_per_city," +
-      "cust_Members/cust_itinerary_details_child/cust_Ticket_Actual_Cost";
+      "cust_Members/cust_itinerary_details_child/cust_Ticket_Actual_Cost,cust_Members/cust_itinerary_details_child/cust_Reserved_Budget";
 
     const expandQuery =
       "cust_Members,cust_Members/cust_itinerary_details,cust_Members/cust_itinerary_details_child";
@@ -775,6 +775,7 @@ const _updateItineraryBatch = async function (body, cookies) {
                   cust_perdiem_per_city: oItineraryFound.perDiemPerCity,
                   cust_Ticket_Actual_Cost: oItineraryFound.ticketActualCost,
                   cust_ticket_average: oItineraryFound.ticketAverage,
+                  cust_Reserved_Budget: oItineraryFound.reservedBudget,
                 };
                 memberUpdateRequest.cust_itinerary_details_child.results.push(
                   itineraryUpdateRequest,
@@ -924,7 +925,7 @@ const _updateItinerary = async function (decryptedData, cookies) {
 
       const itineraryFetchUrl =
         cookies.SF.URL +
-        "cust_itinerary_details_child?$format=json&$select=cust_Mission_effectiveStartDate,cust_Mission_externalCode,cust_Mission_transactionSequence,cust_Members_externalCode,externalCode,cust_city,cust_start_date,cust_end_date,cust_ticket_average,cust_perdiem_per_city,cust_Ticket_Actual_Cost&$filter=cust_Mission_externalCode eq '" +
+        "cust_itinerary_details_child?$format=json&$select=cust_Mission_effectiveStartDate,cust_Mission_externalCode,cust_Mission_transactionSequence,cust_Members_externalCode,externalCode,cust_city,cust_start_date,cust_end_date,cust_ticket_average,cust_perdiem_per_city,cust_Ticket_Actual_Cost,cust_Reserved_Budget&$filter=cust_Mission_externalCode eq '" +
         decryptedData.missionId +
         "' and cust_city eq '" +
         decryptedData.itineraryCity +
@@ -955,6 +956,8 @@ const _updateItinerary = async function (decryptedData, cookies) {
           decryptedData.itinerayActualCost;
         itineraryUpdateRequest.cust_ticket_type =
           decryptedData.itineraryTicketType;
+        itineraryUpdateRequest.cust_Reserved_Budget =
+          decryptedData.reservedBudget;
 
         const itineraryUpdateUrl = cookies.SF.URL + "upsert";
         const itineraryUpdateConfig = {
@@ -1594,7 +1597,6 @@ const _claimMission = async function (decryptedData, cookies) {
     //--Step 1: Update S4 Document
     //--S4 Document Update
 
-
     const SFAuthUsername = SFAuth.split(":")[0].split("@")[0];
 
     const postClaimAttachmentUrl = cookies.SF.URL + "upsert?$format=json";
@@ -1657,7 +1659,7 @@ const _claimMission = async function (decryptedData, cookies) {
         "cust_Members/cust_itinerary_details_child/cust_head_of_mission,cust_Members/cust_itinerary_details_child/cust_hospitality_default," +
         "cust_Members/cust_itinerary_details_child/cust_city,cust_Members/cust_itinerary_details_child/cust_ticket_type," +
         "cust_Members/cust_itinerary_details_child/cust_ticket_average,cust_Members/cust_itinerary_details_child/cust_perdiem_per_city," +
-        "cust_Members/cust_itinerary_details_child/cust_Ticket_Actual_Cost";
+        "cust_Members/cust_itinerary_details_child/cust_Ticket_Actual_Cost,cust_Members/cust_itinerary_details_child/cust_Reserved_Budget";
 
       const missionFetchUrl = `cust_Mission?$format=json&$filter=externalCode eq '${decryptedData.missionId}'&$select=${missionSelectQuery}&$expand=${missionExpandQuery}`;
 
@@ -1810,6 +1812,8 @@ const _claimMission = async function (decryptedData, cookies) {
             decryptedData.memberTotalPerDiem;
           memberUpdateRequest.cust_Employee_Total_Ticket =
             decryptedData.memberTotalTicketCost;
+          memberUpdateRequest.cust_Reserved_Budget =
+            decryptedData.reservedBudget;
           memberUpdateRequest.cust_Claimed = "Y";
 
           for (var i = 0; i < decryptedData.itinerary.length; i++) {
@@ -1828,6 +1832,8 @@ const _claimMission = async function (decryptedData, cookies) {
                 decryptedData.itinerary[i].itinerayTicketAverage.toString();
               itineraryUpdateRequest.cust_perdiem_per_city =
                 decryptedData.itinerary[i].itinerayPerDiem;
+              itineraryUpdateRequest.cust_Reserved_Budget =
+                decryptedData.itinerary[i].reservedBudget;
 
               memberUpdateRequest.cust_itinerary_details_child.results.push(
                 itineraryUpdateRequest,
@@ -2314,7 +2320,7 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
             for (var it = 0; it < decryptedData.itinerary.length; it++) {
               var itineraryFetchUrl =
                 cookies.SF.URL +
-                "cust_itinerary_details_child?$format=json&$select=cust_Mission_effectiveStartDate,cust_Mission_externalCode,cust_Mission_transactionSequence,cust_Members_externalCode,externalCode,cust_city,cust_start_date,cust_end_date,cust_ticket_average,cust_perdiem_per_city,cust_Ticket_Actual_Cost&$filter=cust_Mission_externalCode eq '" +
+                "cust_itinerary_details_child?$format=json&$select=cust_Mission_effectiveStartDate,cust_Mission_externalCode,cust_Mission_transactionSequence,cust_Members_externalCode,externalCode,cust_city,cust_start_date,cust_end_date,cust_ticket_average,cust_perdiem_per_city,cust_Ticket_Actual_Cost,cust_Reserved_Budget&$filter=cust_Mission_externalCode eq '" +
                 decryptedData.missionId +
                 "' and cust_city eq '" +
                 decryptedData.itinerary[it].itineraryCity +
@@ -2344,6 +2350,8 @@ const _claimMission_v1 = async function (decryptedData, cookies) {
                   decryptedData.itinerary[it].itinerayTicketAverage.toString();
                 itineraryUpdateRequest.cust_perdiem_per_city =
                   decryptedData.itinerary[it].itinerayPerDiem;
+                itineraryUpdateRequest.cust_Reserved_Budget =
+                  decryptedData.itinerary[it].reservedBudget;
 
                 var itineraryUpdateUrl = cookies.SF.URL + "upsert";
                 var itineraryUpdateConfig = {
@@ -5133,7 +5141,7 @@ const _updateMissionPayrollBatch = async function (body, cookies) {
       "cust_Members/cust_itinerary_details_child/cust_head_of_mission,cust_Members/cust_itinerary_details_child/cust_hospitality_default," +
       "cust_Members/cust_itinerary_details_child/cust_city,cust_Members/cust_itinerary_details_child/cust_ticket_type," +
       "cust_Members/cust_itinerary_details_child/cust_ticket_average,cust_Members/cust_itinerary_details_child/cust_perdiem_per_city," +
-      "cust_Members/cust_itinerary_details_child/cust_Ticket_Actual_Cost";
+      "cust_Members/cust_itinerary_details_child/cust_Ticket_Actual_Cost,cust_Members/cust_itinerary_details_child/cust_Reserved_Budget";
 
     const expandQuery =
       "cust_Members,cust_Members/cust_itinerary_details,cust_Members/cust_itinerary_details_child";
@@ -5246,14 +5254,14 @@ const _updateMissionPayrollBatch = async function (body, cookies) {
               results: [],
             },
           };
-
+          
           oMember.cust_itinerary_details_child.results.forEach(
             (oItinerary, i) => {
               const oItineraryFound = _.find(oMemberFound.itinerary, [
                 "externalCode",
                 oItinerary.externalCode,
               ]);
-
+              
               if (oItineraryFound) {
                 let itineraryUpdateRequest = {
                   __metadata: oItinerary.__metadata,
@@ -5266,6 +5274,7 @@ const _updateMissionPayrollBatch = async function (body, cookies) {
                   cust_ticket_average: oItineraryFound.ticketAverage,
                   cust_hospitality_default: oItineraryFound.hospitalityDefault,
                   cust_city: oItineraryFound.city,
+                  cust_Reserved_Budget: oItineraryFound.reservedBudget,
                 };
                 memberUpdateRequest.cust_itinerary_details_child.results.push(
                   itineraryUpdateRequest,
@@ -5431,7 +5440,7 @@ const _updateMissionPayroll = async function (body, cookies) {
       "cust_Members/cust_itinerary_details_child/cust_head_of_mission,cust_Members/cust_itinerary_details_child/cust_hospitality_default," +
       "cust_Members/cust_itinerary_details_child/cust_city,cust_Members/cust_itinerary_details_child/cust_ticket_type," +
       "cust_Members/cust_itinerary_details_child/cust_ticket_average,cust_Members/cust_itinerary_details_child/cust_perdiem_per_city," +
-      "cust_Members/cust_itinerary_details_child/cust_Ticket_Actual_Cost";
+      "cust_Members/cust_itinerary_details_child/cust_Ticket_Actual_Cost,cust_Members/cust_itinerary_details_child/cust_Reserved_Budget";
     const expandQuery =
       "cust_Members,cust_Members/cust_itinerary_details,cust_Members/cust_itinerary_details_child";
     const missionFetchUrl =
@@ -5501,6 +5510,7 @@ const _updateMissionPayroll = async function (body, cookies) {
                   cust_perdiem_per_city: oItineraryFound.perDiemPerCity,
                   cust_Ticket_Actual_Cost: oItineraryFound.ticketActualCost,
                   cust_ticket_average: oItineraryFound.ticketAverage,
+                  cust_Reserved_Budget: oItineraryFound.reservedBudget,
                   cust_hospitality_default: oItineraryFound.hospitalityDefault,
                   cust_city: oItineraryFound.city,
                 };
@@ -5610,7 +5620,7 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
       "cust_Members/cust_itinerary_details_child/cust_head_of_mission,cust_Members/cust_itinerary_details_child/cust_hospitality_default," +
       "cust_Members/cust_itinerary_details_child/cust_city,cust_Members/cust_itinerary_details_child/cust_ticket_type," +
       "cust_Members/cust_itinerary_details_child/cust_ticket_average,cust_Members/cust_itinerary_details_child/cust_perdiem_per_city," +
-      "cust_Members/cust_itinerary_details_child/cust_Ticket_Actual_Cost," +
+      "cust_Members/cust_itinerary_details_child/cust_Ticket_Actual_Cost,cust_Members/cust_itinerary_details_child/cust_Reserved_Budget," +
       "cust_Members/cust_AttachmentNav/attachmentId";
 
     const missionExpandQuery =
@@ -5887,6 +5897,7 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
             cust_perdiem_per_city: _convertFloat(oItinerary.perDiemPerCity),
             cust_Ticket_Actual_Cost: parseFloat(oItinerary.ticketActualCost),
             cust_ticket_average: _convertFloat(oItinerary.ticketAverage),
+            cust_Reserved_Budget: _convertFloat(oItinerary.reservedBudget),
             cust_hospitality_default: oItinerary.hospitalityDefault,
             cust_city: oItinerary.city,
           };
@@ -6763,6 +6774,8 @@ const _updateMission = async function (body, userInfo, cookies) {
                       memberUpdateFetchRes.externalCode,
                     cust_ticket_average:
                       body.members[j].itinerary[k].ticketAverage.toString(),
+                    cust_Reserved_Budget:
+                      body.members[j].itinerary[k].reservedBudget.toString(),
                     cust_ticket_type: body.members[j].itinerary[k].ticketType,
                     cust_perdiem_per_city:
                       body.members[j].itinerary[k].perDiemPerCity.toString(),
@@ -6773,6 +6786,8 @@ const _updateMission = async function (body, userInfo, cookies) {
                     cust_hospitality_default:
                       body.members[j].itinerary[k].hospitalityDefault,
                     cust_city: body.members[j].itinerary[k].city,
+                    cust_Reserved_Budget:
+                      body.members[j].itinerary[k].reservedBudget.toString(),
                   };
 
                   var itineraryUpdateUrl = cookies.SF.URL + "upsert";
@@ -7166,7 +7181,7 @@ const _constructS4DocumentDetailsFromMissionId = async function (
             sequenceNo: (i + 1) * 10,
             userId: m.cust_Employee_ID,
             employeeId: m.cust_EmployeeID,
-            perdiemAmount: parseFloat(m.cust_Employee_Total_Perdiem),
+            reservedBudget: parseFloat(m.cust_Reserved_Budget),
             costCenter: null, // wiill be fetched later on
           });
 
@@ -7260,23 +7275,25 @@ const _constructS4DocumentFromPayload = async function (
         }
       });
 
-      let employeeFetchUrl = `${cookies.SF.URL}EmpJob?$format=json&$filter=${employeeFilterQuery}&$select=userId,costCenter`;
+      if (employeeFilterQuery !== "") {
+        let employeeFetchUrl = `${cookies.SF.URL}EmpJob?$format=json&$filter=${employeeFilterQuery}&$select=userId,costCenter`;
 
-      const employeeFetchResponse = await axios.get(employeeFetchUrl, config);
+        const employeeFetchResponse = await axios.get(employeeFetchUrl, config);
 
-      if (
-        employeeFetchResponse &&
-        employeeFetchResponse.data &&
-        employeeFetchResponse.data.d &&
-        employeeFetchResponse.data.d.results
-      ) {
-        const aEmployee = employeeFetchResponse.data.d.results;
-        oMissionRequest.members.forEach((m, i) => {
-          const oEmp = _.find(aEmployee, ["userId", m.userID]);
-          if (oEmp) {
-            oMissionRequest.members[i].costCenter = oEmp.costCenter;
-          }
-        });
+        if (
+          employeeFetchResponse &&
+          employeeFetchResponse.data &&
+          employeeFetchResponse.data.d &&
+          employeeFetchResponse.data.d.results
+        ) {
+          const aEmployee = employeeFetchResponse.data.d.results;
+          oMissionRequest.members.forEach((m, i) => {
+            const oEmp = _.find(aEmployee, ["userId", m.userID]);
+            if (oEmp) {
+              oMissionRequest.members[i].costCenter = oEmp.costCenter;
+            }
+          });
+        }
       }
     }
 
@@ -7294,7 +7311,7 @@ const _constructS4DocumentFromPayload = async function (
         sequenceNo: (i + 1) * 10,
         userId: m.userID,
         employeeId: m.employeeID,
-        perdiemAmount: parseFloat(m.employeeTotalPerdiem),
+        reservedBudget: parseFloat(m.reservedBudget),
         costCenter: m.costCenter, // wiill be fetched later on
       });
     });
@@ -7536,7 +7553,7 @@ async function _createS4Documentv3(body, referenceGuid, appCookies) {
       HeaderToItem: oPayload.members.map((m) => ({
         BLPOS: m.sequenceNo.toString(),
         KOSTL: m.costCenter,
-        WRBTR: m.perdiemAmount.toString(),
+        WRBTR: m.reservedBudget.toString(),
         PTEXT: m.employeeId,
       })),
     };
@@ -7605,7 +7622,7 @@ async function _createS4Documentv2(body, appCookies) {
       HeaderToItem: oPayload.members.map((m) => ({
         BLPOS: m.sequenceNo.toString(),
         KOSTL: m.costCenter,
-        WRBTR: m.perdiemAmount.toString(),
+        WRBTR: m.reservedBudget.toString(),
         PTEXT: m.employeeId,
       })),
     };
@@ -8304,6 +8321,7 @@ const _getAdminMissionReport = async function (body, cookies) {
       "cust_Members/cust_itinerary_details_child/cust_head_of_mission,cust_Members/cust_itinerary_details_child/cust_hospitality_default," +
       "cust_Members/cust_itinerary_details_child/cust_city,cust_Members/cust_itinerary_details_child/cust_ticket_type," +
       "cust_Members/cust_itinerary_details_child/cust_ticket_average,cust_Members/cust_itinerary_details_child/cust_perdiem_per_city," +
+      "cust_Members/cust_itinerary_details_child/cust_Reserved_Budget," +
       "cust_Members/cust_itinerary_details_child/cust_Ticket_Actual_Cost,cust_Pending_With_userNav/displayName," +
       "cust_Pending_With_GroupNav/label_en_US,cust_Pending_With_GroupNav/label_ar_SA,cust_Pending_With_userNav/displayName,cust_Pending_With_userNav/custom04";
 

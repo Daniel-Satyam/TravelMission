@@ -447,7 +447,7 @@ sap.ui.define(
                 AvailableBudget: oBudget.hasOwnProperty("GetFCBudget")
                   ? parseFloat(oBudget.GetFCBudget.AvailableBudget)
                   : 0,
-                TotalPerDiem: 0,
+                ReservedBudget: 0,
                 IsBudgetAvailable: false,
               });
             }
@@ -455,7 +455,7 @@ sap.ui.define(
             aBudgetCheck.push({
               CostCenter: c,
               AvailableBudget: 0,
-              TotalPerDiem: 0,
+              ReservedBudget: 0,
               IsBudgetAvailable: false,
             });
           }
@@ -464,28 +464,28 @@ sap.ui.define(
 
         //--Loop through the members and check the available budget
         aMembers.forEach((oMember) => {
-          let perDiemDeficit = parseFloat(oMember.employeeTotalPerdiem);
+          let perDiemDeficit = parseFloat(oMember.reservedBudget);
           const oBudgetCheck = _.find(aBudgetCheck, [
             "CostCenter",
             oMember.costCenter,
           ]);
 
-          const oFormerMember = _.find(this.formerMembers, ["employeeID", oMember.employeeID]);
+          const oFormerMember = _.find(this.formerMembers, ["id", oMember.employeeID]);
 
           //--Find the difference by taking the old member's perdiem
-          if(oFormerMember && oFormerMember.employeeTotalPerdiem && isNaN(parseFloat(oFormerMember.employeeTotalPerdiem))){
-            perDiemDeficit = perDiemDeficit - parseFloat(oFormerMember.employeeTotalPerdiem);
+          if(oFormerMember && oFormerMember.reservedBudget && !isNaN(parseFloat(oFormerMember.reservedBudget))){
+            perDiemDeficit = perDiemDeficit - parseFloat(oFormerMember.reservedBudget);
           }
           //--Find the difference of taking the old member's perdiem
 
-          oBudgetCheck.TotalPerDiem =
-            oBudgetCheck.TotalPerDiem +  perDiemDeficit;
+          oBudgetCheck.ReservedBudget =
+            oBudgetCheck.ReservedBudget +  perDiemDeficit;
         });
         //--Loop through the members and check the available budget
 
         //--Check budget availability and give errors
         aBudgetCheck.forEach((oBudgetCheck) => {
-          if (oBudgetCheck.AvailableBudget >= oBudgetCheck.TotalPerDiem) {
+          if (oBudgetCheck.AvailableBudget >= oBudgetCheck.ReservedBudget) {
             oBudgetCheck.IsBudgetAvailable = true;
           }
         });
@@ -502,8 +502,8 @@ sap.ui.define(
               EmployeeName: oMember.employeeName,
               CostCenter: oMember.costCenter,
               AvailableBudget: oBudgetCheck.AvailableBudget,
-              TotalPerDiem: oBudgetCheck.TotalPerDiem,
-              EmployeePerDiem: oMember.employeeTotalPerdiem,
+              ReservedBudget: oBudgetCheck.ReservedBudget,
+              EmployeeReservedBudget: oMember.reservedBudget,
             });
           }
         });
@@ -591,6 +591,7 @@ sap.ui.define(
             employeeTotalExpense: oMember.employeeTotalExpense.toString(),
             employeeTotalPerdiem: oMember.employeeTotalPerdiem.toString(),
             employeeTotalTicket: oMember.employeeTotalTicket.toString(),
+            reservedBudget: oMember.employeeTotalTicket.toString(),
             itinerary: [],
           };
           if (oMember.itinerary && oMember.itinerary.length > 0) {
@@ -608,6 +609,7 @@ sap.ui.define(
                   ? parseFloat(oItinerary.ticketActualCost)
                   : 0,
                 ticketAverage: oItinerary.ticketAverage.toString(),
+                reservedBudget: oItinerary.reservedBudget.toString(),
               };
 
               oMemberRequest.itinerary.push(oItineraryRequest);
@@ -1149,6 +1151,17 @@ sap.ui.define(
                         itineraryData[j].ticketAverage = 0;
                       }
 
+                      if (
+                        !isNaN(parseInt(ticketAndPerDiemData.toBeReserved))
+                      ) {
+                        itineraryData[j].reservedBudget = 0;
+
+                        itineraryData[j].reservedBudget =
+                          ticketAndPerDiemData.toBeReserved;
+                      } else {
+                        itineraryData[j].reservedBudget = 0;
+                      }
+
                       itineraryData[j].ticketType =
                         ticketAndPerDiemData.ticketType;
                     }
@@ -1158,6 +1171,7 @@ sap.ui.define(
 
               var memberTicketAverage = 0;
               var memberPerDiemPerCity = 0;
+              var memberReservedBudget = 0;
               var missionTicketAverage = 0;
               var missionPerDiemPerCity = 0;
               var missionTotalExpense = 0;
@@ -1165,6 +1179,7 @@ sap.ui.define(
               for (var i = 0; i < mModelData.length; i++) {
                 memberTicketAverage = 0;
                 memberPerDiemPerCity = 0;
+                memberReservedBudget = 0;
                 if (guid == mModelData[i].guid) {
                   var itineraryData = mModelData[i].itinerary;
                   for (var j = 0; j < itineraryData.length; j++) {
@@ -1172,11 +1187,14 @@ sap.ui.define(
                       memberPerDiemPerCity + itineraryData[j].perDiemPerCity;
                     memberTicketAverage =
                       memberTicketAverage + itineraryData[j].ticketAverage;
+                    memberReservedBudget = memberReservedBudget + itineraryData[j].reservedBudget;
                   }
                   mModelData[i].employeeTotalPerdiem = memberPerDiemPerCity;
                   mModelData[i].employeeTotalTicket = memberTicketAverage;
                   mModelData[i].employeeTotalExpense =
                     memberPerDiemPerCity + memberTicketAverage;
+                  mModelData[i].reservedBudget =
+                    memberPerDiemPerCity + memberReservedBudget;  
                   missionTicketAverage =
                     missionTicketAverage + memberTicketAverage;
                   missionPerDiemPerCity =
@@ -1681,6 +1699,7 @@ sap.ui.define(
                         employeeTotalExpense: memberInfo.totalExpense,
                         employeeTotalTicket: memberInfo.totalTicket,
                         employeeTotalPerdiem: memberInfo.totalPerDiem,
+                        reservedBudget: memberInfo.reservedBudget,
                         itinerary: [],
                         attachments: [],
                       };
@@ -1705,6 +1724,7 @@ sap.ui.define(
                           perDiemPerCity: itineraryInfo.perDiemPerCity,
                           ticketAverage: itineraryInfo.ticketAverage,
                           ticketActualCost: itineraryInfo.ticketActualCost,
+                          reservedBudget: itineraryInfo.reservedBudget,
                           startDateMinDate: mStartDtMin,
                           startDateMaxDate: mEndDtMax,
                           endDateMinDate: mStartDtMin,

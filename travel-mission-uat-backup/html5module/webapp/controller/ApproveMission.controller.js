@@ -372,6 +372,7 @@ sap.ui.define(
                     perDiemPerCity: itineraryInfo.perDiemPerCity,
                     ticketAverage: itineraryInfo.ticketAverage,
                     ticketActualCost: itineraryInfo.ticketActualCost,
+                    reservedBudget: itineraryInfo.reservedBudget,
                   };
 
                   memberObj.itinerary.push(itinieraryObj);

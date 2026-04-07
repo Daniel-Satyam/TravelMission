@@ -140,12 +140,12 @@ sap.ui.define(
                 '<td style="' +
                 sTdStyle +
                 ' font-family:monospace; text-align:right; color:#444;">' +
-                fmtNum(oItem.TotalPerDiem) +
+                fmtNum(oItem.ReservedBudget) +
                 "</td>" +
                 '<td style="' +
                 sTdStyle +
                 ' font-family:monospace; text-align:right; color:#e65100;">' +
-                fmtNum(oItem.EmployeePerDiem) +
+                fmtNum(oItem.EmployeeReservedBudget) +
                 "</td>" +
                 "</tr>";
             });

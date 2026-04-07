@@ -533,6 +533,7 @@ sap.ui.define(
                     perDiemPerCity: itineraryInfo.perDiemPerCity,
                     ticketAverage: itineraryInfo.ticketAverage,
                     ticketActualCost: itineraryInfo.ticketActualCost,
+                    reservedBudget: itineraryInfo.reservedBudget,
                     reflectBudgetInfo: false,
                   };
 
@@ -1403,6 +1404,7 @@ sap.ui.define(
             oItineraryCopy.perDiemPerCity = 0;
             oItineraryCopy.ticketAverage = 0;
             oItineraryCopy.ticketActualCost = 0;
+            oItineraryCopy.reservedBudget = 0;
             oItineraryCopy.ticketType = 0;
             oItineraryCopy.hospitalityDefault = aInfo.hospitality_Type;
             oNewRow.itinerary.push(oItineraryCopy);
@@ -1428,6 +1430,7 @@ sap.ui.define(
             perDiemPerCity: 0,
             ticketAverage: 0,
             ticketActualCost: 0,
+            reservedBudget:0,
           });
         }
         //--Set the first members itinerarys to the new member
@@ -1737,6 +1740,7 @@ sap.ui.define(
               perDiemPerCity: 0,
               ticketAverage: 0,
               ticketActualCost: 0,
+              reservedBudget:0,
               reflectBudgetInfo: false,
             };
 
@@ -1777,6 +1781,7 @@ sap.ui.define(
         for (var i = 0; i < mModelData.length; i++) {
           memberTicketAverage = 0;
           memberPerDiemPerCity = 0;
+          memberReservedBudget = 0;
           if (guid == mModelData[i].guid) {
             var itineraryData = mModelData[i].itinerary;
             for (var j = 0; j < itineraryData.length; j++) {
@@ -3167,12 +3172,12 @@ sap.ui.define(
 
                       //--Reserved Budget
                       if (
-                        !isNaN(parseInt(ticketAndPerDiemData.reservedBudget))
+                        !isNaN(parseInt(ticketAndPerDiemData.toBeReserved))
                       ) {
                         itineraryData[j].reservedBudget = 0;
 
                         itineraryData[j].reservedBudget =
-                          ticketAndPerDiemData.reservedBudget;
+                          ticketAndPerDiemData.toBeReserved;
                       } else {
                         itineraryData[j].reservedBudget = 0;
                       }
@@ -3426,7 +3431,7 @@ sap.ui.define(
                 AvailableBudget: oBudget.hasOwnProperty("GetFCBudget")
                   ? parseFloat(oBudget.GetFCBudget.AvailableBudget)
                   : 0,
-                TotalPerDiem: 0,
+                ReservedBudget: 0,
                 IsBudgetAvailable: false,
               });
             }
@@ -3434,7 +3439,7 @@ sap.ui.define(
             aBudgetCheck.push({
               CostCenter: c,
               AvailableBudget: 0,
-              TotalPerDiem: 0,
+              ReservedBudget: 0,
               IsBudgetAvailable: false,
             });
           }
@@ -3443,36 +3448,36 @@ sap.ui.define(
 
         //--Loop through the members and check the available budget
         aMembers.forEach((oMember) => {
-          let perDiemDeficit = parseFloat(oMember.employeeTotalPerdiem);
+          let perDiemDeficit = parseFloat(oMember.reservedBudget);
           const oBudgetCheck = _.find(aBudgetCheck, [
             "CostCenter",
             oMember.costCenter,
           ]);
 
           const oFormerMember = _.find(this.formerMembers, [
-            "employeeID",
+            "id",
             oMember.employeeID,
           ]);
 
           //--Find the difference by taking the old member's perdiem
           if (
             oFormerMember &&
-            oFormerMember.employeeTotalPerdiem &&
-            isNaN(parseFloat(oFormerMember.employeeTotalPerdiem))
+            oFormerMember.reservedBudget &&
+            !isNaN(parseFloat(oFormerMember.reservedBudget))
           ) {
             perDiemDeficit =
-              perDiemDeficit - parseFloat(oFormerMember.employeeTotalPerdiem);
+              perDiemDeficit - parseFloat(oFormerMember.reservedBudget);
           }
           //--Find the difference of taking the old member's perdiem
 
-          oBudgetCheck.TotalPerDiem =
-            oBudgetCheck.TotalPerDiem + perDiemDeficit;
+          oBudgetCheck.ReservedBudget =
+            oBudgetCheck.ReservedBudget + perDiemDeficit;
         });
         //--Loop through the members and check the available budget
 
         //--Check budget availability and give errors
         aBudgetCheck.forEach((oBudgetCheck) => {
-          if (oBudgetCheck.AvailableBudget >= oBudgetCheck.TotalPerDiem) {
+          if (oBudgetCheck.AvailableBudget >= oBudgetCheck.ReservedBudget) {
             oBudgetCheck.IsBudgetAvailable = true;
           }
         });
@@ -3489,8 +3494,8 @@ sap.ui.define(
               EmployeeName: oMember.employeeName,
               CostCenter: oMember.costCenter,
               AvailableBudget: oBudgetCheck.AvailableBudget,
-              TotalPerDiem: oBudgetCheck.TotalPerDiem,
-              EmployeePerDiem: oMember.employeeTotalPerdiem,
+              ReservedBudget: oBudgetCheck.ReservedBudget,
+              EmployeeReservedBudget: oMember.reservedBudget,
             });
           }
         });
@@ -3916,6 +3921,7 @@ sap.ui.define(
               ticketActualCost: 0,
               ticketAverage: 0,
               ticketType: "",
+              reservedBudget:0,
             };
             if (
               missionMembersData[j].itinerary[k].city != "" &&
@@ -3992,6 +3998,8 @@ sap.ui.define(
               missionMembersData[j].itinerary[k].ticketActualCost;
             missionItineraryRequest.ticketAverage =
               missionMembersData[j].itinerary[k].ticketAverage;
+            missionItineraryRequest.reservedBudget =
+              missionMembersData[j].itinerary[k].reservedBudget;
             missionMemberRequest.itinerary.push(missionItineraryRequest);
           }
 

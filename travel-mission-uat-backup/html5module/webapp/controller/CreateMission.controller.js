@@ -980,6 +980,7 @@ sap.ui.define(
             oItineraryCopy.ticketAverage = 0;
             oItineraryCopy.ticketActualCost = 0;
             oItineraryCopy.ticketType = 0;
+            oItineraryCopy.reservedBudget = 0;
             oItineraryCopy.hospitalityDefault = aInfo.hospitality_Type;
             oNewRow.itinerary.push(oItineraryCopy);
           });
@@ -1004,6 +1005,7 @@ sap.ui.define(
             perDiemPerCity: 0,
             ticketAverage: 0,
             ticketActualCost: 0,
+            reservedBudget: 0,
           });
         }
         //--Set the first members itinerarys to the new member
@@ -1105,6 +1107,7 @@ sap.ui.define(
               perDiemPerCity: 0,
               ticketAverage: 0,
               ticketActualCost: 0,
+              reservedBudget: 0,
               reflectBudgetInfo: false,
             };
 
@@ -1306,7 +1309,7 @@ sap.ui.define(
                 AvailableBudget: oBudget.hasOwnProperty("GetFCBudget")
                   ? parseFloat(oBudget.GetFCBudget.AvailableBudget)
                   : 0,
-                TotalPerDiem: 0,
+                ReservedBudget: 0,
                 IsBudgetAvailable: false,
               });
             }
@@ -1314,7 +1317,7 @@ sap.ui.define(
             aBudgetCheck.push({
               CostCenter: c,
               AvailableBudget: 0,
-              TotalPerDiem: 0,
+              ReservedBudget: 0,
               IsBudgetAvailable: false,
             });
           }
@@ -1327,15 +1330,16 @@ sap.ui.define(
             "CostCenter",
             oMember.costCenter,
           ]);
-          oBudgetCheck.TotalPerDiem =
-            oBudgetCheck.TotalPerDiem +
-            parseFloat(oMember.employeeTotalPerdiem);
+          oBudgetCheck.ReservedBudget =
+            oBudgetCheck.ReservedBudget +
+            parseFloat(oMember.reservedBudget);
+            //parseFloat(oMember.employeeTotalPerdiem);
         });
         //--Loop through the members and check the available budget
 
         //--Check budget availability and give errors
         aBudgetCheck.forEach((oBudgetCheck) => {
-          if (oBudgetCheck.AvailableBudget >= oBudgetCheck.TotalPerDiem) {
+          if (oBudgetCheck.AvailableBudget >= oBudgetCheck.ReservedBudget) {
             oBudgetCheck.IsBudgetAvailable = true;
           }
         });
@@ -1352,8 +1356,8 @@ sap.ui.define(
               EmployeeName: oMember.employeeName,
               CostCenter: oMember.costCenter,
               AvailableBudget: oBudgetCheck.AvailableBudget,
-              TotalPerDiem: oBudgetCheck.TotalPerDiem,
-              EmployeePerDiem: oMember.employeeTotalPerdiem,
+              ReservedBudget: oBudgetCheck.ReservedBudget,
+              EmployeeReservedBudget: oMember.reservedBudget,
             });
           }
         });
@@ -1793,6 +1797,7 @@ sap.ui.define(
               ticketActualCost: 0,
               ticketAverage: 0,
               ticketType: "",
+              reservedBudget:0
             };
             if (
               missionMembersData[j].itinerary[k].city != "" &&
@@ -1869,6 +1874,8 @@ sap.ui.define(
               missionMembersData[j].itinerary[k].ticketActualCost;
             missionItineraryRequest.ticketAverage =
               missionMembersData[j].itinerary[k].ticketAverage;
+             missionItineraryRequest.reservedBudget =
+              missionMembersData[j].itinerary[k].reservedBudget;
             missionMemberRequest.itinerary.push(missionItineraryRequest);
           }
 
@@ -3231,10 +3238,10 @@ sap.ui.define(
 
                       //--reserved budget
                       if (
-                        !isNaN(parseInt(ticketAndPerDiemData.reservedBudget))
+                        !isNaN(parseInt(ticketAndPerDiemData.toBeReserved))
                       ) {
                         itineraryData[j].reservedBudget =
-                          ticketAndPerDiemData.reservedBudget;
+                          ticketAndPerDiemData.toBeReserved;
                       } else {
                         itineraryData[j].reservedBudget = 0;
                       }

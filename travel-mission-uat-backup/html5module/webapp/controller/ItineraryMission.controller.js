@@ -413,7 +413,7 @@ sap.ui.define(
                     perDiemPerCity: itineraryInfo.perDiemPerCity,
                     ticketAverage: itineraryInfo.ticketAverage,
                     ticketActualCost: itineraryInfo.ticketActualCost,
-                    reservedBudget: 0,
+                    reservedBudget: itineraryInfo.reservedBudget,
                     //"startDateMinDate": startDtModified,
                     //"startDateMaxDate": endDtModified,
                     //"endDateMinDate": startDtModified,
@@ -854,12 +854,12 @@ sap.ui.define(
 
                       //--reservedBudget
                       if (
-                        !isNaN(parseInt(ticketAndPerDiemData.reservedBudget))
+                        !isNaN(parseInt(ticketAndPerDiemData.toBeReserved))
                       ) {
                         itineraryData[j].reservedBudget = 0;
 
                         itineraryData[j].reservedBudget =
-                          ticketAndPerDiemData.reservedBudget;
+                          ticketAndPerDiemData.toBeReserved;
                       } else {
                         itineraryData[j].reservedBudget = 0;
                       }
@@ -943,7 +943,6 @@ sap.ui.define(
                       memberPerDiemPerCity + itineraryPerDiemPerCity;
                     memberTicketAverage =
                       memberTicketAverage + itineraryTicketAverage;
-
                     memberReservedBudget =
                       memberReservedBudget + itineraryReservedBudget; //--Reserved budget
                   }
@@ -1378,7 +1377,7 @@ sap.ui.define(
                 AvailableBudget: oBudget.hasOwnProperty("GetFCBudget")
                   ? parseFloat(oBudget.GetFCBudget.AvailableBudget)
                   : 0,
-                TotalPerDiem: 0,
+                ReservedBudget: 0,
                 IsBudgetAvailable: false,
               });
             }
@@ -1386,7 +1385,7 @@ sap.ui.define(
             aBudgetCheck.push({
               CostCenter: c,
               AvailableBudget: 0,
-              TotalPerDiem: 0,
+              ReservedBudget: 0,
               IsBudgetAvailable: false,
             });
           }
@@ -1395,28 +1394,28 @@ sap.ui.define(
 
         //--Loop through the members and check the available budget
         aMembers.forEach((oMember) => {
-          let perDiemDeficit = parseFloat(oMember.employeeTotalPerdiem);
+          let perDiemDeficit = parseFloat(oMember.reservedBudget);
           const oBudgetCheck = _.find(aBudgetCheck, [
             "CostCenter",
             oMember.costCenter,
           ]);
 
-          const oFormerMember = _.find(this.formerMembers, ["employeeID", oMember.employeeID]);
+          const oFormerMember = _.find(this.formerMembers, ["id", oMember.employeeID]);
 
           //--Find the difference by taking the old member's perdiem
-          if(oFormerMember && oFormerMember.employeeTotalPerdiem && isNaN(parseFloat(oFormerMember.employeeTotalPerdiem))){
-            perDiemDeficit = perDiemDeficit - parseFloat(oFormerMember.employeeTotalPerdiem);
+          if(oFormerMember && oFormerMember.reservedBudget && !isNaN(parseFloat(oFormerMember.reservedBudget))){
+            perDiemDeficit = perDiemDeficit - parseFloat(oFormerMember.reservedBudget);
           }
           //--Find the difference of taking the old member's perdiem
 
-          oBudgetCheck.TotalPerDiem =
-            oBudgetCheck.TotalPerDiem +  perDiemDeficit;
+          oBudgetCheck.ReservedBudget =
+            oBudgetCheck.ReservedBudget +  perDiemDeficit;
         });
         //--Loop through the members and check the available budget
 
         //--Check budget availability and give errors
         aBudgetCheck.forEach((oBudgetCheck) => {
-          if (oBudgetCheck.AvailableBudget >= oBudgetCheck.TotalPerDiem) {
+          if (oBudgetCheck.AvailableBudget >= oBudgetCheck.ReservedBudget) {
             oBudgetCheck.IsBudgetAvailable = true;
           }
         });
@@ -1433,8 +1432,8 @@ sap.ui.define(
               EmployeeName: oMember.employeeName,
               CostCenter: oMember.costCenter,
               AvailableBudget: oBudgetCheck.AvailableBudget,
-              TotalPerDiem: oBudgetCheck.TotalPerDiem,
-              EmployeePerDiem: oMember.employeeTotalPerdiem,
+              ReservedBudget: oBudgetCheck.ReservedBudget,
+              EmployeeReservedBudget: oMember.reservedBudget,
             });
           }
         });

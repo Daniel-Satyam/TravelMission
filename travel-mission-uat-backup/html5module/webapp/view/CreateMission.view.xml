@@ -564,7 +564,7 @@
 											</layoutData>
 
 											<Label text="{i18n>employeeAvailableBudget}" />
-											<Input value="{membersModel>employeeAvailableBudget}" enabled="false"
+											<Input value="{path:'membersModel>employeeAvailableBudget', formatter: 'Formatter.formatAmount'}" enabled="false"
 												tooltip="{membersModel>costCenter}=>{membersModel>employeeAvailableBudget}"
 											 />
 										</VBox>
@@ -579,7 +579,7 @@
 											</layoutData>
 
 											<Label text="{i18n>employeeTotalExpense}" />
-											<Input value="{membersModel>employeeTotalExpense}" enabled="false" />
+											<Input value="{path:'membersModel>employeeTotalExpense', formatter: 'Formatter.formatAmount'}" enabled="false" />
 										</VBox>
 									</f:GridListItem>
 									<f:GridListItem>
@@ -589,7 +589,7 @@
 											</layoutData>
 
 											<Label text="{i18n>employeeTotalPerdiem}" />
-											<Input value="{membersModel>employeeTotalPerdiem}" enabled="false" />
+											<Input value="{path:'membersModel>employeeTotalPerdiem', formatter: 'Formatter.formatAmount'}" enabled="false" />
 										</VBox>
 									</f:GridListItem>
 									<f:GridListItem>
@@ -599,7 +599,7 @@
 											</layoutData>
 
 											<Label text="{i18n>employeeTotalTicket}" />
-											<Input value="{membersModel>employeeTotalTicket}" enabled="false" />
+											<Input value="{path:'membersModel>employeeTotalTicket',formatter: 'Formatter.formatAmount'}" enabled="false" />
 										</VBox>
 									</f:GridListItem>
 
@@ -610,7 +610,7 @@
 											</layoutData>
 
 											<Label text="{i18n>reservedBudget}" />
-											<Input value="{membersModel>reservedBudget}" enabled="false" />
+											<Input value="{path:'membersModel>reservedBudget',formatter: 'Formatter.formatAmount'}" enabled="false" />
 										</VBox>
 									</f:GridListItem>
 
@@ -857,6 +857,16 @@
 
 														<Label text="{i18n>ticketActualCost}" />
 														<Input value="{membersModel>ticketActualCost}" enabled="false"/>
+													</VBox>
+												</f:GridListItem>
+												<f:GridListItem>
+													<VBox class="sapUiSmallMargin">
+														<layoutData>
+															<FlexItemData growFactor="1" shrinkFactor="0" />
+														</layoutData>
+
+														<Label text="{i18n>reservedBudget}" />
+														<Input value="{path: 'membersModel>reservedBudget', formatter: 'Formatter.formatAmount'}" enabled="false"/>
 													</VBox>
 												</f:GridListItem>
 											</f:GridList>
