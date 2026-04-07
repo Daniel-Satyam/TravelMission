@@ -564,8 +564,8 @@
 											</layoutData>
 
 											<Label text="{i18n>employeeAvailableBudget}" />
-											<Input value="{membersModel>employeeAvailableBudget}" enabled="false"
-												tooltip="{membersModel>costCenter}=>{membersModel>employeeAvailableBudget}"
+											<Input value="{path: 'membersModel>employeeAvailableBudget', formatter: 'Formatter.formatAmount'}" enabled="false"
+												tooltip="{membersModel>costCenter}=>{path:'membersModel>employeeAvailableBudget',formatter: 'Formatter.formatAmount'}"
 											 />
 										</VBox>
 									</f:GridListItem>

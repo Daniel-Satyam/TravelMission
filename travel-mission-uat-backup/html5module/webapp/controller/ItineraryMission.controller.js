@@ -211,8 +211,8 @@ sap.ui.define(
               employeeTotalExpense: 0,
               employeeTotalTicket: 0,
               employeeTotalPerdiem: 0,
-              reservedBudget:0,//--reserved budget
-              costCenter:"",
+              reservedBudget: 0, //--reserved budget
+              costCenter: "",
               jobLevel: "",
               itinerary: [],
               attachments: [],
@@ -392,6 +392,7 @@ sap.ui.define(
                   employeeTotalTicket: memberInfo.totalTicket,
                   employeeTotalPerdiem: memberInfo.totalPerDiem,
                   costCenter: memberInfo.costCenter,
+                  employeeAvailableBudget: 0,
                   reservedBudget: memberInfo.reservedBudget,
                   itinerary: [],
                   attachments: [],
@@ -449,6 +450,10 @@ sap.ui.define(
                 membersArr.push(memberObj);
               }
 
+              membersArr = await that.refreshMembersAvailableBudget(
+                membersArr,
+                missionInfoObj,
+              );
               var membersModel = new JSONModel({
                 members: membersArr,
               });
@@ -853,9 +858,7 @@ sap.ui.define(
                       }
 
                       //--reservedBudget
-                      if (
-                        !isNaN(parseInt(ticketAndPerDiemData.toBeReserved))
-                      ) {
+                      if (!isNaN(parseInt(ticketAndPerDiemData.toBeReserved))) {
                         itineraryData[j].reservedBudget = 0;
 
                         itineraryData[j].reservedBudget =
@@ -1171,7 +1174,6 @@ sap.ui.define(
           return null;
         }
 
-
         let oMissionRequest = {
           info: {
             missionId: oMission.missionID,
@@ -1309,16 +1311,13 @@ sap.ui.define(
           parseFloat(this.missionTotalExpense) -
           parseFloat(oMissionRequest.info.missionTotalExpense);
 
-
         oMissionRequest.info.sectorAvailableBudget =
           sectorAvailableBudget.toString();
 
         oMissionRequest.info.sectorUtilizedBudget =
           sectorUtilizedBudget.toString();
 
-       
         return oMissionRequest;
-        
       },
       checkBudgetAvailability: async function (bShowLoading = false) {
         let aBudgetTracking = [];
@@ -1400,16 +1399,24 @@ sap.ui.define(
             oMember.costCenter,
           ]);
 
-          const oFormerMember = _.find(this.formerMembers, ["id", oMember.employeeID]);
+          const oFormerMember = _.find(this.formerMembers, [
+            "id",
+            oMember.employeeID,
+          ]);
 
           //--Find the difference by taking the old member's perdiem
-          if(oFormerMember && oFormerMember.reservedBudget && !isNaN(parseFloat(oFormerMember.reservedBudget))){
-            perDiemDeficit = perDiemDeficit - parseFloat(oFormerMember.reservedBudget);
+          if (
+            oFormerMember &&
+            oFormerMember.reservedBudget &&
+            !isNaN(parseFloat(oFormerMember.reservedBudget))
+          ) {
+            perDiemDeficit =
+              perDiemDeficit - parseFloat(oFormerMember.reservedBudget);
           }
           //--Find the difference of taking the old member's perdiem
 
           oBudgetCheck.ReservedBudget =
-            oBudgetCheck.ReservedBudget +  perDiemDeficit;
+            oBudgetCheck.ReservedBudget + perDiemDeficit;
         });
         //--Loop through the members and check the available budget
 
@@ -1459,7 +1466,7 @@ sap.ui.define(
         const envInfo = await this.getEnvInfo();
         const url = "/updateTicketItinerary";
 
-        if(!oUpdateRequest){
+        if (!oUpdateRequest) {
           return;
         }
 

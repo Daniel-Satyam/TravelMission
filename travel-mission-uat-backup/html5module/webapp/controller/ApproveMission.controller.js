@@ -21,7 +21,7 @@ sap.ui.define(
     MessageBox,
     MessageToast,
     Storage,
-    formatter
+    formatter,
   ) {
     "use strict";
 
@@ -195,8 +195,8 @@ sap.ui.define(
               employeeTotalExpense: 0,
               employeeTotalTicket: 0,
               employeeTotalPerdiem: 0,
-              reservedBudget:0,
-              costCenter:"",
+              reservedBudget: 0,
+              costCenter: "",
               jobLevel: "",
               itinerary: [],
               attachments: [],
@@ -257,7 +257,7 @@ sap.ui.define(
                 xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                 xhr.setRequestHeader(
                   "x-approuter-authorization",
-                  "Bearer " + envInfo.CF.accessToken
+                  "Bearer " + envInfo.CF.accessToken,
                 );
               }
             },
@@ -317,7 +317,7 @@ sap.ui.define(
                     fileSize:
                       Math.round(
                         (parseFloat(missionAttachments[a].fileSize) / 1024) *
-                          100
+                          100,
                       ) /
                         100 +
                       " KB",
@@ -354,6 +354,7 @@ sap.ui.define(
                   employeeTotalTicket: memberInfo.totalTicket,
                   employeeTotalPerdiem: memberInfo.totalPerDiem,
                   costCenter: memberInfo.costCenter,
+                  employeeAvailableBudget: 0,
                   reservedBudget: memberInfo.reservedBudget,
                   itinerary: [],
                   attachments: [],
@@ -391,7 +392,7 @@ sap.ui.define(
                       fileSize:
                         Math.round(
                           (parseFloat(memberAttachments[ma].fileSize) / 1024) *
-                            100
+                            100,
                         ) /
                           100 +
                         " KB",
@@ -404,6 +405,10 @@ sap.ui.define(
                 membersArr.push(memberObj);
               }
 
+              membersArr = await that.refreshMembersAvailableBudget(
+                membersArr,
+                missionInfoObj,
+              );
               var membersModel = new JSONModel({
                 members: membersArr,
               });
@@ -481,7 +486,7 @@ sap.ui.define(
                 xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                 xhr.setRequestHeader(
                   "x-approuter-authorization",
-                  "Bearer " + envInfo.CF.accessToken
+                  "Bearer " + envInfo.CF.accessToken,
                 );
               }
             },
@@ -568,7 +573,7 @@ sap.ui.define(
               xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
               xhr.setRequestHeader(
                 "x-approuter-authorization",
-                "Bearer " + envInfo.CF.accessToken
+                "Bearer " + envInfo.CF.accessToken,
               );
             }
           },
@@ -577,20 +582,23 @@ sap.ui.define(
           }),
           success: async function (data, textStatus, jqXHR) {
             that.closeBusyFragment();
-            that.alertMessage("S",
+            that.alertMessage(
+              "S",
               "successfulOperation",
               "travelMissionApprovedBy",
-              [`${decryptedDataParsed.keyVault.user.firstName} ${decryptedDataParsed.keyVault.user.lastName}`],
-              { 
+              [
+                `${decryptedDataParsed.keyVault.user.firstName} ${decryptedDataParsed.keyVault.user.lastName}`,
+              ],
+              {
                 showConfirmButton: true,
-                confirmCallbackFn: async ()=>{
+                confirmCallbackFn: async () => {
                   await that.initializeModel();
                   await that.initiateDynamicMembers();
                   await that.initiateMissionAttachment();
                   const oRouter = that.getOwnerComponent().getRouter();
                   oRouter.navTo("index");
-                }
-              }
+                },
+              },
             );
             // MessageBox.success(
             //   "The travel mission is approved by " +
@@ -615,7 +623,7 @@ sap.ui.define(
             if (jqXHR.status == 401) {
               that.closeMission();
             } else {
-              that.alertMessage("E", "errorOperation", "serverError", [],null);
+              that.alertMessage("E", "errorOperation", "serverError", [], null);
               // MessageBox.error("Something went wrong", {
               //   actions: [MessageBox.Action.CLOSE],
               //   onClose: function (sAction) {},
@@ -668,7 +676,7 @@ sap.ui.define(
               xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
               xhr.setRequestHeader(
                 "x-approuter-authorization",
-                "Bearer " + envInfo.CF.accessToken
+                "Bearer " + envInfo.CF.accessToken,
               );
             }
           },
@@ -677,20 +685,23 @@ sap.ui.define(
           }),
           success: async function (data, textStatus, jqXHR) {
             that.closeBusyFragment();
-            that.alertMessage("S",
+            that.alertMessage(
+              "S",
               "successfulOperation",
               "travelMissionSentBackBy",
-              [`${decryptedDataParsed.keyVault.user.firstName} ${decryptedDataParsed.keyVault.user.lastName}`],
-              { 
+              [
+                `${decryptedDataParsed.keyVault.user.firstName} ${decryptedDataParsed.keyVault.user.lastName}`,
+              ],
+              {
                 showConfirmButton: true,
-                confirmCallbackFn: async ()=>{
+                confirmCallbackFn: async () => {
                   await that.initializeModel();
                   await that.initiateDynamicMembers();
                   await that.initiateMissionAttachment();
                   const oRouter = that.getOwnerComponent().getRouter();
                   oRouter.navTo("index");
-                }
-              }
+                },
+              },
             );
             // MessageBox.success(
             //   "The travel mission is sent back by " +
@@ -712,7 +723,7 @@ sap.ui.define(
           },
           error: async function (jqXHR, textStatus, errorDesc) {
             that.closeBusyFragment();
-            that.alertMessage("E", "errorOperation", "serverError", [],null);
+            that.alertMessage("E", "errorOperation", "serverError", [], null);
             // MessageBox.error("Something went wrong", {
             //   actions: [MessageBox.Action.CLOSE],
             //   onClose: function (sAction) {},
@@ -744,7 +755,8 @@ sap.ui.define(
         payload.action = "3";
 
         if (payload.byDelegate) {
-          payload.comment = payload.comment + ` Rejected by delegate ${payload.byDelegate}`;
+          payload.comment =
+            payload.comment + ` Rejected by delegate ${payload.byDelegate}`;
           payload.comment.trim();
         }
 
@@ -769,26 +781,29 @@ sap.ui.define(
                 xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                 xhr.setRequestHeader(
                   "x-approuter-authorization",
-                  "Bearer " + envInfo.CF.accessToken
+                  "Bearer " + envInfo.CF.accessToken,
                 );
               }
             },
             success: async function (data, textStatus, jqXHR) {
               that.closeBusyFragment();
-              that.alertMessage("S",
+              that.alertMessage(
+                "S",
                 "successfulOperation",
                 "travelMissionRejectedBy",
-                [`${decryptedDataParsed.keyVault.user.firstName} ${decryptedDataParsed.keyVault.user.lastName}`],
-                { 
+                [
+                  `${decryptedDataParsed.keyVault.user.firstName} ${decryptedDataParsed.keyVault.user.lastName}`,
+                ],
+                {
                   showConfirmButton: true,
-                  confirmCallbackFn: async ()=>{
+                  confirmCallbackFn: async () => {
                     await that.initializeModel();
                     await that.initiateDynamicMembers();
                     await that.initiateMissionAttachment();
                     const oRouter = that.getOwnerComponent().getRouter();
                     oRouter.navTo("index");
-                  }
-                }
+                  },
+                },
               );
               // MessageBox.success("The mission has been rejected", {
               //   actions: [MessageBox.Action.CLOSE],
@@ -804,7 +819,7 @@ sap.ui.define(
             },
             error: async function (jqXHR, textStatus, errorDesc) {
               that.closeBusyFragment();
-              that.alertMessage("E", "errorOperation", "serverError", [],null);
+              that.alertMessage("E", "errorOperation", "serverError", [], null);
               // MessageBox.error("Something went wrong", {
               //   actions: [MessageBox.Action.CLOSE],
               //   onClose: function (sAction) {},
@@ -815,5 +830,5 @@ sap.ui.define(
         });
       },
     });
-  }
+  },
 );

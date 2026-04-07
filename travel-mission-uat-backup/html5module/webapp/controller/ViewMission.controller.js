@@ -21,7 +21,7 @@ sap.ui.define(
     MessageBox,
     MessageToast,
     Storage,
-    formatter
+    formatter,
   ) {
     "use strict";
 
@@ -155,7 +155,7 @@ sap.ui.define(
             externalEntity3: "",
             externalEntity4: "",
             externalEntity5: "",
-			externalEntities:[],
+            externalEntities: [],
             flightType: "",
             budgetParked: 0,
             missionID: "",
@@ -190,8 +190,8 @@ sap.ui.define(
               employeeTotalExpense: 0,
               employeeTotalTicket: 0,
               employeeTotalPerdiem: 0,
-              reservedBudget:0,//--reserved budget
-              costCenter:"",
+              reservedBudget: 0, //--reserved budget
+              costCenter: "",
               jobLevel: "",
               itinerary: [],
               attachments: [],
@@ -250,7 +250,7 @@ sap.ui.define(
                 xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                 xhr.setRequestHeader(
                   "x-approuter-authorization",
-                  "Bearer " + envInfo.CF.accessToken
+                  "Bearer " + envInfo.CF.accessToken,
                 );
               }
             },
@@ -332,7 +332,7 @@ sap.ui.define(
                     fileSize:
                       Math.round(
                         (parseFloat(missionAttachments[a].fileSize) / 1024) *
-                          100
+                          100,
                       ) /
                         100 +
                       " KB",
@@ -378,6 +378,7 @@ sap.ui.define(
                       employeeTotalTicket: memberInfo.totalTicket,
                       employeeTotalPerdiem: memberInfo.totalPerDiem,
                       costCenter: memberInfo.costCenter,
+                      employeeAvailableBudget: 0,
                       reservedBudget: memberInfo.reservedBudget,
                       itinerary: [],
                       attachments: [],
@@ -390,7 +391,7 @@ sap.ui.define(
                         city: itineraryInfo.city,
                         ticketType: itineraryInfo.ticketType,
                         startDate: formatter.formatDateUI(
-                          itineraryInfo.startDate
+                          itineraryInfo.startDate,
                         ),
                         endDate: formatter.formatDateUI(itineraryInfo.endDate),
                         headOfMission: itineraryInfo.isHeadOfMission,
@@ -398,7 +399,7 @@ sap.ui.define(
                         perDiemPerCity: itineraryInfo.perDiemPerCity,
                         ticketAverage: itineraryInfo.ticketAverage,
                         ticketActualCost: itineraryInfo.ticketActualCost,
-                        reservedBudget:itineraryInfo.reservedBudget,
+                        reservedBudget: itineraryInfo.reservedBudget,
                       };
 
                       memberObj.itinerary.push(itinieraryObj);
@@ -418,7 +419,7 @@ sap.ui.define(
                             Math.round(
                               (parseFloat(memberAttachments[ma].fileSize) /
                                 1024) *
-                                100
+                                100,
                             ) /
                               100 +
                             " KB",
@@ -448,6 +449,8 @@ sap.ui.define(
                     employeeTotalExpense: memberInfo.totalExpense,
                     employeeTotalTicket: memberInfo.totalTicket,
                     employeeTotalPerdiem: memberInfo.totalPerDiem,
+                    costCenter: memberInfo.costCenter,
+                    employeeAvailableBudget: 0,
                     reservedBudget: memberInfo.reservedBudget,
                     itinerary: [],
                     attachments: [],
@@ -460,7 +463,7 @@ sap.ui.define(
                       city: itineraryInfo.city,
                       ticketType: itineraryInfo.ticketType,
                       startDate: formatter.formatDateUI(
-                        itineraryInfo.startDate
+                        itineraryInfo.startDate,
                       ),
                       endDate: formatter.formatDateUI(itineraryInfo.endDate),
                       headOfMission: itineraryInfo.isHeadOfMission,
@@ -488,7 +491,7 @@ sap.ui.define(
                           Math.round(
                             (parseFloat(memberAttachments[ma].fileSize) /
                               1024) *
-                              100
+                              100,
                           ) /
                             100 +
                           " KB",
@@ -502,6 +505,10 @@ sap.ui.define(
                 }
               }
 
+              membersArr = await that.refreshMembersAvailableBudget(
+                membersArr,
+                missionInfoObj,
+              );
               var membersModel = new JSONModel({
                 members: membersArr,
               });
@@ -577,7 +584,7 @@ sap.ui.define(
                 xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                 xhr.setRequestHeader(
                   "x-approuter-authorization",
-                  "Bearer " + envInfo.CF.accessToken
+                  "Bearer " + envInfo.CF.accessToken,
                 );
               }
             },
@@ -621,5 +628,5 @@ sap.ui.define(
         a.click();
       },
     });
-  }
+  },
 );

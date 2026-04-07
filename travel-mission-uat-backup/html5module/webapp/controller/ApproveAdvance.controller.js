@@ -21,7 +21,7 @@ sap.ui.define(
     MessageBox,
     MessageToast,
     Storage,
-    formatter
+    formatter,
   ) {
     "use strict";
 
@@ -29,8 +29,8 @@ sap.ui.define(
       missionFormerSector: null,
       missionTotalExpense: 0,
 
-      formerMembers:[],
-      
+      formerMembers: [],
+
       onInit: function (evt) {
         this.initializeAppSettings(true);
         const oRouter = this.getRouter();
@@ -470,16 +470,24 @@ sap.ui.define(
             oMember.costCenter,
           ]);
 
-          const oFormerMember = _.find(this.formerMembers, ["id", oMember.employeeID]);
+          const oFormerMember = _.find(this.formerMembers, [
+            "id",
+            oMember.employeeID,
+          ]);
 
           //--Find the difference by taking the old member's perdiem
-          if(oFormerMember && oFormerMember.reservedBudget && !isNaN(parseFloat(oFormerMember.reservedBudget))){
-            perDiemDeficit = perDiemDeficit - parseFloat(oFormerMember.reservedBudget);
+          if (
+            oFormerMember &&
+            oFormerMember.reservedBudget &&
+            !isNaN(parseFloat(oFormerMember.reservedBudget))
+          ) {
+            perDiemDeficit =
+              perDiemDeficit - parseFloat(oFormerMember.reservedBudget);
           }
           //--Find the difference of taking the old member's perdiem
 
           oBudgetCheck.ReservedBudget =
-            oBudgetCheck.ReservedBudget +  perDiemDeficit;
+            oBudgetCheck.ReservedBudget + perDiemDeficit;
         });
         //--Loop through the members and check the available budget
 
@@ -569,7 +577,7 @@ sap.ui.define(
             flightType: oMission.flightType,
             hospitality_Type: oMission.hospitality_Type,
             missionStartDate: formatter.formatDatetoJSON(
-              oMission.missionStartDate
+              oMission.missionStartDate,
             ),
             missionEndDate: formatter.formatDatetoJSON(oMission.missionEndDate),
             noOfDays: oMission.noOfDays.toString(),
@@ -654,7 +662,7 @@ sap.ui.define(
               xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
               xhr.setRequestHeader(
                 "x-approuter-authorization",
-                "Bearer " + envInfo.CF.accessToken
+                "Bearer " + envInfo.CF.accessToken,
               );
             }
           },
@@ -669,7 +677,7 @@ sap.ui.define(
                 "successfulOperation",
                 "missionUpdated",
                 [],
-                null
+                null,
               );
             }
           },
@@ -843,7 +851,7 @@ sap.ui.define(
               "errorsFound",
               "overlapItineraryError",
               [],
-              null
+              null,
             );
             // MessageBox.error(
             //   "Please select any other date which is not overlap with other cities dates",
@@ -950,7 +958,7 @@ sap.ui.define(
               "errorsFound",
               "overlapItineraryError",
               [],
-              null
+              null,
             );
             // MessageBox.error(
             //   "Please select any other date which is not overlap with other cities dates",
@@ -1115,7 +1123,7 @@ sap.ui.define(
                 xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                 xhr.setRequestHeader(
                   "x-approuter-authorization",
-                  "Bearer " + envInfo.CF.accessToken
+                  "Bearer " + envInfo.CF.accessToken,
                 );
               }
             },
@@ -1151,9 +1159,7 @@ sap.ui.define(
                         itineraryData[j].ticketAverage = 0;
                       }
 
-                      if (
-                        !isNaN(parseInt(ticketAndPerDiemData.toBeReserved))
-                      ) {
+                      if (!isNaN(parseInt(ticketAndPerDiemData.toBeReserved))) {
                         itineraryData[j].reservedBudget = 0;
 
                         itineraryData[j].reservedBudget =
@@ -1187,14 +1193,15 @@ sap.ui.define(
                       memberPerDiemPerCity + itineraryData[j].perDiemPerCity;
                     memberTicketAverage =
                       memberTicketAverage + itineraryData[j].ticketAverage;
-                    memberReservedBudget = memberReservedBudget + itineraryData[j].reservedBudget;
+                    memberReservedBudget =
+                      memberReservedBudget + itineraryData[j].reservedBudget;
                   }
                   mModelData[i].employeeTotalPerdiem = memberPerDiemPerCity;
                   mModelData[i].employeeTotalTicket = memberTicketAverage;
                   mModelData[i].employeeTotalExpense =
                     memberPerDiemPerCity + memberTicketAverage;
                   mModelData[i].reservedBudget =
-                    memberPerDiemPerCity + memberReservedBudget;  
+                    memberPerDiemPerCity + memberReservedBudget;
                   missionTicketAverage =
                     missionTicketAverage + memberTicketAverage;
                   missionPerDiemPerCity =
@@ -1246,7 +1253,7 @@ sap.ui.define(
                 null,
                 "perdiemCalculatedSaveToUpdate",
                 [],
-                { showConfirmButton: true }
+                { showConfirmButton: true },
               );
 
               that.animateSaveButton();
@@ -1300,7 +1307,7 @@ sap.ui.define(
               "errorOperation",
               "sessionExpired",
               [],
-              null
+              null,
             );
             // MessageBox.error("The session is expired. Please refresh.", {
             //   actions: [MessageBox.Action.CLOSE],
@@ -1418,8 +1425,8 @@ sap.ui.define(
               employeeTotalExpense: 0,
               employeeTotalTicket: 0,
               employeeTotalPerdiem: 0,
-              reservedBudget:0,
-              costCenter:"",
+              reservedBudget: 0,
+              costCenter: "",
               jobLevel: "",
               itinerary: [],
               attachments: [],
@@ -1494,7 +1501,7 @@ sap.ui.define(
                 xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                 xhr.setRequestHeader(
                   "x-approuter-authorization",
-                  "Bearer " + envInfo.CF.accessToken
+                  "Bearer " + envInfo.CF.accessToken,
                 );
               }
             },
@@ -1506,10 +1513,10 @@ sap.ui.define(
               var advanceInfo = advanceData.d.results[0];
 
               advanceInfo.cust_StartDate = formatter.formatDateStr(
-                advanceInfo.cust_StartDate
+                advanceInfo.cust_StartDate,
               );
               advanceInfo.cust_EndDate = formatter.formatDateStr(
-                advanceInfo.cust_EndDate
+                advanceInfo.cust_EndDate,
               );
 
               var advanceInfoModel = new JSONModel({
@@ -1541,7 +1548,7 @@ sap.ui.define(
                     xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                     xhr.setRequestHeader(
                       "x-approuter-authorization",
-                      "Bearer " + envInfo.CF.accessToken
+                      "Bearer " + envInfo.CF.accessToken,
                     );
                   }
                 },
@@ -1552,7 +1559,7 @@ sap.ui.define(
 
                   for (var i = 0; i < auditInfo.length; i++) {
                     auditInfo[i]["photo"] = await that.getPhoto(
-                      auditInfo[i].user
+                      auditInfo[i].user,
                     );
                   }
 
@@ -1591,7 +1598,7 @@ sap.ui.define(
                     missionDescription: missionInfo.description,
                     missionDetails: missionInfo.details,
                     missionStartDate: formatter.formatDateUI(
-                      missionInfo.startDate
+                      missionInfo.startDate,
                     ),
                     missionEndDate: formatter.formatDateUI(missionInfo.endDate),
                     sector: missionInfo.sector,
@@ -1656,7 +1663,7 @@ sap.ui.define(
                           Math.round(
                             (parseFloat(missionAttachments[a].fileSize) /
                               1024) *
-                              100
+                              100,
                           ) /
                             100 +
                           " KB",
@@ -1674,7 +1681,7 @@ sap.ui.define(
                     .getView()
                     .setModel(
                       missionAttachmentsModel,
-                      "missionAttachmentsModel"
+                      "missionAttachmentsModel",
                     );
 
                   var membersArr = [];
@@ -1699,6 +1706,8 @@ sap.ui.define(
                         employeeTotalExpense: memberInfo.totalExpense,
                         employeeTotalTicket: memberInfo.totalTicket,
                         employeeTotalPerdiem: memberInfo.totalPerDiem,
+                        costCenter: memberInfo.costCenter,
+                        employeeAvailableBudget: 0,
                         reservedBudget: memberInfo.reservedBudget,
                         itinerary: [],
                         attachments: [],
@@ -1714,10 +1723,10 @@ sap.ui.define(
                           city: itineraryInfo.city,
                           ticketType: itineraryInfo.ticketType,
                           startDate: formatter.formatDateUI(
-                            itineraryInfo.startDate
+                            itineraryInfo.startDate,
                           ),
                           endDate: formatter.formatDateUI(
-                            itineraryInfo.endDate
+                            itineraryInfo.endDate,
                           ),
                           headOfMission: itineraryInfo.isHeadOfMission,
                           hospitalityDefault: itineraryInfo.hospitality,
@@ -1748,7 +1757,7 @@ sap.ui.define(
                               Math.round(
                                 (parseFloat(memberAttachments[ma].fileSize) /
                                   1024) *
-                                  100
+                                  100,
                               ) /
                                 100 +
                               " KB",
@@ -1761,6 +1770,10 @@ sap.ui.define(
                     }
                   }
 
+                  membersArr = await that.refreshMembersAvailableBudget(
+                    membersArr,
+                    missionInfoObj,
+                  );
                   var membersModel = new JSONModel({
                     members: membersArr,
                   });
@@ -1837,7 +1850,7 @@ sap.ui.define(
                 xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
                 xhr.setRequestHeader(
                   "x-approuter-authorization",
-                  "Bearer " + envInfo.CF.accessToken
+                  "Bearer " + envInfo.CF.accessToken,
                 );
               }
             },
@@ -1905,7 +1918,7 @@ sap.ui.define(
             "errorOperation",
             "ownAdvanceCannotBeApproved",
             [],
-            null
+            null,
           );
           return;
         }
@@ -1948,7 +1961,7 @@ sap.ui.define(
               xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
               xhr.setRequestHeader(
                 "x-approuter-authorization",
-                "Bearer " + envInfo.CF.accessToken
+                "Bearer " + envInfo.CF.accessToken,
               );
             }
           },
@@ -1970,7 +1983,7 @@ sap.ui.define(
                 confirmCallbackFn: () => {
                   that.closeMission();
                 },
-              }
+              },
             );
             // MessageBox.success(
             //   "The travel advance is approved by " +
@@ -2026,7 +2039,7 @@ sap.ui.define(
             "errorOperation",
             "ownAdvanceCannotBeSentBack",
             [],
-            null
+            null,
           );
           return;
         }
@@ -2069,7 +2082,7 @@ sap.ui.define(
               xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
               xhr.setRequestHeader(
                 "x-approuter-authorization",
-                "Bearer " + envInfo.CF.accessToken
+                "Bearer " + envInfo.CF.accessToken,
               );
             }
           },
@@ -2090,7 +2103,7 @@ sap.ui.define(
                 confirmCallbackFn: () => {
                   that.closeMission();
                 },
-              }
+              },
             );
             // MessageBox.success(
             //   "The travel advance is sent back by " +
@@ -2122,5 +2135,5 @@ sap.ui.define(
         });
       },
     });
-  }
+  },
 );

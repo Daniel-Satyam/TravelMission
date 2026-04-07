@@ -488,11 +488,11 @@ sap.ui.define(
                   title: memberInfo.title,
                   multipleCities: memberInfo.multicity,
                   noOfCities: "",
-                  employeeAvailableBudget: 0,
                   employeeTotalExpense: memberInfo.totalExpense,
                   employeeTotalTicket: memberInfo.totalTicket,
                   employeeTotalPerdiem: memberInfo.totalPerDiem,
                   costCenter: memberInfo.costCenter,
+                  employeeAvailableBudget: 0,
                   reservedBudget: memberInfo.reservedBudget,
                   jobLevel: "",
                   itinerary: [],
@@ -567,9 +567,9 @@ sap.ui.define(
 
                 membersArr.push(memberObj);
               }
-
+              membersArr = await that.refreshMembersAvailableBudget(membersArr,missionInfoObj);
               var membersModel = new JSONModel({
-                members: membersArr,
+                members: membersArr
               });
 
               that.setModel(membersModel, "membersModel");

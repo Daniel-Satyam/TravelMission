@@ -467,6 +467,7 @@ sap.ui.define(
                   employeeTotalTicket: memberInfo.totalTicket,
                   employeeTotalPerdiem: memberInfo.totalPerDiem,
                   costCenter: memberInfo.costCenter,
+                  employeeAvailableBudget: 0,
                   reservedBudget: memberInfo.reservedBudget,
                   itinerary: [],
                   attachments: [],
@@ -572,14 +573,17 @@ sap.ui.define(
                     };
                     memberObj.attachments.push(memberAttachmentObj);
                   }
-
-                  if (decryptedDataParsed.keyVault.user.id == memberInfo.id) {
-                    membersArr.push(memberObj);
-                  }
-                  allMembersArr.push(memberObj);
                 }
+                if (decryptedDataParsed.keyVault.user.id == memberInfo.id) {
+                  membersArr.push(memberObj);
+                }
+                allMembersArr.push(memberObj);
               }
 
+              membersArr = await that.refreshMembersAvailableBudget(
+                membersArr,
+                missionInfoObj,
+              );
               var membersModel = new JSONModel({
                 members: membersArr,
                 allMembers: allMembersArr,
@@ -1190,9 +1194,7 @@ sap.ui.define(
                         itineraryData[j].ticketAverage = 0;
                       }
 
-                      if (
-                        !isNaN(parseInt(ticketAndPerDiemData.toBeReserved))
-                      ) {
+                      if (!isNaN(parseInt(ticketAndPerDiemData.toBeReserved))) {
                         itineraryData[j].reservedBudget = 0;
 
                         itineraryData[j].reservedBudget =
@@ -1363,17 +1365,11 @@ sap.ui.define(
               aInfo.totalPerdiemMission = missionPerDiemPerCity;
               aInfo.totalExpense = missionTicketAverage + missionPerDiemPerCity;
 
-              var membersModel = new JSONModel({
-                members: mModelData,
-              });
+              const oMembersModel = that.getModel("membersModel");
+              oMembersModel.setProperty("/members", mModelData);
 
-              that.setModel(membersModel, "membersModel");
-
-              var missionInfoModel = new JSONModel({
-                info: aInfo,
-              });
-
-              that.setModel(missionInfoModel, "missionInfoModel");
+              const oMissionInfoModel = that.getModel("missionInfoModel");
+              oMissionInfoModel.setProperty("/info", aInfo);
 
               that.closeBusyFragment();
             },
@@ -1514,7 +1510,7 @@ sap.ui.define(
             _.find(aMembers, ["employeeID", m.employeeID]) || _.clone(m);
           //--Check if the user himself
 
-          let perDiemDeficit = parseFloat(oMember.reservedBudget);
+          let perDiemDeficit = parseFloat(oMember.employeeTotalPerdiem);
           const oBudgetCheck = _.find(aBudgetCheck, [
             "CostCenter",
             oMember.costCenter,
@@ -1528,11 +1524,11 @@ sap.ui.define(
           //--Find the difference by taking the old member's perdiem
           if (
             oFormerMember &&
-            oFormerMember.reservedBudget &&
-            !isNaN(parseFloat(oFormerMember.reservedBudget))
+            oFormerMember.employeeTotalPerdiem &&
+            !isNaN(parseFloat(oFormerMember.employeeTotalPerdiem))
           ) {
             perDiemDeficit =
-              perDiemDeficit - parseFloat(oFormerMember.reservedBudget);
+              perDiemDeficit - parseFloat(oFormerMember.employeeTotalPerdiem);
           }
           //--Find the difference of taking the old member's perdiem
 
@@ -1561,7 +1557,7 @@ sap.ui.define(
               CostCenter: oMember.costCenter,
               AvailableBudget: oBudgetCheck.AvailableBudget,
               ReservedBudget: oBudgetCheck.ReservedBudget,
-              EmployeeReservedBudget: oMember.reservedBudget,
+              EmployeeReservedBudget: oMember.employeeTotalPerdiem,
             });
           }
         });
@@ -2374,7 +2370,6 @@ sap.ui.define(
           return null;
         }
 
-
         if (
           aInfoCalculate.missionEndDate != "" &&
           aInfoCalculate.missionEndDate != null
@@ -2382,8 +2377,7 @@ sap.ui.define(
           var hoursToAdd = 12 * 60 * 60 * 1000;
           var missionEndDate = new Date(aInfoCalculate.missionEndDate);
           missionEndDate.setTime(missionEndDate.getTime() + hoursToAdd);
-          obj.info.missionEndDate =
-            "/Date(" + missionEndDate.getTime() + ")/";
+          obj.info.missionEndDate = "/Date(" + missionEndDate.getTime() + ")/";
         }
 
         if (
@@ -2687,7 +2681,7 @@ sap.ui.define(
               startDate: "",
               ticketActualCost: 0,
               ticketAverage: 0,
-              reservedBudget:0,
+              reservedBudget: 0,
               ticketType: "",
             };
             if (

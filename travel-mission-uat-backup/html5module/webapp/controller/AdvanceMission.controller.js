@@ -409,6 +409,7 @@ sap.ui.define(
                     employeeTotalTicket: memberInfo.totalTicket,
                     employeeTotalPerdiem: memberInfo.totalPerDiem,
                     costCenter: memberInfo.costCenter,
+                    employeeAvailableBudget: 0,
                     reservedBudget: memberInfo.reservedBudget,
                     itinerary: [],
                     attachments: [],
@@ -480,6 +481,7 @@ sap.ui.define(
                 }
               }
 
+              membersArr = await that.refreshMembersAvailableBudget(membersArr,missionInfoObj);
               var membersModel = new JSONModel({
                 members: membersArr,
               });

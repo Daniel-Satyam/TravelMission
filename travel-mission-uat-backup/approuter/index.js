@@ -598,6 +598,7 @@ const _updateItineraryBatch = async function (body, cookies) {
       body,
       null,
       cookies,
+      "updateItinerary"
     );
     //--Step 1: Update S4 Document
 
@@ -1162,6 +1163,7 @@ const _createMission = async function (body, userInfo, cookies) {
       body,
       referenceGuid,
       cookies,
+      "createMission"
     );
     //--Step 1: Create S4 Document
 
@@ -1207,6 +1209,7 @@ const _createMission = async function (body, userInfo, cookies) {
       updatePayload,
       referenceGuid,
       cookies,
+      "createMission"
     );
     //--Step 3: Update S4 document with mission id
 
@@ -1522,6 +1525,7 @@ const _approveRejectMission = async function (data, cookies) {
       const createS4Document = await _createS4Documentv2(
         { missionId: data.mission },
         cookies,
+        "approveRejectMission"
       );
     } catch (e) {
       throw new CustomHttpError(500, "FI document could not be updated");
@@ -1584,6 +1588,7 @@ const _claimMission = async function (decryptedData, cookies) {
       decryptedData,
       null,
       cookies,
+      "claimMission"
     );
     if (
       !(
@@ -5570,6 +5575,7 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
       body,
       null,
       cookies,
+      "updateMission"
     );
     //--Step 1: Update S4 Document
 
@@ -7133,6 +7139,7 @@ const _checkMissionBatch = async function (body, cookies) {
 const _constructS4DocumentDetailsFromMissionId = async function (
   missionId,
   cookies,
+  missionStep
 ) {
   try {
     const auth = "Basic " + cookies.SF.basicAuth;
@@ -7181,7 +7188,7 @@ const _constructS4DocumentDetailsFromMissionId = async function (
             sequenceNo: (i + 1) * 10,
             userId: m.cust_Employee_ID,
             employeeId: m.cust_EmployeeID,
-            reservedBudget: parseFloat(m.cust_Reserved_Budget),
+            consumedBudget: parseFloat(m.cust_Reserved_Budget),
             costCenter: null, // wiill be fetched later on
           });
 
@@ -7239,6 +7246,7 @@ const _constructS4DocumentFromPayload = async function (
   missionRequest,
   referenceGuid,
   cookies,
+  missionStep
 ) {
   try {
     let s4DocumentNumber = null;
@@ -7311,7 +7319,7 @@ const _constructS4DocumentFromPayload = async function (
         sequenceNo: (i + 1) * 10,
         userId: m.userID,
         employeeId: m.employeeID,
-        reservedBudget: parseFloat(m.reservedBudget),
+        consumedBudget: missionStep === "claimMission" ? parseFloat(m.employeeTotalPerdiem) : parseFloat(m.reservedBudget),
         costCenter: m.costCenter, // wiill be fetched later on
       });
     });
@@ -7533,12 +7541,13 @@ async function _fetchCsrfTokenv2(destinationName, servicePath) {
 /**
  * Create Header with Items (Deep Insert)
  */
-async function _createS4Documentv3(body, referenceGuid, appCookies) {
+async function _createS4Documentv3(body, referenceGuid, appCookies, missionStep) {
   try {
     const oPayload = await _constructS4DocumentFromPayload(
       body,
       referenceGuid,
       appCookies,
+      missionStep
     );
 
     if (!oPayload) {
@@ -7553,7 +7562,7 @@ async function _createS4Documentv3(body, referenceGuid, appCookies) {
       HeaderToItem: oPayload.members.map((m) => ({
         BLPOS: m.sequenceNo.toString(),
         KOSTL: m.costCenter,
-        WRBTR: m.reservedBudget.toString(),
+        WRBTR: m.consumedBudget.toString(),
         PTEXT: m.employeeId,
       })),
     };
@@ -7604,10 +7613,11 @@ async function _createS4Documentv3(body, referenceGuid, appCookies) {
     );
   }
 }
-async function _createS4Documentv2(body, appCookies) {
+async function _createS4Documentv2(body, appCookies, missionStep) {
   const oPayload = await _constructS4DocumentDetailsFromMissionId(
     body.missionId,
     appCookies,
+    missionStep
   );
   try {
     if (!oPayload) {
@@ -7622,7 +7632,7 @@ async function _createS4Documentv2(body, appCookies) {
       HeaderToItem: oPayload.members.map((m) => ({
         BLPOS: m.sequenceNo.toString(),
         KOSTL: m.costCenter,
-        WRBTR: m.reservedBudget.toString(),
+        WRBTR: m.consumedBudget.toString(),
         PTEXT: m.employeeId,
       })),
     };

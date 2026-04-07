@@ -159,16 +159,24 @@ sap.ui.define(
             oMember.costCenter,
           ]);
 
-          const oFormerMember = _.find(this.formerMembers, ["id", oMember.employeeID]);
+          const oFormerMember = _.find(this.formerMembers, [
+            "id",
+            oMember.employeeID,
+          ]);
 
           //--Find the difference by taking the old member's perdiem
-          if(oFormerMember && oFormerMember.reservedBudget && !isNaN(parseFloat(oFormerMember.reservedBudget))){
-            perDiemDeficit = perDiemDeficit - parseFloat(oFormerMember.reservedBudget);
+          if (
+            oFormerMember &&
+            oFormerMember.reservedBudget &&
+            !isNaN(parseFloat(oFormerMember.reservedBudget))
+          ) {
+            perDiemDeficit =
+              perDiemDeficit - parseFloat(oFormerMember.reservedBudget);
           }
           //--Find the difference of taking the old member's perdiem
 
           oBudgetCheck.ReservedBudget =
-            oBudgetCheck.ReservedBudget +  perDiemDeficit;
+            oBudgetCheck.ReservedBudget + perDiemDeficit;
         });
         //--Loop through the members and check the available budget
 
@@ -1240,15 +1248,13 @@ sap.ui.define(
                       }
 
                       //--reserved budget
-                      if (
-                        !isNaN(parseInt(ticketAndPerDiemData.toBeReserved ))
-                      ) {
-                        itineraryData[j].reservedBudget  = 0;
-                        
-                        itineraryData[j].reservedBudget  =
-                        ticketAndPerDiemData.toBeReserved ;
+                      if (!isNaN(parseInt(ticketAndPerDiemData.toBeReserved))) {
+                        itineraryData[j].reservedBudget = 0;
+
+                        itineraryData[j].reservedBudget =
+                          ticketAndPerDiemData.toBeReserved;
                       } else {
-                        itineraryData[j].reservedBudget  = 0;
+                        itineraryData[j].reservedBudget = 0;
                       }
                       //--reserved budget
 
@@ -1278,7 +1284,8 @@ sap.ui.define(
                     memberTicketAverage =
                       memberTicketAverage + itineraryData[j].ticketAverage;
 
-                    memberReservedBudget = memberReservedBudget + itineraryData[j].reservedBudget;
+                    memberReservedBudget =
+                      memberReservedBudget + itineraryData[j].reservedBudget;
                   }
                   mModelData[i].employeeTotalPerdiem = memberPerDiemPerCity;
                   mModelData[i].employeeTotalTicket = memberTicketAverage;
@@ -1508,8 +1515,8 @@ sap.ui.define(
               employeeTotalExpense: 0,
               employeeTotalTicket: 0,
               employeeTotalPerdiem: 0,
-              reservedBudget:0,
-              costCenter:"",
+              reservedBudget: 0,
+              costCenter: "",
               jobLevel: "",
               itinerary: [],
               attachments: [],
@@ -1838,6 +1845,7 @@ sap.ui.define(
                         employeeTotalTicket: memberInfo.totalTicket,
                         employeeTotalPerdiem: memberInfo.totalPerDiem,
                         costCenter: memberInfo.costCenter,
+                        employeeAvailableBudget: 0,
                         reservedBudget: memberInfo.reservedBudget,
                         itinerary: [],
                         attachments: [],
@@ -1900,7 +1908,10 @@ sap.ui.define(
                       membersArr.push(memberObj);
                     }
                   }
-
+                  membersArr = await that.refreshMembersAvailableBudget(
+                    membersArr,
+                    missionInfoObj,
+                  );
                   var membersModel = new JSONModel({
                     members: membersArr,
                   });

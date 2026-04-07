@@ -494,6 +494,20 @@
 											</ComboBox>
 										</VBox>
 									</f:GridListItem>
+									<!-- New budget integration change -->
+									<f:GridListItem>
+										<VBox class="sapUiSmallMargin">
+											<layoutData>
+												<FlexItemData growFactor="1" shrinkFactor="0" />
+											</layoutData>
+
+											<Label text="{i18n>employeeAvailableBudget}" />
+											<Input value="{path: 'membersModel>employeeAvailableBudget', formatter: 'Formatter.formatAmount'}" enabled="false"
+												tooltip="{membersModel>costCenter}=>{path:'membersModel>employeeAvailableBudget',formatter: 'Formatter.formatAmount'}"
+											 />
+										</VBox>
+									</f:GridListItem>
+									<!-- New budget integration change -->
 									<f:GridListItem>
 										<VBox class="sapUiSmallMargin">
 											<layoutData>

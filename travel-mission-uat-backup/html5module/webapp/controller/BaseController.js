@@ -103,10 +103,10 @@ sap.ui.define(
               ' text-align:right;">Available</th>' +
               '<th style="' +
               sThStyle +
-              ' text-align:right;">Total Per Diem</th>' +
+              ' text-align:right;">Reserved (Total)</th>' +
               '<th style="' +
               sThStyle +
-              ' text-align:right;">Emp. Per Diem</th>' +
+              ' text-align:right;">Reserved (Employee)</th>' +
               "</tr>" +
               "</thead>" +
               "<tbody>";
@@ -180,6 +180,42 @@ sap.ui.define(
               null,
             );
           }
+      },
+
+      refreshMembersAvailableBudget: async function(aMembers, oMissionInfo){
+        const aMembersClone = _.cloneDeep(aMembers);
+        const aCostCenterBudget = [];
+        aMembersClone.forEach((m) => {
+          if (_.findIndex(aCostCenterBudget, ["costCenter", m.costCenter]) === -1) {
+            aCostCenterBudget.push({costCenter: m.costCenter, availableBudget:0});
+          }
+        });
+
+        for (const oCostCenterBudget of aCostCenterBudget) {
+          try {
+            if (oCostCenterBudget) {
+              const oBudget = await this.getFCBudgetS4(
+                oCostCenterBudget.costCenter,
+                oMissionInfo.missionStartDate.getFullYear(),
+              );
+
+              oCostCenterBudget.availableBudget = oBudget.hasOwnProperty("GetFCBudget") ? parseFloat(oBudget.GetFCBudget.AvailableBudget) : 0;
+            }
+          } catch (e) {
+            oCostCenterBudget.availableBudget = 0;
+          }
+        }
+
+        aMembersClone.forEach((m,i)=>{
+          const oCostCenterBudget = _.find(aCostCenterBudget, ["costCenter", m.costCenter]);
+          if(oCostCenterBudget){
+            aMembersClone[i].employeeAvailableBudget = oCostCenterBudget.availableBudget;
+          }else{
+            aMembersClone[i].employeeAvailableBudget = 0;
+          }
+        });
+        
+        return aMembersClone;
       },
 
       /**
