@@ -1520,7 +1520,7 @@ const _approveRejectMission = async function (data, cookies) {
     //Approve
     try {
       const createS4Document = await _createS4Documentv2(
-        { missionId: response.data.missionId },
+        { missionId: data.mission },
         cookies,
       );
     } catch (e) {
