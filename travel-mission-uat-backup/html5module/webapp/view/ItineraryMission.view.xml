@@ -52,6 +52,29 @@
 									<FlexItemData growFactor="1" shrinkFactor="0" />
 								</layoutData>
 
+								<Label text="{i18n>missionType}" labelFor="idMissionType" required="true" />
+								<ComboBox
+									id="idMissionType"
+									class="createMissionDropdown"
+									showClearIcon="true"
+									selectedKey="{missionInfoModel>/info/missionType}"
+									items="{
+										path: 'missionTypeModel>/missionTypeSet',
+										length : 500,
+										sorter: { path: 'localeLabel' },
+										templateShareable: false
+									}"
+									enabled="false">
+									<core:Item key="{missionTypeModel>externalCode}" text="{= ${appModel>/language} === 'en' ? ${missionTypeModel>localeLabel} : ${missionTypeModel>localeARLabel} }" />
+								</ComboBox>
+							</VBox>
+						</f:GridListItem>
+						<f:GridListItem>
+							<VBox class="sapUiSmallMargin">
+								<layoutData>
+									<FlexItemData growFactor="1" shrinkFactor="0" />
+								</layoutData>
+
 								<Label text="{i18n>destination}" labelFor="missionDestination" required="true" />
 								<ComboBox
 									visible="{= ${appModel>/language} === 'en' }"

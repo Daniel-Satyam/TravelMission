@@ -774,7 +774,7 @@ sap.ui.define(
               hospitalityOptions: _.cloneDeep(result.hospitalityOptions),
             });
             this.setModel(hospitalityOptionsModel, "hospitalityOptionsModel");
-
+            
             let sectorsModel = new JSONModel({
               sectors: _.cloneDeep(result.sectors),
               availableSectors: _.filter(result.sectors, [
@@ -814,6 +814,11 @@ sap.ui.define(
               headOfMission: _.cloneDeep(result.headOfMission),
             });
             this.setModel(headOfMissionModel, "headOfMissionModel");
+
+            let missionTypeModel = new JSONModel({
+              missionTypeSet: _.cloneDeep(result.missionTypes),
+            });
+            this.setModel(missionTypeModel, "missionTypeModel");
 
             oScreenModelData.pageErrorMessage = null;
             oScreenModelData.pageError = false;

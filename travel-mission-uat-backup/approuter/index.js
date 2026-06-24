@@ -1764,6 +1764,18 @@ const _claimMission = async function (decryptedData, cookies) {
           "The claim creation in mission " + decryptedData.missionId;
         claimUpdateHeader["mdfSystemEffectiveStartDate"] = decryptedData.date;
       }
+
+      //--Find the returned cost center from claim mission
+      let sCostCenter = null;
+      if(updateS4DocumentResult && updateS4DocumentResult.HeaderToItem && updateS4DocumentResult.HeaderToItem.results){
+        const oItem = _.find(updateS4DocumentResult.HeaderToItem.results, ["PTEXT",decryptedData.employeeId]);
+        if(oItem && oItem["cust_CostCenter"]){
+          sCostCenter = oItem["cust_CostCenter"] || null;
+        }
+      }
+      //--Find the returned cost center from claim mission
+
+
       let claimUpdateRequest = {
         ...claimUpdateHeader,
         cust_Claim_Type: decryptedData.type,
@@ -1773,6 +1785,7 @@ const _claimMission = async function (decryptedData, cookies) {
         cust_EndDate: decryptedData.claimEndDate,
         cust_Location: decryptedData.location,
         cust_ClaimAmount: decryptedData.claimAmount,
+        cust_CostCenter: sCostCenter,
         cust_Currency: "AED",
         cust_Status: decryptedData.status,
         cust_Pending_with: approveGroup,
@@ -4094,6 +4107,19 @@ const _cancelMission = async function (decryptedData, cookies) {
   try {
     const auth = "Basic " + cookies.SF.basicAuth;
 
+
+ //--Call S4 Odata
+ try {
+   const deleteS4Document = await _deleteS4Documentv2(
+     { missionId: decryptedData.missionId },
+     cookies,
+    );
+  } catch (e) {
+    throw new CustomHttpError(500, "S4 document could not be deleted");
+  }
+  //--Call S4 Odata
+
+
     const sectorFetchUrl =
       `cust_SectorBudget?$format=json` +
       `&$select=externalCode,cust_Available_budget,cust_Budget,cust_Parked_Amount,cust_Utilized_Budget,effectiveStartDate,cust_S4_Sector,cust_S4_SubSector,cust_Visible`;
@@ -4393,16 +4419,6 @@ const _cancelMission = async function (decryptedData, cookies) {
       (await _parseMultipartResponse(postBatchResponse)) || [];
 
     if (postBatchResult) {
-      //--Call S4 Odata
-      try {
-        const deleteS4Document = await _deleteS4Documentv2(
-          { missionId: decryptedData.missionId },
-          cookies,
-        );
-      } catch (e) {
-        console.log(e);
-      }
-      //--Call S4 Odata
       return true;
     } else {
       return false;
@@ -5682,6 +5698,7 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
         cust_Budget_Available: _convertFloat(body.info.budgetAvailable),
         cust_Budget_Parked: _convertFloat(body.info.budgetParked),
         cust_Mission_Description: body.info.missionDescription,
+        cust_Mission_Type: body.info.missionType,
         cust_Destination: body.info.destination,
         cust_Hospitality_Type: body.info.hospitality_Type,
         cust_Sector: body.info.sector,
@@ -6546,6 +6563,8 @@ const _updateMission = async function (body, userInfo, cookies) {
       missionUpdateRequest.__metadata.uri = cookies.SF.URL + "cust_Mission";
       missionUpdateRequest.cust_Mission_Description =
         body.info.missionDescription;
+        missionUpdateRequest.cust_Mission_Type =
+        body.info.missionType;
       missionUpdateRequest.cust_Destination = body.info.destination;
       missionUpdateRequest.cust_Hospitality_Type = body.info.hospitality_Type;
       missionUpdateRequest.cust_Sector = body.info.sector;
@@ -7571,6 +7590,12 @@ async function _createS4Documentv3(body, referenceGuid, appCookies, missionStep)
       s4Payload.STATUS = "U";
     }
 
+    //--Claim mission case
+    if(missionStep === "claimMission"){
+      s4Payload.STATUS = "C";
+    }
+    //--Claim mission case
+
     // Fetch CSRF token first
     const { csrfToken, cookies } = await _fetchCsrfTokenv2(
       S4_DESTINATION,
@@ -7980,6 +8005,7 @@ const _getMastersBatch = async function (body, cookies) {
     multicities: [],
     headOfMission: [],
     externalEntity: [],
+    missionTypes:[]
   };
 
   try {
@@ -8078,6 +8104,16 @@ const _getMastersBatch = async function (body, cookies) {
       `GET ${externalEntityFetchUrl} HTTP/1.1\r\n` +
       `Accept: application/json\r\n\r\n`;
 
+    const missionTypeFetchUrl =
+      "Picklist?$expand=picklistOptions,picklistOptions/picklistLabels&$select=picklistOptions/externalCode,picklistOptions/localeLabel,picklistOptions/picklistLabels/locale,picklistOptions/picklistLabels/label,picklistOptions/status&$filter=picklistId eq 'Mission_Type' and picklistOptions/status eq 'ACTIVE'&$format=json";
+
+    getBatchBody +=
+      `--${boundary}\r\n` +
+      `Content-Type: application/http\r\n` +
+      `Content-Transfer-Encoding: binary\r\n\r\n` +
+      `GET ${missionTypeFetchUrl} HTTP/1.1\r\n` +
+      `Accept: application/json\r\n\r\n`;
+
     const multicityFetchUrl =
       "Picklist?$expand=picklistOptions,picklistOptions/picklistLabels&$select=picklistOptions/externalCode,picklistOptions/localeLabel,picklistOptions/picklistLabels/locale,picklistOptions/picklistLabels/label,picklistOptions/status&$filter=picklistId eq 'yesNo' and picklistOptions/status eq 'ACTIVE'&$format=json";
 
@@ -8117,6 +8153,8 @@ const _getMastersBatch = async function (body, cookies) {
     aResultMap.push({ target: "statuses", index: i });
     i++;
     aResultMap.push({ target: "externalEntity", index: i }); // same with head of mission so no need to increase index
+    i++;
+    aResultMap.push({ target: "missionTypes", index: i }); // same with head of mission so no need to increase index
     i++;
     aResultMap.push({ target: "multicities", index: i }); // same with head of mission so no need to increase index
     aResultMap.push({ target: "headOfMission", index: i }); // same with multicities so no need to increase index
@@ -8316,7 +8354,7 @@ const _getAdminMissionReport = async function (body, cookies) {
     }
 
     const selectQuery =
-      "externalCode,externalName,cust_Pending_With_Group,cust_Pending_With_user,effectiveStartDate,transactionSequence,cust_Mission_Start_Date,cust_Mission_End_Date,cust_No_Of_Days," +
+      "externalCode,externalName,cust_Mission_Type,cust_Pending_With_Group,cust_Pending_With_user,effectiveStartDate,transactionSequence,cust_Mission_Start_Date,cust_Mission_End_Date,cust_No_Of_Days," +
       "cust_ReplicationFlag,cust_Hospitality_Type,cust_Flight_type,cust_Destination,cust_TotalPerdiemMission,cust_TicketAverage,cust_Sector," +
       "cust_Total_Expense,cust_Budget_Available,cust_Budget_Parked,cust_Decree_Type,cust_ExternalEntity,cust_ExternalEntity2,cust_ExternalEntity3,cust_ExternalEntity4,cust_ExternalEntity5," +
       "cust_Status,createdDateTime,createdBy," +
@@ -8456,6 +8494,9 @@ const _getAdminMissionReport = async function (body, cookies) {
         case "multicity":
           o = _.find(oMasters.multicities, ["externalCode", v]);
           break;
+        case "missionType":
+          o = _.find(oMasters.missionTypes, ["externalCode", v]);
+          break;
         case "headOfMission":
           o = _.find(oMasters.headOfMission, ["externalCode", v]);
           break;
@@ -8479,6 +8520,7 @@ const _getAdminMissionReport = async function (body, cookies) {
         let missionInfo = {
           missionId: m0.externalCode,
           missionDescription: m0.externalName,
+          missionType: _readValue("missionType", m0.cust_Mission_Type),
           missionStartDate: _formatDate(m0.cust_Mission_Start_Date),
           missionEndDate: _formatDate(m0.cust_Mission_End_Date),
           destination: _readValue("city", m0.cust_Destination),
@@ -8601,125 +8643,132 @@ const _getAdminMissionReport = async function (body, cookies) {
       },
       {
         Colsq: 2,
+        Colid: "missionType",
+        Coltx: "Mission Type",
+        Colwd: "15rem",
+        Coldt: "string",
+      },
+      {
+        Colsq: 3,
         Colid: "missionStartDate",
         Coltx: "Mission Start Date",
         Colwd: "9rem",
         Coldt: "date",
       },
       {
-        Colsq: 3,
+        Colsq: 4,
         Colid: "missionEndDate",
         Coltx: "Mission End Date",
         Colwd: "9rem",
         Coldt: "date",
       },
       {
-        Colsq: 4,
+        Colsq: 5,
         Colid: "destination",
         Coltx: "Destination",
         Colwd: "15rem",
         Coldt: "string",
       },
       {
-        Colsq: 5,
+        Colsq: 6,
         Colid: "sector",
         Coltx: "Sector",
         Colwd: "15rem",
         Coldt: "string",
       },
       {
-        Colsq: 6,
+        Colsq: 7,
         Colid: "sectorCode",
         Coltx: "Sector Code",
         Colwd: "9rem",
         Coldt: "string",
       },
       {
-        Colsq: 7,
+        Colsq: 8,
         Colid: "decreeType",
         Coltx: "Decree Type",
         Colwd: "9rem",
         Coldt: "string",
       },
       {
-        Colsq: 8,
+        Colsq: 9,
         Colid: "externalEntity",
         Coltx: "External Entity",
         Colwd: "9rem",
         Coldt: "string",
       },
       {
-        Colsq: 9,
+        Colsq: 10,
         Colid: "hospitality",
         Coltx: "Hospitality",
         Colwd: "9rem",
         Coldt: "string",
       },
       {
-        Colsq: 10,
+        Colsq: 11,
         Colid: "flightType",
         Coltx: "Flight Type",
         Colwd: "9rem",
         Coldt: "string",
       },
       {
-        Colsq: 11,
+        Colsq: 12,
         Colid: "budgetAvailable",
         Coltx: "Budget Available",
         Colwd: "9rem",
         Coldt: "amount",
       },
       {
-        Colsq: 12,
+        Colsq: 13,
         Colid: "budgetParked",
         Coltx: "Budget Parked",
         Colwd: "9rem",
         Coldt: "amount",
       },
       {
-        Colsq: 13,
+        Colsq: 14,
         Colid: "noOfDays",
         Coltx: "No Of Days",
         Colwd: "9rem",
         Coldt: "number",
       },
       {
-        Colsq: 14,
+        Colsq: 15,
         Colid: "status",
         Coltx: "Status",
         Colwd: "9rem",
         Coldt: "string",
       },
       {
-        Colsq: 15,
+        Colsq: 16,
         Colid: "pendingWith",
         Coltx: "Pending With",
         Colwd: "13rem",
         Coldt: "string",
       },
       {
-        Colsq: 16,
+        Colsq: 17,
         Colid: "totalExpense",
         Coltx: "Total Expense on Mission",
         Colwd: "9rem",
         Coldt: "amount",
       },
       {
-        Colsq: 17,
+        Colsq: 18,
         Colid: "totalPerdiem",
         Coltx: "Total Perdiem Mission",
         Colwd: "9rem",
         Coldt: "amount",
       },
       {
-        Colsq: 18,
+        Colsq: 19,
         Colid: "createdAt",
         Coltx: "Request Date",
         Colwd: "9rem",
         Coldt: "date",
       },
       {
-        Colsq: 19,
+        Colsq: 20,
         Colid: "createdBy",
         Coltx: "Mission Created By",
         Colwd: "9rem",
@@ -8727,49 +8776,49 @@ const _getAdminMissionReport = async function (body, cookies) {
       },
       //--Member columns
       {
-        Colsq: 20,
+        Colsq: 21,
         Colid: "employeeId",
         Coltx: "Member Employee ID",
         Colwd: "9rem",
         Coldt: "string",
       },
       {
-        Colsq: 21,
+        Colsq: 22,
         Colid: "employeeName",
         Coltx: "Member Employee Name",
         Colwd: "15rem",
         Coldt: "string",
       },
       {
-        Colsq: 22,
+        Colsq: 23,
         Colid: "employeeTitle",
         Coltx: "Title of Employee",
         Colwd: "15rem",
         Coldt: "string",
       },
       {
-        Colsq: 23,
+        Colsq: 24,
         Colid: "employeeTotalExpense",
         Coltx: "Employee Total Expense",
         Colwd: "9rem",
         Coldt: "amount",
       },
       {
-        Colsq: 24,
+        Colsq: 25,
         Colid: "employeeTotalPerdiem",
         Coltx: "Employee Total Perdiem",
         Colwd: "9rem",
         Coldt: "amount",
       },
       {
-        Colsq: 25,
+        Colsq: 26,
         Colid: "employeeTotalTicket",
         Coltx: "Employee Total Ticket",
         Colwd: "9rem",
         Coldt: "amount",
       },
       {
-        Colsq: 26,
+        Colsq: 27,
         Colid: "employeeMultipleCity",
         Coltx: "Multiple Cities",
         Colwd: "9rem",

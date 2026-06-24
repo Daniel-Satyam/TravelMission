@@ -151,6 +151,7 @@ sap.ui.define(
         return new Promise(async function (resolve, reject) {
           var missionInfoObj = {
             missionDescription: "",
+            missionType: "",
             missionStartDate: null,
             missionEndDate: null,
             sector: "",
@@ -315,6 +316,7 @@ sap.ui.define(
 
               var missionInfoObj = {
                 missionDescription: missionInfo.description,
+                missionType: missionInfo.missionType,
                 missionDetails: missionInfo.details,
                 missionStartDate: formatter.formatDateUI(missionInfo.startDate),
                 missionEndDate: formatter.formatDateUI(missionInfo.endDate),

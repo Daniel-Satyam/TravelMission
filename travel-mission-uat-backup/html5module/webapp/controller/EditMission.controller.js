@@ -164,6 +164,7 @@ sap.ui.define(
         return new Promise(async function (resolve, reject) {
           var missionInfoObj = {
             missionDescription: "",
+            missionType: "",
             missionStartDate: null,
             missionEndDate: null,
             sector: "",
@@ -387,6 +388,7 @@ sap.ui.define(
                     ? UI5Date.getInstance(missionInfo.startDate)
                     : null,
                 missionDescription: missionInfo.description,
+                missionType: missionInfo.missionType,
                 missionDetails: missionInfo.details,
                 missionStartDate: formatter.formatDateUI(missionInfo.startDate),
                 missionEndDate: formatter.formatDateUI(missionInfo.endDate),
@@ -3643,6 +3645,7 @@ sap.ui.define(
             flightType: "",
             hospitality_Type: "",
             missionDescription: "",
+            missionType: "",
             missionEndDate: "",
             missionStartDate: "",
             noOfDays: 0,
@@ -3678,6 +3681,17 @@ sap.ui.define(
         } else {
           validationError = true;
         }
+
+        //--Mission type check
+        if (
+          missionInfoModelData.missionType != "" &&
+          missionInfoModelData.missionType != null
+        ) {
+          missionRequest.info.missionType = missionInfoModelData.missionType;
+        } else {
+          validationError = true;
+        }
+        //--Mission type check
 
         if (
           missionInfoModelData.decreeType === "09" ||
