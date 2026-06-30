@@ -7544,7 +7544,7 @@ async function _fetchCsrfTokenv2(destinationName, servicePath) {
     { destinationName },
     {
       method: "GET",
-      url: servicePath,
+      url: servicePath + "/",
       headers: {
         "x-csrf-token": "Fetch",
       },
