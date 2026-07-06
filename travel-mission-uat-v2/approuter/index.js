@@ -2118,6 +2118,7 @@ const _claimMission = async function (decryptedData, cookies) {
                     salutation_Ar: "",
                     emailAddress: recipientsEmail.toString(),
                     cc: "N",
+                    costCenter: sCostCenter,
                   },
                 ],
               };
