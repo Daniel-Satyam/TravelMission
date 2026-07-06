@@ -2075,7 +2075,101 @@ sap.ui.define(
 
         var sectorUtilizedBudget = 0;
 
-        var body = {
+        var obj = {
+          missionId: aInfoCalculate.missionID,
+          missionDescription: aInfoCalculate.missionDescription,
+          claim: claimInfo.externalCode,
+          sectorUtilizedBudget: 0,
+          sector: aInfoCalculate.sector,
+          date: "/Date(" + new Date().getTime() + ")/",
+          action: "1",
+          loggedInUser: decryptedDataParsed.keyVault.user.id,
+          byDelegate:
+            decryptedDataParsed.keyVault.masterUser.id !==
+            decryptedDataParsed.keyVault.user.id
+              ? `${decryptedDataParsed.keyVault.masterUser.firstName} ${decryptedDataParsed.keyVault.masterUser.lastName} (${decryptedDataParsed.keyVault.masterUser.id})`
+              : null,
+          payload: payload,
+        };
+
+        /* if (claimInfo && claimInfo.cust_Claim_Parked) {
+              if (parseFloat(claimInfo.cust_Claim_Parked) >= 0) {
+                obj.sectorUtilizedBudget =
+                  parseFloat(sectorUtilizedBudget) -
+                  Math.abs(parseFloat(claimInfo.cust_Claim_Parked));
+              } else {
+                obj.sectorUtilizedBudget =
+                  parseFloat(sectorUtilizedBudget) +
+                  Math.abs(parseFloat(claimInfo.cust_Claim_Parked));
+              }
+            } */
+
+        //var encryptedData = await that.getEncryptedData(obj);
+        that.openBusyFragment();
+        jQuery.ajax({
+          type: "POST",
+          url: "/approveRejectClaim",
+          contentType: "application/json",
+          xhrFields: { withCredentials: true },
+          beforeSend: function (xhr) {
+            if (envInfo != null) {
+              xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
+              xhr.setRequestHeader(
+                "x-approuter-authorization",
+                "Bearer " + envInfo.CF.accessToken,
+              );
+            }
+          },
+          data: JSON.stringify({
+            data: obj,
+          }),
+          success: async function (data, textStatus, jqXHR) {
+            that.closeBusyFragment();
+            that.alertMessage(
+              "S",
+              "successfulOperation",
+              "travelClaimApprovedBy",
+              [
+                `${decryptedDataParsed.keyVault.user.firstName} ${decryptedDataParsed.keyVault.user.lastName}`,
+              ],
+              {
+                showConfirmButton: true,
+                confirmCallbackFn: () => {
+                  that.closeMission();
+                },
+              },
+            );
+
+            // MessageBox.success(
+            //   "The travel claim is approved by " +
+            //     decryptedDataParsed.keyVault.user.firstName +
+            //     " " +
+            //     decryptedDataParsed.keyVault.user.lastName,
+            //   {
+            //     actions: [MessageBox.Action.CLOSE],
+            //     onClose: async function (sAction) {
+            //       that.closeMission();
+            //     },
+            //     dependentOn: that.getView(),
+            //   }
+            // );
+          },
+          error: async function (jqXHR, textStatus, errorDesc) {
+            that.closeBusyFragment();
+            if (jqXHR.status == 401) {
+              that.closeMission();
+            } else {
+              that.alertMessage("E", "errorOperation", "serverError", [], null);
+              // MessageBox.error("Something went wrong", {
+              //   actions: [MessageBox.Action.CLOSE],
+              //   onClose: function (sAction) {},
+              //   dependentOn: that.getView(),
+              // });
+            }
+          },
+        });
+
+        /*         var body = {
           params: {
             sector: aInfoCalculate.sector,
           },
@@ -2222,7 +2316,7 @@ sap.ui.define(
               // });
             }
           },
-        });
+        }); */
       },
 
       sendBackClaim: async function (oEvent) {
@@ -2266,17 +2360,110 @@ sap.ui.define(
 
         var sectorAvailableBudget = 0;
 
+        var obj = {
+          missionId: aInfoCalculate.missionID,
+          missionDescription: aInfoCalculate.missionDescription,
+          claim: claimInfo.externalCode,
+          sectorAvailableBudget: 0,
+          sector: aInfoCalculate.sector,
+          date: "/Date(" + new Date().getTime() + ")/",
+          action: "5",
+          loggedInUser: decryptedDataParsed.keyVault.user.id,
+          byDelegate:
+            decryptedDataParsed.keyVault.masterUser.id !==
+            decryptedDataParsed.keyVault.user.id
+              ? `${decryptedDataParsed.keyVault.masterUser.firstName} ${decryptedDataParsed.keyVault.masterUser.lastName} (${decryptedDataParsed.keyVault.masterUser.id})`
+              : null,
+          payload: payload,
+        };
+
+        /* if (claimInfo && claimInfo.cust_Claim_Parked) {
+              if (parseFloat(claimInfo.cust_Claim_Parked) >= 0) {
+                obj.sectorAvailableBudget =
+                  parseFloat(sectorAvailableBudget) -
+                  Math.abs(parseFloat(claimInfo.cust_Claim_Parked));
+              } else {
+                obj.sectorAvailableBudget =
+                  parseFloat(sectorAvailableBudget) +
+                  Math.abs(parseFloat(claimInfo.cust_Claim_Parked));
+              }
+            } */
+
+        //var encryptedData = await that.getEncryptedData(obj);
+
+        jQuery.ajax({
+          type: "POST",
+          url: "/approveRejectClaim",
+          contentType: "application/json",
+          xhrFields: { withCredentials: true },
+          beforeSend: function (xhr) {
+            if (envInfo != null) {
+              xhr.setRequestHeader("x-csrf-token", envInfo.CSRF);
+              xhr.setRequestHeader(
+                "x-approuter-authorization",
+                "Bearer " + envInfo.CF.accessToken,
+              );
+            }
+          },
+          data: JSON.stringify({
+            data: obj,
+          }),
+          success: async function (data, textStatus, jqXHR) {
+            that.closeBusyFragment();
+            that.alertMessage(
+              "S",
+              "successfulOperation",
+              "travelClaimSentBackBy",
+              [
+                `${decryptedDataParsed.keyVault.user.firstName} ${decryptedDataParsed.keyVault.user.lastName}`,
+              ],
+              {
+                showConfirmButton: true,
+                confirmCallbackFn: () => {
+                  that.closeMission();
+                },
+              },
+            );
+            // MessageBox.success(
+            //   "The travel claim is sent back by " +
+            //     decryptedDataParsed.keyVault.user.firstName +
+            //     " " +
+            //     decryptedDataParsed.keyVault.user.lastName,
+            //   {
+            //     actions: [MessageBox.Action.CLOSE],
+            //     onClose: async function (sAction) {
+            //       that.closeMission();
+            //     },
+            //     dependentOn: that.getView(),
+            //   }
+            // );
+          },
+          error: async function (jqXHR, textStatus, errorDesc) {
+            that.closeBusyFragment();
+            if (jqXHR.status == 401) {
+              that.closeMission();
+            } else {
+              that.alertMessage("E", "errorOperation", "serverError", [], null);
+              // MessageBox.error("Something went wrong", {
+              //   actions: [MessageBox.Action.CLOSE],
+              //   onClose: function (sAction) {},
+              //   dependentOn: that.getView(),
+              // });
+            }
+          },
+        });
+
         var body = {
           params: {
             sector: aInfoCalculate.sector,
           },
         };
 
-        var encData = await that.getEncryptedData(body);
+        //var encData = await that.getEncryptedData(body);
 
-        that.openBusyFragment();
-        var url = "/fetchSectorInfo";
-        jQuery.ajax({
+        //that.openBusyFragment();
+        //var url = "/fetchSectorInfo";
+        /*  jQuery.ajax({
           type: "POST",
           url: url,
           contentType: "application/json",
@@ -2413,7 +2600,7 @@ sap.ui.define(
               // });
             }
           },
-        });
+        }); */
       },
     });
   },

@@ -598,7 +598,7 @@ const _updateItineraryBatch = async function (body, cookies) {
       body,
       null,
       cookies,
-      "updateItinerary"
+      "updateItinerary",
     );
     //--Step 1: Update S4 Document
 
@@ -1163,7 +1163,7 @@ const _createMission = async function (body, userInfo, cookies) {
       body,
       referenceGuid,
       cookies,
-      "createMission"
+      "createMission",
     );
     //--Step 1: Create S4 Document
 
@@ -1209,7 +1209,7 @@ const _createMission = async function (body, userInfo, cookies) {
       updatePayload,
       referenceGuid,
       cookies,
-      "createMission"
+      "createMission",
     );
     //--Step 3: Update S4 document with mission id
 
@@ -1525,7 +1525,7 @@ const _approveRejectMission = async function (data, cookies) {
       const createS4Document = await _createS4Documentv2(
         { missionId: data.mission },
         cookies,
-        "approveRejectMission"
+        "approveRejectMission",
       );
     } catch (e) {
       throw new CustomHttpError(500, "FI document could not be updated");
@@ -1588,7 +1588,7 @@ const _claimMission = async function (decryptedData, cookies) {
       decryptedData,
       null,
       cookies,
-      "claimMission"
+      "claimMission",
     );
     if (
       !(
@@ -1767,14 +1767,20 @@ const _claimMission = async function (decryptedData, cookies) {
 
       //--Find the returned cost center from claim mission
       let sCostCenter = null;
-      if(updateS4DocumentResult && updateS4DocumentResult.HeaderToItem && updateS4DocumentResult.HeaderToItem.results){
-        const oItem = _.find(updateS4DocumentResult.HeaderToItem.results, ["PTEXT",decryptedData.employeeId]);
-        if(oItem && oItem["cust_CostCenter"]){
-          sCostCenter = oItem["cust_CostCenter"] || null;
+      if (
+        updateS4DocumentResult &&
+        updateS4DocumentResult.HeaderToItem &&
+        updateS4DocumentResult.HeaderToItem.results
+      ) {
+        const oItem = _.find(updateS4DocumentResult.HeaderToItem.results, [
+          "PTEXT",
+          decryptedData.employeeId,
+        ]);
+        if (oItem && oItem["KOSTL"]) {
+          sCostCenter = oItem["KOSTL"] || null;
         }
       }
       //--Find the returned cost center from claim mission
-
 
       let claimUpdateRequest = {
         ...claimUpdateHeader,
@@ -2998,6 +3004,7 @@ const _fetchClaimInfo = async function (decryptedData, cookies) {
 const _approveRejectClaim = async function (decryptedData, cookies) {
   try {
     var auth = "Basic " + cookies.SF.basicAuth;
+    let sCostCenter = null;
 
     var claimUrl =
       cookies.SF.URL +
@@ -3020,6 +3027,38 @@ const _approveRejectClaim = async function (decryptedData, cookies) {
       var claimRequest = claimResponse.data.d.results[0];
       const postClaimUrl = cookies.SF.URL + "upsert?$format=json";
       if (decryptedData.action == "1") {
+        //--S4 Document Update
+        //--Step 1: Update S4 document
+         //--Find the returned cost center from claim mission
+        
+        try {
+          const createS4Document = await _createS4Documentv2(
+            decryptedData,
+            cookies,
+            "approveRejectClaim",
+          );
+
+          //--Find the returned cost center from claim mission
+          if (
+            createS4Document &&
+            createS4Document.HeaderToItem &&
+            createS4Document.HeaderToItem.results
+          ) {
+            const oItem = _.find(createS4Document.HeaderToItem.results, [
+              "PTEXT",
+              claimRequest.cust_EmployeeID,
+            ]);
+            if (oItem && oItem["KOSTL"]) {
+              sCostCenter = oItem["KOSTL"] || null;
+            }
+          }
+          //--Find the returned cost center from claim mission
+        } catch (e) {
+          throw new CustomHttpError(500, "FI document could not be updated");
+        }
+        //--Step 1: Update S4 Document
+        //--S4 Document Update
+
         var postClaimConfig = {
           method: "post",
           maxBodyLength: Infinity,
@@ -3043,6 +3082,7 @@ const _approveRejectClaim = async function (decryptedData, cookies) {
             cust_Pending_with: "",
             cust_Claim_Parked: "0",
             cust_Comment: decryptedData.payload.comments,
+            cust_CostCenter: sCostCenter
           }),
         };
       } else {
@@ -3120,8 +3160,171 @@ const _approveRejectClaim = async function (decryptedData, cookies) {
             await axios.request(memberUpdateConfig);
           }
         }
+        try {
+          var auditLogUrl = cookies.SF.URL + "cust_Audit_Log?$format=json";
+          var action = null;
+          if (decryptedData.action == "1") {
+            action = "Approved";
+          } else {
+            action = "Sent Back";
+          }
 
-        const sectorFetchUrl =
+          let comment = decryptedData.payload.comments || "";
+
+          comment = `${comment} (Claim ${action} for Mission ${decryptedData.missionId})`;
+
+          if (decryptedData.byDelegate !== null) {
+            comment = comment + ` => By delegate ${decryptedData.byDelegate}`;
+          }
+
+          comment.trim();
+
+          const auditLogConfig = {
+            method: "post",
+            maxBodyLength: Infinity,
+            url: auditLogUrl,
+            headers: {
+              Authorization: auth,
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            data: JSON.stringify({
+              __metadata: {
+                uri: cookies.SF.URL + "cust_Audit_Log",
+              },
+              externalCode: "1234",
+              cust_Timestamp: decryptedData.date,
+              cust_Key: decryptedData.missionId,
+              cust_User: decryptedData.loggedInUser,
+              cust_Action: "Claim " + action,
+              cust_Comments: comment,
+            }),
+          };
+          await axios.request(auditLogConfig);
+
+          var members = [claimRequest.cust_EmployeeID];
+          if (members.length > 0) {
+            var groupMembersIds = "'" + members.join("', '") + "'";
+
+            var getApproverGroupMembersInfoUrl =
+              cookies.SF.URL +
+              "PerPersonal?$format=json&$filter=personIdExternal in " +
+              groupMembersIds +
+              " &$expand=salutationNav/picklistLabels,personNav/emailNav";
+
+            const getApproverGroupMembersInfoConfig = {
+              headers: {
+                Authorization: auth,
+              },
+            };
+
+            const getApproverGroupMembersInfoResponse = await axios.get(
+              getApproverGroupMembersInfoUrl,
+              getApproverGroupMembersInfoConfig,
+            );
+
+            if (
+              getApproverGroupMembersInfoResponse &&
+              getApproverGroupMembersInfoResponse.data &&
+              getApproverGroupMembersInfoResponse.data.d.results &&
+              getApproverGroupMembersInfoResponse.data.d.results.length > 0
+            ) {
+              var recipients = [];
+              for (
+                var r = 0;
+                r < getApproverGroupMembersInfoResponse.data.d.results.length;
+                r++
+              ) {
+                var recipient = {
+                  employeeID:
+                    getApproverGroupMembersInfoResponse.data.d.results[r]
+                      .personIdExternal,
+                  name: getApproverGroupMembersInfoResponse.data.d.results[r]
+                    .customString2,
+                  name_Ar:
+                    getApproverGroupMembersInfoResponse.data.d.results[r]
+                      .displayName,
+                  salutation: null,
+                  salutation_Ar: null,
+                  emailAddress:
+                    getApproverGroupMembersInfoResponse.data.d.results[r]
+                      .personNav.emailNav.results[0].emailAddress,
+                  cc: "N",
+                  costCenter: sCostCenter || null,
+                };
+                for (
+                  s = 0;
+                  s <
+                  getApproverGroupMembersInfoResponse.data.d.results[r]
+                    .salutationNav.picklistLabels.results.length;
+                  s++
+                ) {
+                  if (
+                    getApproverGroupMembersInfoResponse.data.d.results[r]
+                      .salutationNav.picklistLabels.results[s].locale == "en_US"
+                  ) {
+                    recipient.salutation =
+                      getApproverGroupMembersInfoResponse.data.d.results[
+                        r
+                      ].salutationNav.picklistLabels.results[s].label;
+                  } else if (
+                    getApproverGroupMembersInfoResponse.data.d.results[r]
+                      .salutationNav.picklistLabels.results[s].locale == "ar_SA"
+                  ) {
+                    recipient.salutation_Ar =
+                      getApproverGroupMembersInfoResponse.data.d.results[
+                        r
+                      ].salutationNav.picklistLabels.results[s].label;
+                  }
+                }
+
+                recipients.push(recipient);
+              }
+
+              var decreeAttachment = [];
+
+              if (
+                decryptedData.decreeAttachments &&
+                decryptedData.decreeAttachments.length > 0
+              ) {
+                decreeAttachment.push({
+                  fileName: decryptedData.decreeAttachments[0].fileName,
+                  mimeType: decryptedData.decreeAttachments[0].mimetype,
+                  fileContent: decryptedData.decreeAttachments[0].file,
+                });
+              }
+
+              var notificationPayload = {
+                type: "Claim",
+                isBeneficiary: "Y",
+                isApprover: "N",
+                missionID: decryptedData.missionId,
+                missionDescription: decryptedData.missionDescription,
+                status: decryptedData.action == "1" ? "Approved" : "Sentback",
+                subject: "",
+                body: "",
+                link: "",
+                sendIndivially: "Y",
+                attachments: decreeAttachment,
+                params: {
+                  ownerEmployeeID: claimRequest.cust_EmployeeID,
+                },
+                recipients: recipients,
+              };
+
+              await _sendNotification(
+                notificationPayload,
+                cookies,
+                "sendClaimNotification",
+              );
+              return true;
+            }
+          }
+        } catch (error) {
+          console.log("Some issues with notification:", error);
+          return false;
+        }
+        /*         const sectorFetchUrl =
           cookies.SF.URL +
           "cust_SectorBudget?$format=json&$filter=externalCode eq " +
           decryptedData.sector +
@@ -3331,7 +3534,7 @@ const _approveRejectClaim = async function (decryptedData, cookies) {
               return false;
             }
           }
-        }
+        } */
       }
     }
   } catch (error) {
@@ -4108,18 +4311,16 @@ const _cancelMission = async function (decryptedData, cookies) {
   try {
     const auth = "Basic " + cookies.SF.basicAuth;
 
-
- //--Call S4 Odata
- try {
-   const deleteS4Document = await _deleteS4Documentv2(
-     { missionId: decryptedData.missionId },
-     cookies,
-    );
-  } catch (e) {
-    throw new CustomHttpError(500, "S4 document could not be deleted");
-  }
-  //--Call S4 Odata
-
+    //--Call S4 Odata
+    try {
+      const deleteS4Document = await _deleteS4Documentv2(
+        { missionId: decryptedData.missionId },
+        cookies,
+      );
+    } catch (e) {
+      throw new CustomHttpError(500, "S4 document could not be deleted");
+    }
+    //--Call S4 Odata
 
     const sectorFetchUrl =
       `cust_SectorBudget?$format=json` +
@@ -5276,14 +5477,14 @@ const _updateMissionPayrollBatch = async function (body, cookies) {
               results: [],
             },
           };
-          
+
           oMember.cust_itinerary_details_child.results.forEach(
             (oItinerary, i) => {
               const oItineraryFound = _.find(oMemberFound.itinerary, [
                 "externalCode",
                 oItinerary.externalCode,
               ]);
-              
+
               if (oItineraryFound) {
                 let itineraryUpdateRequest = {
                   __metadata: oItinerary.__metadata,
@@ -5592,7 +5793,7 @@ const _updateMissionBatch = async function (body, userInfo, cookies) {
       body,
       null,
       cookies,
-      "updateMission"
+      "updateMission",
     );
     //--Step 1: Update S4 Document
 
@@ -6564,8 +6765,7 @@ const _updateMission = async function (body, userInfo, cookies) {
       missionUpdateRequest.__metadata.uri = cookies.SF.URL + "cust_Mission";
       missionUpdateRequest.cust_Mission_Description =
         body.info.missionDescription;
-        missionUpdateRequest.cust_Mission_Type =
-        body.info.missionType;
+      missionUpdateRequest.cust_Mission_Type = body.info.missionType;
       missionUpdateRequest.cust_Destination = body.info.destination;
       missionUpdateRequest.cust_Hospitality_Type = body.info.hospitality_Type;
       missionUpdateRequest.cust_Sector = body.info.sector;
@@ -7159,7 +7359,7 @@ const _checkMissionBatch = async function (body, cookies) {
 const _constructS4DocumentDetailsFromMissionId = async function (
   missionId,
   cookies,
-  missionStep
+  missionStep,
 ) {
   try {
     const auth = "Basic " + cookies.SF.basicAuth;
@@ -7266,11 +7466,11 @@ const _constructS4DocumentFromPayload = async function (
   missionRequest,
   referenceGuid,
   cookies,
-  missionStep
+  missionStep,
 ) {
   try {
     let s4DocumentNumber = null;
-    let oMissionRequest = _.clone(missionRequest);
+    let oMissionRequest = _.clone(missionRequest); 
 
     if (missionRequest.info.missionId && referenceGuid === null) {
       const auth = "Basic " + cookies.SF.basicAuth;
@@ -7339,7 +7539,10 @@ const _constructS4DocumentFromPayload = async function (
         sequenceNo: (i + 1) * 10,
         userId: m.userID,
         employeeId: m.employeeID,
-        consumedBudget: missionStep === "claimMission" ? parseFloat(m.employeeTotalPerdiem) : parseFloat(m.reservedBudget),
+        consumedBudget:
+          missionStep === "claimMission"
+            ? parseFloat(m.employeeTotalPerdiem)
+            : parseFloat(m.reservedBudget),
         costCenter: m.costCenter, // wiill be fetched later on
       });
     });
@@ -7561,13 +7764,18 @@ async function _fetchCsrfTokenv2(destinationName, servicePath) {
 /**
  * Create Header with Items (Deep Insert)
  */
-async function _createS4Documentv3(body, referenceGuid, appCookies, missionStep) {
+async function _createS4Documentv3(
+  body,
+  referenceGuid,
+  appCookies,
+  missionStep,
+) {
   try {
     const oPayload = await _constructS4DocumentFromPayload(
       body,
       referenceGuid,
       appCookies,
-      missionStep
+      missionStep,
     );
 
     if (!oPayload) {
@@ -7592,8 +7800,10 @@ async function _createS4Documentv3(body, referenceGuid, appCookies, missionStep)
     }
 
     //--Claim mission case
-    if(missionStep === "claimMission"){
+    if (missionStep === "claimMission") {
       s4Payload.STATUS = "C";
+    } else if (missionStep === "claimMissionApprove") {
+      s4Payload.STATUS = "A";
     }
     //--Claim mission case
 
@@ -7643,7 +7853,7 @@ async function _createS4Documentv2(body, appCookies, missionStep) {
   const oPayload = await _constructS4DocumentDetailsFromMissionId(
     body.missionId,
     appCookies,
-    missionStep
+    missionStep,
   );
   try {
     if (!oPayload) {
@@ -7665,6 +7875,12 @@ async function _createS4Documentv2(body, appCookies, missionStep) {
 
     if (oPayload.s4DocumentNumber) {
       s4Payload.STATUS = "U";
+    }
+
+    if(missionStep === "claimMissionApprove") {
+      s4Payload.STATUS = "A";
+    } else if(missionStep === "claimMission") {
+      s4Payload.STATUS = "C";
     }
 
     // Fetch CSRF token first
@@ -8006,7 +8222,7 @@ const _getMastersBatch = async function (body, cookies) {
     multicities: [],
     headOfMission: [],
     externalEntity: [],
-    missionTypes:[]
+    missionTypes: [],
   };
 
   try {
