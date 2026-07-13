@@ -7802,7 +7802,7 @@ async function _createS4Documentv3(
     //--Claim mission case
     if (missionStep === "claimMission") {
       s4Payload.STATUS = "C";
-    } else if (missionStep === "claimMissionApprove") {
+    } else if (missionStep === "approveRejectClaim") {
       s4Payload.STATUS = "A";
     }
     //--Claim mission case
@@ -7877,7 +7877,7 @@ async function _createS4Documentv2(body, appCookies, missionStep) {
       s4Payload.STATUS = "U";
     }
 
-    if(missionStep === "claimMissionApprove") {
+    if(missionStep === "approveRejectClaim") {
       s4Payload.STATUS = "A";
     } else if(missionStep === "claimMission") {
       s4Payload.STATUS = "C";
